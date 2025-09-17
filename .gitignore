@@ -1,0 +1,75 @@
+# Documentation and reference materials
+Docs/
+*.pdf
+
+# Personal configuration files
+CLAUDE.md
+.claude/
+
+# System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# MicroPython
+*.mpy
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Hardware-specific files (if any compiled firmware)
+*.bin
+*.hex
+*.elf
+
+# Personal notes and planning (optional - remove if you want to track these)
+Planning/personal_notes.md
+Planning/scratch.md
