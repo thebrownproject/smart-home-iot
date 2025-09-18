@@ -21,9 +21,3 @@ class DHT11Sensor:
     def get_humidity(self):
         self.dht.measure()
         return self.dht.humidity()
-
-# Test the DHT11Sensor class
-sensor = DHT11Sensor()
-print(sensor.read_data())
-print(sensor.get_temperature())
-print(sensor.get_humidity())
