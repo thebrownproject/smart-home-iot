@@ -42,8 +42,9 @@ A running diary of development decisions, important context, and session-to-sess
 
 5. **Development Phases:**
    - Phase 1: ESP32 embedded system (sensors, MQTT, direct DB writes)
-   - Phase 2: C# API (read endpoints) + Next.js dashboard
-   - Phase 3: Bonus features (auth, user roles, PIR arm/disarm)
+   - Phase 2: C# API (read endpoints, MVC pattern)
+   - Phase 3: Next.js dashboard (frontend, MQTT client)
+   - Phase 4: Bonus features (auth, user roles, PIR arm/disarm)
 
 **Current Status:**
 - Phase: Planning complete

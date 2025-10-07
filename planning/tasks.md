@@ -232,9 +232,9 @@
 
 ---
 
-## Phase 2: Web Dashboard + C# API (Standard Requirements)
+## Phase 2: C# API Layer (Backend)
 
-### Milestone 2.1: C# API Setup (REQUIRED)
+### Milestone 2.1: C# API Setup
 
 - [ ] **T2.1**: Create C# ASP.NET Core 8 Web API project
   - Create `api/` directory
@@ -262,20 +262,22 @@
 
 ---
 
-### Milestone 2.2: Next.js Project Setup
+## Phase 3: Web Dashboard (Frontend)
 
-- [ ] **T2.5**: Initialize Next.js project
+### Milestone 3.1: Next.js Project Setup
+
+- [ ] **T3.1**: Initialize Next.js project
   - Create `web/` directory
   - Run `npx create-next-app@latest` with TypeScript, Tailwind, App Router
   - Install dependencies: `mqtt`
   - Configure environment variables in `.env.local`
 
-- [ ] **T2.6**: Set up C# API client
+- [ ] **T3.2**: Set up C# API client
   - File: `web/lib/api.ts`
   - Create fetch wrapper for C# API endpoints
   - Test: Fetch sensor data from C# API
 
-- [ ] **T2.7**: Set up MQTT client provider
+- [ ] **T3.3**: Set up MQTT client provider
   - File: `web/lib/mqtt.ts` and `web/components/MQTTProvider.tsx`
   - Connect to HiveMQ WebSocket (wss://...)
   - Subscribe to `home/#` (all topics)
@@ -283,33 +285,33 @@
 
 ---
 
-### Milestone 2.3: Dashboard UI Components (US8)
+### Milestone 3.2: Dashboard UI Components (US8)
 
-- [ ] **T2.8**: Create sensor display card component
+- [ ] **T3.4**: Create sensor display card component
   - File: `web/components/SensorCard.tsx`
   - Display current temperature, humidity (from MQTT)
   - Real-time updates when new values arrive
   - Show last update timestamp
 
-- [ ] **T2.9**: Create motion detection display
+- [ ] **T3.5**: Create motion detection display
   - Query C# API for motion events in last hour
   - Display count: "PIR Detections (Last Hour): 12"
   - Auto-refresh every 5 minutes
 
-- [ ] **T2.10**: Create gas alert indicator
+- [ ] **T3.6**: Create gas alert indicator
   - File: `web/components/GasAlert.tsx`
   - Show red banner when gas detected (via MQTT)
   - Display "GAS DETECTED - FAN ACTIVE"
   - Hide when alert clears
 
-- [ ] **T2.11**: Create RFID scan history table
+- [ ] **T3.7**: Create RFID scan history table
   - File: `web/components/RFIDLog.tsx`
   - Fetch from C# API (`GET /api/rfid/scans`)
   - Display: Card ID, Result (granted/denied), Timestamp, User
   - Add filter dropdown: "All", "Success", "Failed"
   - Pagination: Show last 50 scans
 
-- [ ] **T2.12**: Create status indicators
+- [ ] **T3.8**: Create status indicators
   - Display door status (open/closed) from MQTT
   - Display window status
   - Display fan status (on/off)
@@ -317,62 +319,62 @@
 
 ---
 
-### Milestone 2.4: Control Panel (US9)
+### Milestone 3.3: Control Panel (US9)
 
-- [ ] **T2.13**: Create actuator control panel
+- [ ] **T3.9**: Create actuator control panel
   - File: `web/components/ControlPanel.tsx`
   - Buttons: "Open Door", "Close Door", "Open Window", "Close Window"
   - Toggle for Fan: "Turn On" / "Turn Off"
   - Click handler publishes MQTT command to `home/control/*`
 
-- [ ] **T2.14**: Add control confirmation feedback
+- [ ] **T3.10**: Add control confirmation feedback
   - Show toast notification when command sent
   - Update button state based on status MQTT messages
   - Disable buttons while command in progress
 
 ---
 
-### Milestone 2.5: Main Dashboard Page
+### Milestone 3.4: Main Dashboard Page
 
-- [ ] **T2.15**: Build main dashboard layout
+- [ ] **T3.11**: Build main dashboard layout
   - File: `web/app/page.tsx`
   - Grid layout: Sensor cards (top), Status indicators (middle), Control panel (bottom)
   - RFID log table on side panel
   - Responsive design (mobile-friendly)
 
-- [ ] **T2.16**: Add asthma alert banner
+- [ ] **T3.12**: Add asthma alert banner
   - Subscribe to `home/asthma_alert` MQTT topic
   - Show prominent yellow banner when alert active
   - Display: "⚠️ ASTHMA ALERT - Humidity: 55%, Temp: 28°C"
 
 ---
 
-### Milestone 2.6: Testing & Polish
+### Milestone 3.5: Testing & Polish
 
-- [ ] **T2.17**: End-to-end web app test
+- [ ] **T3.13**: End-to-end web app test
   - Start ESP32 system
   - Open web dashboard
   - Trigger sensors, verify real-time updates
   - Test control commands, verify actuators respond
   - Check RFID log filtering
 
-- [ ] **T2.18**: Add error handling
+- [ ] **T3.14**: Add error handling
   - MQTT connection lost: Show "Disconnected" banner
   - C# API query failure: Show error message
   - Retry logic for network failures
 
-- [ ] **T2.19**: Performance optimization
+- [ ] **T3.15**: Performance optimization
   - Debounce MQTT updates (avoid UI thrashing)
   - Lazy load RFID history (don't fetch all on initial load)
   - Add loading skeletons for async data
 
 ---
 
-## Phase 3: Bonus Requirements (Optional)
+## Phase 4: Bonus Requirements (Optional)
 
-### Milestone 3.1: User Authentication & Roles
+### Milestone 4.1: User Authentication & Roles
 
-- [ ] **T3.4**: Implement Supabase Auth in web app
+- [ ] **T4.1**: Implement Supabase Auth in web app
   - Add login/signup pages
   - Create users table with roles (Parent, Child)
   - Protect routes based on role
@@ -417,11 +419,11 @@
 
 ---
 
-## Phase 4: Assessment Deliverables
+## Phase 5: Assessment Deliverables
 
-### Milestone 4.1: Documentation
+### Milestone 5.1: Documentation
 
-- [ ] **T4.1**: Create ERD (Entity Relationship Diagram)
+- [ ] **T5.1**: Create ERD (Entity Relationship Diagram)
   - Tool: dbdiagram.io or draw.io
   - Show all tables, relationships, indexes
   - Export as PNG/PDF to `docs/erd.png`

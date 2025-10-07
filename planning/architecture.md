@@ -95,6 +95,72 @@ ESP32 publishes: home/status/door {"state": "open"}
 Next.js updates UI
 ```
 
+## REST API Endpoints (C# .NET)
+
+### Sensors Controller
+```
+GET  /api/sensors/current
+     → Returns latest temperature and humidity reading
+     Response: { "temperature": 24.5, "humidity": 65, "timestamp": "..." }
+
+GET  /api/sensors/history?hours=24&type=temperature
+     → Returns historical sensor readings
+     Query params: hours (default 24), type (temperature|humidity|all)
+     Response: [{ "value": 24.5, "unit": "C", "timestamp": "..." }, ...]
+```
+
+### RFID Controller
+```
+GET  /api/rfid/scans
+     → Returns all RFID scans
+     Response: [{ "cardId": "abc123", "success": true, "userName": "John", "timestamp": "..." }, ...]
+
+GET  /api/rfid/scans?status=failed
+     → Filters by success/failed
+     Query params: status (success|failed|all)
+     Response: [{ "cardId": "unknown", "success": false, "timestamp": "..." }, ...]
+```
+
+### Motion Controller
+```
+GET  /api/motion/recent?hours=1
+     → Returns motion events in last N hours (default 1)
+     Response: { "count": 15, "events": [{ "timestamp": "..." }, ...] }
+```
+
+### Gas Controller
+```
+GET  /api/gas/alerts
+     → Returns gas detection events
+     Response: [{ "sensorValue": 850, "alertStart": "...", "alertEnd": "...", "fanActivated": true }, ...]
+```
+
+### Status Controller
+```
+GET  /api/status
+     → Returns current status of all devices
+     Response: {
+       "door": "open",
+       "window": "closed",
+       "fan": "off",
+       "led": "on",
+       "lastUpdate": "..."
+     }
+```
+
+### Control Controller (Optional - Alternative to MQTT)
+```
+POST /api/control
+     Body: { "device": "door", "action": "open" }
+     → Publishes to MQTT control topic
+     Response: { "success": true, "message": "Command sent" }
+
+     Supported devices: door, window, fan, led
+     Supported actions: open, close, on, off
+```
+
+**Note**: Control commands are primarily via MQTT (Next.js → MQTT → ESP32). The Control API is optional for scenarios where MQTT isn't available.
+
 ## MQTT Topics
 
 ### ESP32 Publishes (Sensors → Cloud)
@@ -124,7 +190,7 @@ home/control/led         # LED control
 |-------|-----------|---------|
 | **Embedded** | MicroPython on ESP32 | Read sensors, control actuators, MQTT pub/sub |
 | **MQTT Broker** | HiveMQ Cloud | Message routing (ESP32 ↔ Cloud) |
-| **Backend API** | C# ASP.NET Core 8 | MQTT subscriber, data validation, REST endpoints |
+| **Backend API** | C# ASP.NET Core 9.0 | REST endpoints, query Supabase, business logic |
 | **Database** | Supabase PostgreSQL | Persistent storage |
 | **Frontend** | Next.js 15 + TypeScript | Dashboard UI, API calls, MQTT subscription |
 
@@ -186,42 +252,28 @@ IDLE (priority 0)
 4. ESP32 ← MQTT (subscribe to control commands)
 5. Test: Sensor → DB + MQTT publish working
 
-### Phase 2: C# API + Web Dashboard
-1. Setup C# API project (ASP.NET Core 8)
-2. Create GET endpoints (query Supabase for historical data)
-3. Build Next.js dashboard
-4. Next.js → C# API (fetch historical data)
-5. Next.js → MQTT (subscribe for real-time, publish for control)
-6. Test: Full loop (ESP32 → DB/MQTT → Next.js)
+### Phase 2: C# API Layer
+1. Setup C# API project (ASP.NET Core 9.0)
+2. Configure Supabase client with dependency injection
+3. Create Models mapping to database tables
+4. Build Controllers with GET endpoints (query Supabase)
+5. Add CORS for Next.js frontend
+6. Enable Swagger for API documentation
+7. Test endpoints with Postman/Swagger UI
 
-### Phase 3: Bonus Features
+### Phase 3: Web Dashboard
+1. Build Next.js dashboard with MQTT client
+2. Create API client wrapper (axios) for C# backend
+3. Next.js → C# API (fetch historical data)
+4. Next.js → MQTT (subscribe for real-time, publish for control)
+5. Test: Full loop (ESP32 → DB/MQTT → API → Next.js)
+
+### Phase 4: Bonus Features
 1. User authentication (Supabase Auth)
 2. User roles (Parent/Child) in C# API
 3. PIR arm/disarm system
 4. Advanced analytics (avg temp per day)
 
-## File Structure
+---
 
-```
-SmartHomeProject/
-├── api/                   # C# ASP.NET Core
-│   └── SmartHomeApi/
-│       ├── Controllers/
-│       ├── Services/
-│       └── Models/
-│
-├── embedded/              # ESP32 MicroPython
-│   ├── main.py
-│   ├── sensors/
-│   ├── actuators/
-│   └── network/
-│
-├── web/                   # Next.js
-│   └── app/
-│
-└── planning/              # This folder
-    ├── prd.md
-    ├── tasks.md
-    ├── architecture.md    # This file
-    └── development-notes.md
-```
+**See `planning/prd.md` for complete file structure, tech stack details, and project requirements.**
