@@ -236,11 +236,11 @@
 
 ### Milestone 2.1: C# API Setup
 
-- [ ] **T2.1**: Create C# ASP.NET Core 8 Web API project
+- [ ] **T2.1**: Create C# ASP.NET Core 9.0 Web API project
   - Create `api/` directory
   - Initialize project: `dotnet new webapi -n SmartHomeApi`
-  - Install NuGet packages: `Npgsql` (PostgreSQL client)
-  - Configure `appsettings.json` with Supabase connection string
+  - Install NuGet packages: `Supabase` (Supabase C# client)
+  - Configure `appsettings.json` with Supabase URL and API key
 
 - [ ] **T2.2**: Implement Supabase data access layer
   - File: `api/Services/SupabaseService.cs`
@@ -379,40 +379,40 @@
   - Create users table with roles (Parent, Child)
   - Protect routes based on role
 
-- [ ] **T3.5**: Role-based access control
+- [ ] **T4.2**: Role-based access control
   - Parent role: Full control (view + control actuators)
   - Child role: View-only (no control buttons)
   - C# API enforces permissions
 
 ---
 
-### Milestone 3.3: Advanced PIR Features
+### Milestone 4.2: Advanced PIR Features
 
-- [ ] **T3.6**: PIR arm/disarm system (ESP32)
+- [ ] **T4.3**: PIR arm/disarm system (ESP32)
   - Button combo: 2 clicks left, 3 clicks right, 1 click left to arm/disarm
   - When armed + motion detected: Buzzer alarm + RGB flash blue/red
   - Auto-disarm on valid RFID scan
 
-- [ ] **T3.7**: PIR web control
+- [ ] **T4.4**: PIR web control
   - Add "Arm PIR" / "Disarm PIR" button in web app
   - Publish MQTT command to ESP32
   - Display alarm status on dashboard
 
 ---
 
-### Milestone 3.4: Analytics & History
+### Milestone 4.3: Analytics & History
 
-- [ ] **T3.8**: Calculate average temperature per day
+- [ ] **T4.5**: Calculate average temperature per day
   - C# API: Query `sensor_logs`, group by date, calculate AVG
   - Endpoint: GET `/api/analytics/temperature/daily`
   - Display in web dashboard as chart (recharts library)
 
-- [ ] **T3.9**: Historical data filtering
+- [ ] **T4.6**: Historical data filtering
   - Web component: Date range picker
   - Filter temperature/humidity logs by date
   - Display results in table or chart
 
-- [ ] **T3.10**: RFID card registration
+- [ ] **T4.7**: RFID card registration
   - Button combo on ESP32: Hold both buttons + scan card to register
   - Save card ID to Supabase `authorized_cards` table
   - Web interface to associate card with user name
