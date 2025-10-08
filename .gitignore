@@ -57,6 +57,9 @@ ENV/
 *.env
 !.env.example
 
+# ESP32 configuration (contains WiFi, MQTT, Supabase credentials)
+embedded/config.py
+
 # MicroPython
 *.mpy
 
