@@ -93,11 +93,13 @@ A running diary of development decisions, important context, and session-to-sess
    - Rationale: Provides progress tracking without board clutter (GitHub shows checkbox completion %)
    - Alternative considered: Each FR as separate issue (rejected - too granular for solo project)
 
-2. **Branching Strategy:**
-   - Continue using `001-comprehensive-smart-home` for all Phase 1 embedded work
-   - Create separate branches for Phase 2 (API) and Phase 3 (Web) due to different tech stacks
-   - Rationale: Phase 1 features are tightly coupled (sensors share MQTT/DB infrastructure)
-   - Solo project doesn't need feature-branch overhead
+2. **Branching Strategy (Updated October 8, 2025):**
+   - `main` - Clean baseline, all planning and cleanup merged
+   - `phase-1-embedded-core` - ESP32 implementation (current development)
+   - `phase-2-api-layer` - C# API (future)
+   - `phase-3-web-dashboard` - Next.js frontend (future)
+   - Rationale: Phase-based branches align with development milestones and tech stacks
+   - Legacy branches (`planning`, `001-comprehensive-smart-home`) merged and can be deleted
 
 3. **Issue Closure Workflow:**
    - Use commit message keywords: `Closes #N`, `Fixes #N`, `Resolves #N`
@@ -140,6 +142,67 @@ A running diary of development decisions, important context, and session-to-sess
 4. Create `embedded/config.py` with WiFi, MQTT, and Supabase credentials
 5. Begin sensor module implementations (T1.5-T1.9)
 6. Move GitHub issue #7 (US6: Environmental Monitoring) to "In Progress" when starting DHT11 work
+
+---
+
+## Session 3 - October 8, 2025
+
+### Repository Cleanup & Phase 1 Preparation ✅
+
+**What was completed:**
+- Reorganized repository structure to match architecture.md
+- Created ESP32 deployment workflow with `/deploy` slash command
+- Updated branch strategy to phase-based development
+
+**Important Decisions Made:**
+
+1. **Repository Structure Cleanup:**
+   - Moved `src/` → `embedded/` to match file-structure.md
+   - Moved `tests/hardware/` → `embedded/tests/` (layer-based testing)
+   - Organized `Docs/` into subdirectories: reference-code/, libraries/, manuals/, tools/
+   - Removed obsolete directories: `.specify/`, `specs/001-comprehensive-smart-home/`
+   - Rationale: Clean structure before starting Phase 1, matches planned architecture
+
+2. **Dependencies & Requirements:**
+   - Updated `requirements.txt` to reflect actual desktop Python tools
+   - `mpremote==1.26.1`, `pyserial==3.5`, `platformdirs==4.4.0`
+   - Clarified: Desktop Python (venv) vs MicroPython (ESP32 libraries in Docs/)
+
+3. **ESP32 Deployment Workflow:**
+   - Created `deploy.py` script at root level
+   - Uses `mpremote` to upload `embedded/*` to ESP32
+   - Added `/deploy` slash command for easy deployment from Claude
+   - Device target: `/dev/tty.usbserial-10`
+
+4. **Branch Strategy Update:**
+   - **New approach**: Phase-based branches (`phase-1-embedded-core`, etc.)
+   - **Old approach**: Single implementation branch (`001-comprehensive-smart-home`)
+   - Rationale: Clear separation between phases, aligns with project milestones
+   - Merged legacy branches to `main` for clean baseline
+
+**Documentation Updates:**
+- `file-structure.md`: Added `embedded/tests/`, `Docs/` structure, deployment workflow
+- `requirements.txt`: Accurate desktop Python dependencies
+- `CLAUDE.md`: Updated branch strategy
+- `development-notes.md`: Documented new branching approach
+
+**Git Operations:**
+- Committed: "Reorganize repository structure for Phase 1 development"
+- Committed: "Add ESP32 deployment workflow"
+- Pushed both commits to `main` branch
+- **Current branch**: `main` (ready to create `phase-1-embedded-core`)
+
+**Current Status:**
+- Phase: Ready for Phase 1 implementation
+- Next Task: T1.2 - Create Supabase project and database schema
+- Repository: Clean, organized, documented
+
+**Next Steps:**
+1. Create `phase-1-embedded-core` branch from `main`
+2. Run `/continue` to start Phase 1 workflow
+3. Set up Supabase project with `database-schema.sql`
+4. Create `embedded/config.py` with credentials
+5. Begin sensor module implementations
 
 ---
 
