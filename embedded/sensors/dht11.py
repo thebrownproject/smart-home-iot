@@ -11,13 +11,25 @@ class DHT11Sensor:
         self.dht = dht.DHT11(machine.Pin(pin_number))
     
     def read_data(self):
-        self.dht.measure()
-        return self.dht.temperature(), self.dht.humidity()
+        try:
+            self.dht.measure()
+            return self.dht.temperature(), self.dht.humidity()
+        except OSError as e:
+            print(f"DHT11 read error: {e}")
+            return None, None
     
-    def get_temperature(self):
-        self.dht.measure()
-        return self.dht.temperature()
-    
-    def get_humidity(self):
-        self.dht.measure()
-        return self.dht.humidity()
+    def read_temperature(self):
+        try:
+            self.dht.measure()
+            return self.dht.temperature()
+        except OSError as e:
+            print(f"DHT11 read error: {e}")
+            return None
+
+    def read_humidity(self):
+        try:
+            self.dht.measure()
+            return self.dht.humidity()
+        except OSError as e:
+            print(f"DHT11 read error: {e}")
+            return None

@@ -452,3 +452,88 @@ All tasks finished:
 - Reference code: `Docs/reference-code/pj9_1_XHT11.py`
 
 ---
+
+## Session 6 - October 8, 2025 - Sensor Module Implementation
+
+**Phase**: Phase 1 - Embedded System Core
+**Milestone**: 1.2 - Sensor Module Implementation
+**Branch**: phase-1-embedded-core
+
+### Tasks Started (In Progress)
+
+- [~] **T1.6**: Implement PIR motion sensor class
+  - Implementation complete with debounce logic (500ms)
+  - Uses digital Pin 14, returns boolean
+  - Needs hardware testing to verify motion detection
+
+- [~] **T1.7**: Implement Gas sensor class
+  - Implementation complete with active LOW logic
+  - Uses Pin 23 with PULL_UP resistor
+  - Returns True when gas detected (pin reads 0)
+  - Needs hardware testing with gas sensor
+
+- [~] **T1.8**: Implement Steam/Moisture sensor class
+  - Implementation complete using ADC (analog sensor)
+  - Uses Pin 34 with 12-bit ADC, 0-3.3V range
+  - Threshold: 746 ADC value (equivalent to 0.6V from reference)
+  - Needs hardware testing with moisture simulation
+
+- [~] **T1.9**: Implement RFID reader class
+  - Implementation complete with two-step scan process
+  - Uses I2C (SCL:22, SDA:21, addr:0x28)
+  - Returns card ID as concatenated string for uniqueness
+  - Needs hardware testing with RFID cards
+
+### Decisions Made
+
+**DHT11 Sensor (reviewed existing code):**
+- Kept error handling pattern (return None on OSError)
+- No temperature validation (-20 to 60°C) - deemed scope creep, not in requirements
+- Documented that `read_data()` is more efficient than calling `read_temperature()` and `read_humidity()` separately
+
+**PIR Sensor:**
+- Added debounce logic IN sensor class (500ms threshold)
+- Alternative considered: debounce in main.py (rejected for encapsulation)
+- Used `time.ticks_diff()` for proper timer wrap-around handling
+
+**Gas Sensor:**
+- Determined NO debounce needed (sustained event, not quick trigger)
+- Active LOW logic: Pin reads 0 when gas detected (PULL_UP resistor)
+- Fan control logic stays in main.py (separation of concerns)
+
+**Steam Sensor:**
+- Changed from digital to analog (ADC) based on reference code
+- Pin 34 (ADC capable), not Pin 24
+- Threshold 746 raw ADC = 0.6V (reference code pattern)
+- Servo control stays in main.py
+
+**RFID Sensor:**
+- Two-method design: `scan_card()` reads card, `get_card_id()` extracts UID
+- String concatenation for UID (e.g., "147210521") vs sum (safer, no collisions)
+- Safety check in `get_card_id()`: verify `uid.size > 0` before extracting
+
+### Key Learning Moments
+
+**Analog vs Digital Sensors:**
+- Digital (PIR, Gas): Returns 0 or 1, simple Pin.IN
+- Analog (Steam): Returns 0-4095, needs ADC configuration
+- Formula: `voltage = adc_value / 4095.0 * 3.3`
+
+**Active HIGH vs Active LOW:**
+- Steam sensor: Active HIGH (moisture = pin reads 1)
+- Gas sensor: Active LOW with PULL_UP (gas = pin reads 0)
+
+**Separation of Concerns:**
+- Sensors read hardware, return data (pure functions)
+- Main loop handles business logic (what to do with sensor data)
+- Actuator control, MQTT publishing, database logging = main.py responsibility
+
+### Next Session
+
+- **Hardware testing required** for T1.6, T1.7, T1.8, T1.9
+- Connect ESP32 and test each sensor individually
+- Verify readings match expected behavior
+- Only mark tasks complete after successful hardware validation
+- Next: Continue Milestone 1.2 testing, or move to Milestone 1.3 (Actuators)
+
+---
