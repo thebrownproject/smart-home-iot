@@ -10,7 +10,7 @@ from wifi_config import WIFI_SSID, WIFI_PASSWORD
 # WiFi Configuration
 # NOTE: Update these credentials for your network
 # WIFI_SSID = 'CyFi'        # Replace with your WiFi name
-# WIFI_PASSWORD = 'SecurityA40'  # Replace with your WiFi password
+# WIFI_PASSWORD = 'Your WiFi password'  # Replace with your WiFi password
 
 # Connection timeout (seconds)
 CONNECTION_TIMEOUT = 30

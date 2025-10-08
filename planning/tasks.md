@@ -1,6 +1,7 @@
 # Smart Home Automation - Development Tasks
 
 ## Project Status: Phase 1 In Progress
+
 **Current Phase**: Phase 1 - Embedded System Core
 **Started**: 2025-10-07
 
@@ -11,11 +12,15 @@
 ### Milestone 1.1: Environment & Database Setup ✅ (Partially Complete)
 
 - [x] **T1.1**: Hardware validation testing
+
   - Validate sensors using reference code in `Docs/reference-code/`
   - Test DHT11, PIR, Gas, Steam, RFID modules individually
   - Document any hardware issues or pin conflicts
+  - **Started**: 2025-10-08
+  - **Completed**: 2025-10-08
 
 - [x] **T1.2**: Create Supabase project and database schema
+
   - Sign up for Supabase account (free tier)
   - Create new project: "smart-home-project"
   - Execute SQL schema from `planning/database-schema.sql`
@@ -24,11 +29,14 @@
   - **Started**: 2025-10-08
   - **Completed**: 2025-10-08
 
-- [ ] **T1.3**: Set up MQTT credentials in ESP32 config
+- [x] **T1.3**: Set up MQTT credentials in ESP32 config
+
   - Create `embedded/config.py` with MQTT broker details
   - Add WiFi credentials (SSID, password)
   - Add Supabase URL and anon key
   - Test MQTT connection using simple publish/subscribe test
+  - **Started**: 2025-10-08
+  - **Completed**: 2025-10-08
 
 - [ ] **T1.4**: Create project file structure
   - Create `embedded/` directory with subdirectories (sensors, actuators, network, display, utils)
@@ -41,23 +49,27 @@
 ### Milestone 1.2: Sensor Module Implementation
 
 - [ ] **T1.5**: Implement DHT11 sensor class **(FR6.1 - HOUSE)**
+
   - File: `embedded/sensors/dht11.py`
   - Methods: `read_temperature()`, `read_humidity()`
   - Error handling for sensor timeouts (return None on failure)
   - Test: Read values every 2 seconds for 1 minute, verify reasonable range (-20 to 60°C)
 
 - [ ] **T1.6**: Implement PIR motion sensor class **(FR2.1 - HOUSE)**
+
   - File: `embedded/sensors/pir.py`
   - Methods: `is_motion_detected()`, `read()` (returns boolean)
   - Debounce logic to prevent rapid triggers
   - Test: Wave hand in front of sensor, verify detection
 
 - [ ] **T1.7**: Implement Gas sensor class **(FR4.1 - HOUSE)**
+
   - File: `embedded/sensors/gas.py`
   - Methods: `is_gas_detected()`, `read_value()` (digital pin value)
   - Test: Trigger sensor, verify digital signal
 
 - [ ] **T1.8**: Implement Steam/Moisture sensor class **(FR3.1 - HOUSE)**
+
   - File: `embedded/sensors/steam.py`
   - Methods: `is_moisture_detected()`, `read()`
   - Test: Simulate steam/water droplet detection
@@ -73,22 +85,26 @@
 ### Milestone 1.3: Actuator Module Implementation
 
 - [x] **T1.10**: Implement LED control class (Started)
+
   - File: `embedded/actuators/led.py`
   - Methods: `on()`, `off()`, `toggle()`
   - Test: Turn LED on/off programmatically
 
 - [ ] **T1.11**: Implement RGB LED (SK6812) class
+
   - File: `embedded/actuators/rgb.py`
   - Methods: `set_color(r, g, b)`, `flash(color, times)`, `off()`
   - Support orange, blue, red colors for requirements
   - Test: Flash RGB in different colors
 
 - [ ] **T1.12**: Implement Servo motor class
+
   - File: `embedded/actuators/servo.py`
   - Methods: `open()`, `close()`, `set_angle(degrees)`
   - Test: Open/close door and window servos
 
 - [ ] **T1.13**: Implement Fan control class
+
   - File: `embedded/actuators/fan.py`
   - Methods: `on()`, `off()`, `is_running()`
   - Test: Turn fan on/off, verify operation
@@ -103,12 +119,14 @@
 ### Milestone 1.4: Display & Network Integration
 
 - [ ] **T1.15**: Implement OLED display class
+
   - File: `embedded/display/oled.py`
   - Use SSD1306 library for I2C communication
   - Methods: `show_text(line1, line2)`, `clear()`, `show_temp_humidity(temp, humidity)`
   - Test: Display "Hello World" on OLED
 
 - [ ] **T1.16**: Implement WiFi connection manager
+
   - File: `embedded/network/wifi_manager.py`
   - Auto-connect on boot using credentials from config.py
   - Retry logic with exponential backoff
@@ -116,6 +134,7 @@
   - Test: Connect to WiFi, print IP address
 
 - [ ] **T1.17**: Implement MQTT client wrapper
+
   - File: `embedded/network/mqtt_client.py`
   - Use `umqtt.simple` or `umqtt.robust` library
   - Methods: `connect()`, `publish(topic, payload)`, `subscribe(topic, callback)`, `check_messages()`
@@ -134,24 +153,28 @@
 ### Milestone 1.5: Core Automation Logic (US1-US5)
 
 - [ ] **T1.19**: Implement time-based LED control **(FR1.1, FR1.2, FR1.3 - HOUSE)**
+
   - Add NTP time sync in `embedded/utils/time_sync.py`
   - Main loop: Check if time between 8pm-7am
   - Turn LED on during nighttime hours, off during day
   - Test: Set ESP32 time manually, verify LED behavior
 
 - [ ] **T1.20**: Implement PIR motion response **(FR2.1, FR2.2, FR2.3 - HOUSE/DATABASE)**
+
   - Main loop: Poll PIR sensor
   - On motion: Set RGB to orange, log to `motion_events` table
   - Publish MQTT event to `home/motion`
   - Test: Trigger motion, verify RGB and MQTT message
 
 - [ ] **T1.21**: Implement steam detection & window control **(FR3.1, FR3.2, FR3.3 - HOUSE)**
+
   - Main loop: Poll steam sensor
   - On moisture: Close window servo, flash RGB blue
   - Publish MQTT event to `home/steam`
   - Test: Simulate steam, verify window closes
 
 - [ ] **T1.22**: Implement gas detection & emergency response **(FR4.1, FR4.2, FR4.3, FR4.4 - HOUSE/DATABASE)**
+
   - Main loop: Poll gas sensor
   - On gas detected: Turn on fan, set RGB to solid red
   - Log alert with start time to `gas_alerts` table
@@ -172,12 +195,14 @@
 ### Milestone 1.6: Environmental Monitoring (US6, US7)
 
 - [ ] **T1.24**: Implement continuous temperature/humidity display **(FR6.1, FR6.2, FR6.3 - HOUSE/WEB)**
+
   - Main loop: Read DHT11 every 2 seconds
   - Display current values on OLED (e.g., "Temp: 24.5C\nHumid: 60%")
   - Publish to MQTT topics `home/temperature` and `home/humidity`
   - Test: Verify OLED updates and MQTT messages
 
 - [ ] **T1.25**: Implement 30-minute sensor logging **(FR6.4 - DATABASE)**
+
   - Use timer to trigger database insert every 30 minutes
   - Insert temperature and humidity to `sensor_logs` table
   - Test: Wait 30 mins, verify database entry
@@ -193,11 +218,13 @@
 ### Milestone 1.7: Manual Controls & State Management
 
 - [ ] **T1.27**: Implement button controls
+
   - Gas alarm disable button: Turn off fan and buzzer when pressed
   - PIR toggle button: Enable/disable motion detection
   - Test: Press buttons, verify actuator responses
 
 - [ ] **T1.28**: Implement MQTT control subscriptions **(FR9.1, FR9.2, FR9.3, FR9.4 - WEB/HOUSE)**
+
   - Subscribe to `home/control/door`, `home/control/window`, `home/control/fan`
   - Parse JSON payload and execute commands
   - Example: `{"action": "open"}` → open door servo
@@ -217,6 +244,7 @@
 ### Milestone 1.8: Testing & Validation
 
 - [ ] **T1.30**: End-to-end hardware test
+
   - Trigger all sensors sequentially
   - Verify correct actuator responses
   - Check MQTT messages in HiveMQ console
@@ -236,17 +264,20 @@
 ### Milestone 2.1: C# API Setup
 
 - [ ] **T2.1**: Create C# ASP.NET Core 9.0 Web API project
+
   - Create `api/` directory
   - Initialize project: `dotnet new webapi -n SmartHomeApi`
   - Install NuGet packages: `Supabase` (Supabase C# client)
   - Configure `appsettings.json` with Supabase URL and API key
 
 - [ ] **T2.2**: Implement Supabase data access layer
+
   - File: `api/Services/SupabaseService.cs`
   - Create methods to query sensor_logs, rfid_scans, motion_events, gas_alerts
   - Test database connection
 
 - [ ] **T2.3**: Create REST API endpoints (GET only)
+
   - File: `api/Controllers/SensorsController.cs`
   - `GET /api/sensors/temperature?hours=24` - Historical temperature
   - `GET /api/sensors/humidity?hours=24` - Historical humidity
@@ -266,12 +297,14 @@
 ### Milestone 3.1: Next.js Project Setup
 
 - [ ] **T3.1**: Initialize Next.js project
+
   - Create `web/` directory
   - Run `npx create-next-app@latest` with TypeScript, Tailwind, App Router
   - Install dependencies: `mqtt`
   - Configure environment variables in `.env.local`
 
 - [ ] **T3.2**: Set up C# API client
+
   - File: `web/lib/api.ts`
   - Create fetch wrapper for C# API endpoints
   - Test: Fetch sensor data from C# API
@@ -287,23 +320,27 @@
 ### Milestone 3.2: Dashboard UI Components (US8)
 
 - [ ] **T3.4**: Create sensor display card component **(FR8.1, FR8.2 - WEB)**
+
   - File: `web/components/SensorCard.tsx`
   - Display current temperature, humidity (from MQTT via FR6.3)
   - Real-time updates when new values arrive
   - Show last update timestamp
 
 - [ ] **T3.5**: Create motion detection display **(FR8.1 - WEB)**
+
   - Query C# API for motion events in last hour
   - Display count: "PIR Detections (Last Hour): 12"
   - Auto-refresh every 5 minutes
 
 - [ ] **T3.6**: Create gas alert indicator **(FR8.2 - WEB)**
+
   - File: `web/components/GasAlert.tsx`
   - Show red banner when gas detected (via MQTT)
   - Display "GAS DETECTED - FAN ACTIVE"
   - Hide when alert clears
 
 - [ ] **T3.7**: Create RFID scan history table **(FR8.3 - WEB)**
+
   - File: `web/components/RFIDLog.tsx`
   - Fetch from C# API (`GET /api/rfid/scans`)
   - Display: Card ID, Result (granted/denied), Timestamp, User
@@ -320,6 +357,7 @@
 ### Milestone 3.3: Control Panel (US9)
 
 - [ ] **T3.9**: Create actuator control panel
+
   - File: `web/components/ControlPanel.tsx`
   - Buttons: "Open Door", "Close Door", "Open Window", "Close Window"
   - Toggle for Fan: "Turn On" / "Turn Off"
@@ -335,6 +373,7 @@
 ### Milestone 3.4: Main Dashboard Page
 
 - [ ] **T3.11**: Build main dashboard layout
+
   - File: `web/app/page.tsx`
   - Grid layout: Sensor cards (top), Status indicators (middle), Control panel (bottom)
   - RFID log table on side panel
@@ -350,6 +389,7 @@
 ### Milestone 3.5: Testing & Polish
 
 - [ ] **T3.13**: End-to-end web app test
+
   - Start ESP32 system
   - Open web dashboard
   - Trigger sensors, verify real-time updates
@@ -357,6 +397,7 @@
   - Check RFID log filtering
 
 - [ ] **T3.14**: Add error handling
+
   - MQTT connection lost: Show "Disconnected" banner
   - C# API query failure: Show error message
   - Retry logic for network failures
@@ -373,6 +414,7 @@
 ### Milestone 4.1: User Authentication & Roles
 
 - [ ] **T4.1**: Implement Supabase Auth in web app
+
   - Add login/signup pages
   - Create users table with roles (Parent, Child)
   - Protect routes based on role
@@ -387,6 +429,7 @@
 ### Milestone 4.2: Advanced PIR Features
 
 - [ ] **T4.3**: PIR arm/disarm system (ESP32)
+
   - Button combo: 2 clicks left, 3 clicks right, 1 click left to arm/disarm
   - When armed + motion detected: Buzzer alarm + RGB flash blue/red
   - Auto-disarm on valid RFID scan
@@ -401,11 +444,13 @@
 ### Milestone 4.3: Analytics & History
 
 - [ ] **T4.5**: Calculate average temperature per day
+
   - C# API: Query `sensor_logs`, group by date, calculate AVG
   - Endpoint: GET `/api/analytics/temperature/daily`
   - Display in web dashboard as chart (recharts library)
 
 - [ ] **T4.6**: Historical data filtering
+
   - Web component: Date range picker
   - Filter temperature/humidity logs by date
   - Display results in table or chart
@@ -422,16 +467,19 @@
 ### Milestone 5.1: Documentation
 
 - [ ] **T5.1**: Create ERD (Entity Relationship Diagram)
+
   - Tool: dbdiagram.io or draw.io
   - Show all tables, relationships, indexes
   - Export as PNG/PDF to `docs/erd.png`
 
 - [ ] **T4.2**: Create web app wireframes
+
   - Tool: Figma or Excalidraw
   - Wireframes for: Dashboard, RFID Log, Control Panel
   - Export to `docs/wireframes/`
 
 - [ ] **T4.3**: Write README.md
+
   - Project overview
   - Hardware requirements and setup
   - Software installation (ESP32 + Web app)
@@ -439,6 +487,7 @@
   - How to run the system
 
 - [ ] **T4.4**: Document MQTT topics
+
   - File: `docs/mqtt-topics.md`
   - List all topics with payload examples
   - Explain pub/sub patterns
@@ -453,6 +502,7 @@
 ### Milestone 4.2: Project Management
 
 - [ ] **T4.6**: Set up GitHub Projects board
+
   - Create project: "Smart Home Automation"
   - Convert user stories to GitHub Issues
   - Create columns: Backlog, In Progress, Done
@@ -469,6 +519,7 @@
 ### Milestone 4.3: Learning Reflection
 
 - [ ] **T4.8**: Write development process reflection
+
   - File: `docs/learning-reflection.md`
   - Sections:
     1. Challenges encountered and solutions
@@ -488,6 +539,7 @@
 ### Milestone 4.4: Deployment & CI/CD
 
 - [ ] **T4.10**: Set up GitHub Actions CI/CD
+
   - Create `.github/workflows/test.yml`
   - Run linting on commits (optional for MicroPython)
   - Auto-deploy web app to Vercel on merge to main
@@ -502,11 +554,13 @@
 ## Notes for Development Sessions
 
 ### Current Task Tracking
+
 - **Active Milestone**: 1.1 - Environment & Database Setup
 - **Next Task**: T1.2 - Create Supabase project and database schema
 - **Blockers**: None currently
 
 ### Development Principles
+
 1. **Test each module independently** before integration
 2. **Commit after each completed task** with meaningful message
 3. **Document hardware issues** immediately in `development-notes.md`
@@ -514,6 +568,7 @@
 5. **Ask for help** on blockers (hardware, network, debugging)
 
 ### Session Workflow
+
 1. Read `tasks.md` to find next pending task
 2. Mark task as in progress (change `[ ]` to `[~]`)
 3. Implement and test the task
@@ -522,6 +577,7 @@
 6. Move to next task
 
 ### Quick Reference
+
 - **ESP32 deployment**: Use MicroPico extension in VS Code
 - **MQTT testing**: HiveMQ web console for pub/sub
 - **Database check**: Supabase dashboard SQL editor
@@ -539,6 +595,7 @@
 **Total**: 67 tasks
 
 **Estimated Timeline**:
+
 - Phase 1: 3-4 weeks (core development)
 - Phase 2: 1-2 weeks (web dashboard)
 - Phase 3: 2-3 weeks (bonus features - optional)

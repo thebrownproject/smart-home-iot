@@ -298,3 +298,107 @@ SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIs
 - Create `embedded/config.py` and `embedded/config.example.py`
 
 ---
+
+## Session 5 - October 8, 2025 - MQTT Configuration & Testing ✅
+
+**Phase**: Phase 1 - Embedded System Core
+**Milestone**: 1.1 - Environment & Database Setup
+**Branch**: phase-1-embedded-core
+
+### Tasks Completed
+
+- [x] **T1.3**: Set up MQTT credentials in ESP32 config
+  - Created `embedded/config.example.py` template (gitignored credentials pattern)
+  - Created `embedded/config.py` with actual WiFi, MQTT, and Supabase credentials
+  - Added `config.py` to `.gitignore` for security
+  - Created `embedded/tests/test_mqtt.py` for connection validation
+  - Successfully tested MQTT pub/sub loop (WiFi + HiveMQ Cloud working)
+
+### Decisions Made
+
+1. **Config File Pattern (Security Best Practice):**
+   - Use `config.py` instead of `.env` (MicroPython has no dotenv library)
+   - Create `config.example.py` as template (committed to Git)
+   - Actual `config.py` is gitignored (never committed)
+   - Rationale: Same pattern as .env files in web development, demonstrates security awareness for portfolio
+
+2. **YAGNI Principle Added to CLAUDE.md:**
+   - Only implement features explicitly required by current task
+   - Don't add "nice to have" features (debug flags, device IDs, intervals) until needed
+   - Keep code simple and focused for student project
+   - Rationale: Prevents feature bloat, easier to understand/maintain
+
+3. **ESP32 Filesystem Cleanup:**
+   - Removed old project files (`src/`, `boot.py`, `wifi_config.py`, test files)
+   - Kept only `Lib/` directory (MQTT, DHT11, RFID, SSL libraries)
+   - Deployed clean project structure from `embedded/` directory
+   - Rationale: Clean environment = predictable behavior, no conflicts
+
+4. **Deploy Script vs Slash Command:**
+   - Deleted `deploy.py` Python script (unreliable `cp -r` with wildcards)
+   - Updated `/deploy` slash command with manual file-by-file copying
+   - Slash command includes venv activation (fixes mpremote not found error)
+   - Complete sync of all `embedded/` directories (sensors, actuators, display, network, utils, tests)
+   - Rationale: More reliable, visible, and flexible than automated script
+
+5. **MQTT Test Strategy:**
+   - Test publishes to `smarthome/test` topic, then subscribes to same topic
+   - Receiving own published message confirms bidirectional communication works
+   - Proves: WiFi ✓, MQTT broker ✓, SSL/TLS ✓, Publish ✓, Subscribe ✓
+   - Foundation for FR6.3 (MQTT publishing), FR8.x (monitoring), FR9.x (control)
+
+### Issues Encountered
+
+1. **ESP32 Device Path Changes:**
+   - Device path changed from `/dev/tty.usbserial-10` to `/dev/tty.usbserial-210` after reconnect
+   - Solution: Updated deploy.py and slash command, added reminder to check `ls /dev/tty.usb*`
+
+2. **mpremote Not Found:**
+   - Initial deploy failed because mpremote wasn't in PATH
+   - Solution: Activate venv before running commands (mpremote installed in venv)
+   - Updated `/deploy` slash command to include venv activation
+
+3. **Deploy Script Hanging:**
+   - `mpremote cp -r embedded/* :` command hung/failed silently
+   - Root cause: Wildcard path resolution unreliable with nested directories
+   - Solution: Manual file-by-file copying (`cp embedded/boot.py :boot.py`, etc.)
+
+### Test Results
+
+**MQTT Connection Test (test_mqtt.py):**
+```
+✅ WiFi connected: 10.52.126.8
+✅ MQTT client connected to HiveMQ Cloud (301d2478bf674954a8b8e5ad05732a73.s1.eu.hivemq.cloud:8883)
+✅ Published: "Hello from ESP32 - MQTT test successful!"
+✅ Received message back on smarthome/test topic
+```
+
+All credentials working:
+- WiFi: CyFi / SecurityA40
+- MQTT: HiveMQ broker with SSL/TLS (thebrownproject user)
+- Supabase: https://uehfuypnccdqvdssknqq.supabase.co (anon key configured)
+
+### Files Created/Modified
+
+**Created:**
+- `embedded/config.example.py` - Credential template
+- `embedded/config.py` - Actual credentials (gitignored)
+- `embedded/tests/test_mqtt.py` - MQTT connection test
+- `.claude/commands/deploy.md` - Updated deployment process
+
+**Modified:**
+- `.gitignore` - Added `embedded/config.py`
+- `CLAUDE.md` - Added YAGNI principle section
+- `planning/tasks.md` - Marked T1.3 complete
+
+**Deleted:**
+- `deploy.py` - Replaced with slash command
+
+### Next Session
+
+- Continue with T1.4: Create project file structure
+- Note: Most structure already exists (sensors/, actuators/, display/, network/, utils/, tests/)
+- May just need to verify placeholder files and boot.py WiFi initialization
+- Then move to Milestone 1.2: Sensor Module Implementation
+
+---
