@@ -23,9 +23,14 @@ SmartHomeProject/
 │   ├── network/
 │   │   ├── mqtt_client.py     # MQTT pub/sub handler
 │   │   └── supabase.py        # Supabase HTTP client
-│   └── utils/
-│       ├── time_sync.py       # NTP time synchronization
-│       └── logger.py          # Debug logging utility
+│   ├── utils/
+│   │   ├── time_sync.py       # NTP time synchronization
+│   │   └── logger.py          # Debug logging utility
+│   └── tests/                  # ESP32 hardware validation tests
+│       ├── run_all_tests.py   # Master test suite orchestrator
+│       ├── test_connections.py # Hardware component tests
+│       ├── test_wifi.py       # WiFi connectivity tests
+│       └── README.md          # Test suite documentation
 │
 ├── api/                        # C# .NET Web API (Phase 2)
 │   ├── SmartHomeApi.sln       # Solution file
@@ -82,6 +87,27 @@ SmartHomeProject/
 ├── project-brief/
 │   └── smart_home_requirements.md  # Teacher requirements
 │
+├── Docs/                       # Teacher-provided reference materials
+│   ├── reference-code/         # Example MicroPython implementations
+│   │   ├── pj1_1_led.py       # LED control example
+│   │   ├── pj3_1_PIR.py       # PIR sensor example
+│   │   ├── pj9_1_XHT11.py     # DHT11 sensor example
+│   │   ├── pj10_rc522_RFID/   # RFID reader example
+│   │   └── ...                # Other hardware examples
+│   ├── libraries/              # Pre-compiled MicroPython libraries (.mpy)
+│   │   ├── dht.mpy            # DHT11/22 sensor library
+│   │   ├── ssl.mpy            # SSL/TLS support
+│   │   └── umqtt/             # MQTT client library
+│   ├── manuals/                # PDF documentation
+│   │   ├── KS5009-Python.pdf  # Hardware kit manual
+│   │   └── index.pdf          # Component reference
+│   └── tools/                  # Development tools
+│       ├── firmware/           # ESP32 MicroPython firmware
+│       ├── Thonny download.txt # IDE download link
+│       └── MacOS/Windows/      # Platform-specific installers
+│
+├── venv/                       # Python virtual environment (desktop tools)
+├── requirements.txt            # Desktop Python dependencies (mpremote, pyserial)
 ├── development-notes.md        # Session log
 └── README.md                   # Setup instructions
 ```
@@ -151,6 +177,29 @@ SmartHomeProject/
 - `hardware-pinout.md` - ESP32 GPIO pin assignments
 - `mqtt-topics.md` - MQTT topic structure
 - `database-schema.md` - Database ERD and table descriptions
+
+### `/Docs` - Teacher-Provided Reference Materials
+
+**Purpose**: Hardware kit documentation and example code from KS5009 kit
+
+**Subdirectories**:
+- `reference-code/` - Example MicroPython implementations for each sensor/actuator
+- `libraries/` - Pre-compiled MicroPython libraries (.mpy files) for ESP32
+- `manuals/` - PDF documentation for hardware kit and components
+- `tools/` - Development tools (Thonny IDE installers, ESP32 firmware)
+
+**Usage**: Reference when implementing sensors/actuators in `embedded/` directory
+
+### `/embedded/tests` - ESP32 Hardware Validation
+
+**Purpose**: Validate hardware connections before software implementation
+
+**Key Files**:
+- `run_all_tests.py` - Master test orchestrator with comprehensive reporting
+- `test_connections.py` - Tests all GPIO pins, I2C devices, sensors, actuators
+- `test_wifi.py` - Tests WiFi connectivity and network recovery
+
+**Usage**: Run on ESP32 to verify all hardware components are wired correctly
 
 ## Configuration Files
 

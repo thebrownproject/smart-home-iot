@@ -1,24 +1,13 @@
-# MicroPython Dependencies for ESP32
-# Note: These are reference libraries - actual installation handled via Thonny IDE
+# Desktop Python tools for ESP32 development & deployment
+# Install with: pip install -r requirements.txt
 
-# Core MicroPython Libraries (built-in)
-# - machine: Hardware control (GPIO, I2C, PWM, etc.)
-# - network: WiFi connectivity
-# - time: Timing and delays
-# - gc: Garbage collection for memory management
+mpremote==1.26.1      # MicroPython remote control & file upload to ESP32
+pyserial==3.5         # Serial communication with ESP32
+platformdirs==4.4.0   # Cross-platform path handling (dependency of mpremote)
 
-# External Libraries (install via Thonny Package Manager)
-# - umqtt.simple: MQTT client for IoT communication
-# - urequests: HTTP requests for Supabase API
-# - micropython-lib: Additional utilities
-
-# Hardware-Specific Libraries
-# - dht: DHT11/DHT22 temperature/humidity sensor
-# - ssd1306: OLED display driver
-# - mfrc522: RFID reader library
-# - neopixel: RGB LED control (SK6812/WS2812)
-
-# Development Dependencies
-# - Thonny IDE: Primary development environment
-# - ampy: Alternative file transfer tool
-# - esptool: ESP32 firmware management
+# Note: MicroPython libraries for ESP32 are in Docs/esp32lib/ and installed via Thonny IDE
+# - umqtt (MQTT client)
+# - dht (Temperature/humidity sensor)
+# - neopixel (RGB LED control)
+# - ssd1306 (OLED display)
+# - mfrc522 (RFID reader)
