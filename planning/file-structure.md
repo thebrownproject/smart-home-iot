@@ -108,6 +108,14 @@ SmartHomeProject/
 │
 ├── venv/                       # Python virtual environment (desktop tools)
 ├── requirements.txt            # Desktop Python dependencies (mpremote, pyserial)
+├── deploy.py                   # ESP32 deployment script (uploads embedded/ to device)
+├── .claude/                    # Claude Code configuration
+│   └── commands/
+│       ├── continue.md         # /continue - Resume development workflow
+│       ├── deploy.md           # /deploy - Deploy to ESP32
+│       ├── plan.md             # /plan - Execute planning workflow
+│       ├── specify.md          # /specify - Create feature specification
+│       └── tasks.md            # /tasks - Generate task breakdown
 ├── development-notes.md        # Session log
 └── README.md                   # Setup instructions
 ```
@@ -216,7 +224,31 @@ SmartHomeProject/
 2. **Check file structure** - Identify which layer to modify (HOUSE/API/WEB)
 3. **Implement feature** - Follow modular structure (one class per sensor/actuator)
 4. **Test incrementally** - Don't wait until all features are complete
-5. **Commit with FR reference** - Link code changes to functional requirements
+5. **Deploy to ESP32** - Run `/deploy` or `python deploy.py` to upload code
+6. **Commit with FR reference** - Link code changes to functional requirements
+
+## ESP32 Deployment
+
+**Script**: `deploy.py` (root level)
+**Slash command**: `/deploy`
+
+Uploads `embedded/` directory to ESP32 via `mpremote`:
+```bash
+# Method 1: Slash command (recommended)
+/deploy
+
+# Method 2: Direct execution
+python deploy.py
+```
+
+After deployment, the ESP32 will run:
+1. `boot.py` - WiFi setup, runs on startup
+2. `main.py` - Main application loop
+
+**View ESP32 output**:
+```bash
+mpremote connect /dev/tty.usbserial-10 repl
+```
 
 ## Related Documentation
 
