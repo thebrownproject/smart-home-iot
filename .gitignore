@@ -52,6 +52,11 @@ ENV/
 .venv/
 .env/
 
+# Environment variables and secrets
+.env
+*.env
+!.env.example
+
 # MicroPython
 *.mpy
 
