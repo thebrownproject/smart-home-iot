@@ -46,11 +46,13 @@ SmartHomeProject/
 │   │   │   ├── StatusController.cs    # GET door/window/fan status
 │   │   │   └── ControlController.cs   # POST actuator commands
 │   │   ├── Models/
+│   │   │   ├── DeviceModel.cs         # Maps to devices table
 │   │   │   ├── SensorReadingModel.cs  # Maps to sensor_logs table
 │   │   │   ├── RfidScanModel.cs       # Maps to rfid_scans table
 │   │   │   ├── MotionEventModel.cs    # Maps to motion_events table
 │   │   │   ├── GasAlertModel.cs       # Maps to gas_alerts table
-│   │   │   └── DeviceStatusModel.cs   # Maps to device_status table
+│   │   │   ├── UserModel.cs           # Maps to users table (Phase 4)
+│   │   │   └── AuthorisedCardModel.cs # Maps to authorised_cards table (Phase 4)
 │   │   └── Contracts/
 │   │       ├── ControlRequest.cs      # {"device": "door", "action": "open"}
 │   │       └── FilterRequest.cs       # Query params for filtering

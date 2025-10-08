@@ -11,16 +11,18 @@
 ### Milestone 1.1: Environment & Database Setup ✅ (Partially Complete)
 
 - [x] **T1.1**: Hardware validation testing
-  - Validate sensors using reference code in `Docs/Python/microPython Code/`
+  - Validate sensors using reference code in `Docs/reference-code/`
   - Test DHT11, PIR, Gas, Steam, RFID modules individually
   - Document any hardware issues or pin conflicts
 
-- [ ] **T1.2**: Create Supabase project and database schema
+- [x] **T1.2**: Create Supabase project and database schema
   - Sign up for Supabase account (free tier)
-  - Create new project: "smart-home-iot"
+  - Create new project: "smart-home-project"
   - Execute SQL schema from `planning/database-schema.sql`
   - Create indexes for timestamp-based queries
   - Test connection with Supabase API key
+  - **Started**: 2025-10-08
+  - **Completed**: 2025-10-08
 
 - [ ] **T1.3**: Set up MQTT credentials in ESP32 config
   - Create `embedded/config.py` with MQTT broker details
@@ -62,7 +64,7 @@
 
 - [ ] **T1.9**: Implement RFID reader class **(FR5.1 - HOUSE)**
   - File: `embedded/sensors/rfid.py`
-  - Use MFRC522 library from `Docs/Python/microPython Code/pj10_rc522_RFID/`
+  - Use MFRC522 library from `Docs/reference-code/pj10_rc522_RFID/`
   - Methods: `scan_card()`, `get_card_id()`
   - Test: Scan known RFID card, print card ID
 
@@ -157,7 +159,7 @@
   - Test: Trigger gas sensor, verify fan activation
 
 - [ ] **T1.23**: Implement RFID access control **(FR5.1-FR5.5 - HOUSE/DATABASE)**
-  - Create `embedded/utils/rfid_database.py` with authorized card list
+  - Create `embedded/utils/rfid_database.py` with authorised card list
   - Main loop: Scan for RFID cards
   - Unknown card: Flash RGB red + buzzer (FR5.2)
   - Known card: Open door servo, show "ACCESS GRANTED" on OLED (FR5.3, FR5.5)
@@ -410,7 +412,7 @@
 
 - [ ] **T4.7**: RFID card registration
   - Button combo on ESP32: Hold both buttons + scan card to register
-  - Save card ID to Supabase `authorized_cards` table
+  - Save card ID to Supabase `authorised_cards` table
   - Web interface to associate card with user name
 
 ---
