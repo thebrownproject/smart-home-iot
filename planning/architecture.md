@@ -184,31 +184,8 @@ home/control/fan         # Turn on/off fan
 home/control/led         # LED control
 ```
 
-## Tech Stack Summary
-
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Embedded** | MicroPython on ESP32 | Read sensors, control actuators, MQTT pub/sub |
-| **MQTT Broker** | HiveMQ Cloud | Message routing (ESP32 ↔ Cloud) |
-| **Backend API** | C# ASP.NET Core 9.0 | REST endpoints, query Supabase, business logic |
-| **Database** | Supabase PostgreSQL | Persistent storage |
-| **Frontend** | Next.js 15 + TypeScript | Dashboard UI, API calls, MQTT subscription |
-
-## Database Schema (Simple)
-
-```sql
--- Sensor readings
-sensor_logs (id, sensor_type, value, unit, timestamp)
-
--- RFID access
-rfid_scans (id, card_id, access_result, timestamp, user_name)
-
--- Motion events
-motion_events (id, detected, timestamp)
-
--- Gas alerts
-gas_alerts (id, sensor_value, alert_start, alert_end, fan_activated)
-```
+**Tech Stack**: See `planning/prd.md` for complete technology details
+**Database Schema**: See `planning/database-schema.sql` for full table definitions
 
 ## Key Decisions
 
@@ -276,4 +253,9 @@ IDLE (priority 0)
 
 ---
 
-**See `planning/prd.md` for complete file structure, tech stack details, and project requirements.**
+## Related Documentation
+
+- **Functional requirements**: `planning/prd.md`
+- **File structure**: `planning/file-structure.md`
+- **Database schema**: `planning/database-schema.sql`
+- **Environment setup**: `planning/environment-setup.md`

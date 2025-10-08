@@ -18,7 +18,7 @@
 - [ ] **T1.2**: Create Supabase project and database schema
   - Sign up for Supabase account (free tier)
   - Create new project: "smart-home-iot"
-  - Execute SQL schema from `prd.md` (sensor_logs, rfid_scans, motion_events, gas_alerts)
+  - Execute SQL schema from `planning/database-schema.sql`
   - Create indexes for timestamp-based queries
   - Test connection with Supabase API key
 
@@ -38,30 +38,29 @@
 
 ### Milestone 1.2: Sensor Module Implementation
 
-- [ ] **T1.5**: Implement DHT11 sensor class
+- [ ] **T1.5**: Implement DHT11 sensor class **(FR6.1 - HOUSE)**
   - File: `embedded/sensors/dht11.py`
   - Methods: `read_temperature()`, `read_humidity()`
-  - Error handling for sensor timeouts
-  - Return None on failure (don't crash)
-  - Test: Read values every 2 seconds for 1 minute
+  - Error handling for sensor timeouts (return None on failure)
+  - Test: Read values every 2 seconds for 1 minute, verify reasonable range (-20 to 60°C)
 
-- [ ] **T1.6**: Implement PIR motion sensor class
+- [ ] **T1.6**: Implement PIR motion sensor class **(FR2.1 - HOUSE)**
   - File: `embedded/sensors/pir.py`
   - Methods: `is_motion_detected()`, `read()` (returns boolean)
   - Debounce logic to prevent rapid triggers
   - Test: Wave hand in front of sensor, verify detection
 
-- [ ] **T1.7**: Implement Gas sensor class
+- [ ] **T1.7**: Implement Gas sensor class **(FR4.1 - HOUSE)**
   - File: `embedded/sensors/gas.py`
   - Methods: `is_gas_detected()`, `read_value()` (digital pin value)
   - Test: Trigger sensor, verify digital signal
 
-- [ ] **T1.8**: Implement Steam/Moisture sensor class
+- [ ] **T1.8**: Implement Steam/Moisture sensor class **(FR3.1 - HOUSE)**
   - File: `embedded/sensors/steam.py`
   - Methods: `is_moisture_detected()`, `read()`
   - Test: Simulate steam/water droplet detection
 
-- [ ] **T1.9**: Implement RFID reader class
+- [ ] **T1.9**: Implement RFID reader class **(FR5.1 - HOUSE)**
   - File: `embedded/sensors/rfid.py`
   - Use MFRC522 library from `Docs/Python/microPython Code/pj10_rc522_RFID/`
   - Methods: `scan_card()`, `get_card_id()`
@@ -132,38 +131,37 @@
 
 ### Milestone 1.5: Core Automation Logic (US1-US5)
 
-- [ ] **T1.19**: Implement time-based LED control (US1)
+- [ ] **T1.19**: Implement time-based LED control **(FR1.1, FR1.2, FR1.3 - HOUSE)**
   - Add NTP time sync in `embedded/utils/time_sync.py`
   - Main loop: Check if time between 8pm-7am
   - Turn LED on during nighttime hours, off during day
   - Test: Set ESP32 time manually, verify LED behavior
 
-- [ ] **T1.20**: Implement PIR motion response (US2)
+- [ ] **T1.20**: Implement PIR motion response **(FR2.1, FR2.2, FR2.3 - HOUSE/DATABASE)**
   - Main loop: Poll PIR sensor
-  - On motion: Set RGB to orange, log to database
+  - On motion: Set RGB to orange, log to `motion_events` table
   - Publish MQTT event to `home/motion`
   - Test: Trigger motion, verify RGB and MQTT message
 
-- [ ] **T1.21**: Implement steam detection & window control (US3)
+- [ ] **T1.21**: Implement steam detection & window control **(FR3.1, FR3.2, FR3.3 - HOUSE)**
   - Main loop: Poll steam sensor
   - On moisture: Close window servo, flash RGB blue
-  - Log event to database
   - Publish MQTT event to `home/steam`
   - Test: Simulate steam, verify window closes
 
-- [ ] **T1.22**: Implement gas detection & emergency response (US4)
+- [ ] **T1.22**: Implement gas detection & emergency response **(FR4.1, FR4.2, FR4.3, FR4.4 - HOUSE/DATABASE)**
   - Main loop: Poll gas sensor
   - On gas detected: Turn on fan, set RGB to solid red
   - Log alert with start time to `gas_alerts` table
   - Fan runs until sensor clears, then log end time
   - Test: Trigger gas sensor, verify fan activation
 
-- [ ] **T1.23**: Implement RFID access control (US5)
+- [ ] **T1.23**: Implement RFID access control **(FR5.1-FR5.5 - HOUSE/DATABASE)**
   - Create `embedded/utils/rfid_database.py` with authorized card list
   - Main loop: Scan for RFID cards
-  - Unknown card: Flash RGB red + buzzer
-  - Known card: Open door servo, show "ACCESS GRANTED" on OLED
-  - Log all scans to `rfid_scans` table
+  - Unknown card: Flash RGB red + buzzer (FR5.2)
+  - Known card: Open door servo, show "ACCESS GRANTED" on OLED (FR5.3, FR5.5)
+  - Log all scans to `rfid_scans` table (FR5.4)
   - Publish MQTT event to `home/rfid`
   - Test: Scan known/unknown cards, verify behavior
 
@@ -171,22 +169,21 @@
 
 ### Milestone 1.6: Environmental Monitoring (US6, US7)
 
-- [ ] **T1.24**: Implement continuous temperature/humidity display (US6)
+- [ ] **T1.24**: Implement continuous temperature/humidity display **(FR6.1, FR6.2, FR6.3 - HOUSE/WEB)**
   - Main loop: Read DHT11 every 2 seconds
   - Display current values on OLED (e.g., "Temp: 24.5C\nHumid: 60%")
   - Publish to MQTT topics `home/temperature` and `home/humidity`
   - Test: Verify OLED updates and MQTT messages
 
-- [ ] **T1.25**: Implement 30-minute sensor logging
+- [ ] **T1.25**: Implement 30-minute sensor logging **(FR6.4 - DATABASE)**
   - Use timer to trigger database insert every 30 minutes
   - Insert temperature and humidity to `sensor_logs` table
   - Test: Wait 30 mins, verify database entry
 
-- [ ] **T1.26**: Implement asthma alert system (US7)
+- [ ] **T1.26**: Implement asthma alert system **(FR7.1, FR7.2, FR7.3 - HOUSE/WEB)**
   - Check conditions: humidity > 50% AND temperature > 27°C
   - If true: Display "ASTHMA ALERT" on OLED
   - Publish alert to MQTT topic `home/asthma_alert`
-  - Log alert to database
   - Test: Set conditions manually, verify alert
 
 ---
@@ -198,7 +195,7 @@
   - PIR toggle button: Enable/disable motion detection
   - Test: Press buttons, verify actuator responses
 
-- [ ] **T1.28**: Implement MQTT control subscriptions (US9)
+- [ ] **T1.28**: Implement MQTT control subscriptions **(FR9.1, FR9.2, FR9.3, FR9.4 - WEB/HOUSE)**
   - Subscribe to `home/control/door`, `home/control/window`, `home/control/fan`
   - Parse JSON payload and execute commands
   - Example: `{"action": "open"}` → open door servo
@@ -287,33 +284,32 @@
 
 ### Milestone 3.2: Dashboard UI Components (US8)
 
-- [ ] **T3.4**: Create sensor display card component
+- [ ] **T3.4**: Create sensor display card component **(FR8.1, FR8.2 - WEB)**
   - File: `web/components/SensorCard.tsx`
-  - Display current temperature, humidity (from MQTT)
+  - Display current temperature, humidity (from MQTT via FR6.3)
   - Real-time updates when new values arrive
   - Show last update timestamp
 
-- [ ] **T3.5**: Create motion detection display
+- [ ] **T3.5**: Create motion detection display **(FR8.1 - WEB)**
   - Query C# API for motion events in last hour
   - Display count: "PIR Detections (Last Hour): 12"
   - Auto-refresh every 5 minutes
 
-- [ ] **T3.6**: Create gas alert indicator
+- [ ] **T3.6**: Create gas alert indicator **(FR8.2 - WEB)**
   - File: `web/components/GasAlert.tsx`
   - Show red banner when gas detected (via MQTT)
   - Display "GAS DETECTED - FAN ACTIVE"
   - Hide when alert clears
 
-- [ ] **T3.7**: Create RFID scan history table
+- [ ] **T3.7**: Create RFID scan history table **(FR8.3 - WEB)**
   - File: `web/components/RFIDLog.tsx`
   - Fetch from C# API (`GET /api/rfid/scans`)
   - Display: Card ID, Result (granted/denied), Timestamp, User
   - Add filter dropdown: "All", "Success", "Failed"
   - Pagination: Show last 50 scans
 
-- [ ] **T3.8**: Create status indicators
-  - Display door status (open/closed) from MQTT
-  - Display window status
+- [ ] **T3.8**: Create status indicators **(FR8.4, FR8.5 - WEB)**
+  - Display door/window status (open/closed) from MQTT
   - Display fan status (on/off)
   - Use color-coded badges (green = open, red = closed)
 
