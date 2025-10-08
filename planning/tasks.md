@@ -38,11 +38,13 @@
   - **Started**: 2025-10-08
   - **Completed**: 2025-10-08
 
-- [ ] **T1.4**: Create project file structure
+- [x] **T1.4**: Create project file structure
   - Create `embedded/` directory with subdirectories (sensors, actuators, network, display, utils)
   - Set up `embedded/boot.py` for WiFi initialization
   - Create placeholder files for all modules listed in `prd.md`
   - Add `.gitignore` for `config.py` and sensitive files
+  - **Started**: 2025-10-08
+  - **Completed**: 2025-10-08
 
 ---
 

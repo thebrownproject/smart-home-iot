@@ -402,3 +402,53 @@ All credentials working:
 - Then move to Milestone 1.2: Sensor Module Implementation
 
 ---
+
+## Session 5 (continued) - WiFi Boot Initialization
+
+### Additional Tasks Completed
+
+- [x] **T1.4**: Create project file structure
+  - Verified all directories exist (sensors/, actuators/, display/, network/, utils/, tests/)
+  - Updated `embedded/boot.py` with WiFi initialization and timeout handling
+  - Placeholder files already created from previous setup
+  - `.gitignore` already includes `config.py`
+
+### WiFi Boot Implementation
+
+**Added to boot.py:**
+```python
+# WiFi initialization with 10-second timeout
+wlan = network.WLAN(network.STA_IF)
+wlan.active(True)
+wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+
+timeout = 10
+while not wlan.isconnected() and timeout > 0:
+    print(f"Waiting for WiFi connection... ({timeout}s left)")
+    time.sleep(1)
+    timeout -= 1
+```
+
+**Design decision - Graceful degradation:**
+- WiFi failure prints warning but system continues to main.py
+- Rationale: Better for development/debugging (can still access REPL)
+- Network-dependent features will fail with clear error messages
+- Alternative considered: `sys.exit(1)` or `machine.reset()` (rejected as too strict for dev)
+
+### Milestone 1.1 Status
+
+**Milestone 1.1: Environment & Database Setup** ✅ **COMPLETE**
+
+All tasks finished:
+- ✅ T1.1: Hardware validation testing
+- ✅ T1.2: Supabase project and database schema
+- ✅ T1.3: MQTT credentials in ESP32 config
+- ✅ T1.4: Project file structure
+
+### Next Session
+
+- Begin **Milestone 1.2**: Sensor Module Implementation
+- Start with T1.5: Implement DHT11 sensor class (temperature/humidity)
+- Reference code: `Docs/reference-code/pj9_1_XHT11.py`
+
+---
