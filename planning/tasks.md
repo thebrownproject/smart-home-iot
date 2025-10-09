@@ -140,12 +140,14 @@
 
 ### Milestone 1.4: Display & Network Integration
 
-- [ ] **T1.15**: Implement OLED display class
+- [x] **T1.15**: Implement OLED display class
 
   - File: `embedded/display/oled.py`
-  - Use SSD1306 library for I2C communication
+  - Use LCD1602 library for I2C communication (hardware is 16x2 LCD, not OLED)
   - Methods: `show_text(line1, line2)`, `clear()`, `show_temp_humidity(temp, humidity)`
-  - Test: Display "Hello World" on OLED
+  - Test: Display "Hello World" on LCD
+  - **Started**: 2025-10-09
+  - **Completed**: 2025-10-09
 
 - [ ] **T1.16**: Implement WiFi connection manager
 

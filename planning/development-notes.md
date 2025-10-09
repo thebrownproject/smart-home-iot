@@ -815,3 +815,129 @@ All outputs tested and hardware-validated!
 - T1.18: Supabase HTTP client (database logging)
 
 ---
+
+## Session 9 - October 9, 2025 - Display Module Implementation (LCD1602) ✅
+
+**Phase**: Phase 1 - Embedded System Core  
+**Milestone**: 1.4 - Display & Network Integration  
+**Branch**: phase-1-embedded-core
+
+### Tasks Completed
+
+- [x] **T1.15**: Implement OLED display class - Actually 16x2 character LCD, not OLED
+
+### Decisions Made
+
+1. **Hardware Clarification - LCD vs OLED:**
+   - Documentation said "OLED SSD1306" but actual hardware is 16x2 character LCD (LCD1602)
+   - Evidence: I2C scan shows address 0x27 (typical for LCD), not 0x3C (typical for OLED SSD1306)
+   - Session 7 notes said "OLED + RFID" but meant LCD (0x27) + RFID (0x28)
+   - Decision: Use `i2c_lcd` library from reference code, not `ssd1306`
+
+2. **Library Location - /Lib/ vs embedded/display/:**
+   - Initial approach: Copied `i2c_lcd.py` and `lcd_api.py` to `embedded/display/`
+   - **Better approach**: Upload to ESP32 `/Lib/` folder (like other dependencies)
+   - Rationale: Keeps app code separate from library dependencies, matches existing pattern (mfrc522, soft_iic)
+   - Import changes from `from display.i2c_lcd import I2cLcd` → `from i2c_lcd import I2cLcd`
+
+3. **Class Name "OLED" Despite LCD Hardware:**
+   - Kept class name as `OLED` for API compatibility with requirements
+   - Added docstring note explaining discrepancy
+   - Methods match required API: `show_text()`, `clear()`, `show_temp_humidity()`
+
+4. **Default Parameters for Flexibility:**
+   - `show_text(line1, line2="")` - Makes second line optional
+   - Allows single-line displays: `oled.show_text("Status: OK")`
+   - Or two-line: `oled.show_text("Hello", "World")`
+
+5. **String Truncation for Safety:**
+   - LCD is 16 chars wide, added `[:16]` slicing to prevent overflow
+   - Prevents runtime errors if strings exceed display width
+
+### Issues Encountered & Resolutions
+
+1. **ImportError: no module named 'ssd1306':**
+   - **Problem**: Initial implementation tried to use SSD1306 OLED library
+   - **Root Cause**: Hardware is actually a character LCD, not OLED
+   - **Solution**: Switched to `i2c_lcd` library from reference code (pj8_1_lcd1602)
+   - **Learning**: Always verify actual hardware with I2C scan before assuming specs
+
+2. **File Organization Confusion:**
+   - **Question**: Where should LCD libraries go - app code or Lib folder?
+   - **Answer**: `/Lib/` folder on ESP32 for reusable dependencies
+   - **Pattern**: App code in `embedded/`, libraries in `/Lib/`
+
+3. **ImportError: no module named 'i2c_lcd' (initially):**
+   - **Problem**: Tried importing from `display.i2c_lcd` when files weren't deployed
+   - **Solution**: User uploaded `i2c_lcd.py` and `lcd_api.py` to ESP32 `/Lib/`
+   - **Result**: Simple import `from i2c_lcd import I2cLcd` works
+
+### Implementation Details
+
+**OLED Class (embedded/display/oled.py):**
+- Uses `I2cLcd` from `i2c_lcd` library (16x2 LCD1602)
+- I2C address: 0x27 (not 0x3C)
+- Methods:
+  - `show_text(line1, line2="")` - Display 1 or 2 lines with auto-truncation
+  - `clear()` - Clear display
+  - `show_temp_humidity(temp, humidity)` - Format and display sensor data
+
+**Test File (embedded/tests/display/test_oled.py):**
+- Tests all three methods with delays
+- Displays "Hello" / "World", then "Temp: 20C" / "Humid: 50%", then clears
+- User confirmed working on hardware
+
+### Key Learning Moments
+
+**Character LCD vs OLED Display API:**
+- **LCD (HD44780)**: `clear()`, `move_to(x, row)`, `putstr(text)` - Row/column based
+- **OLED (SSD1306)**: `fill()`, `text(str, x, y)`, `show()` - Pixel-based with frame buffer
+- LCD is simpler for text-only displays, OLED allows graphics/custom fonts
+
+**I2C Address as Hardware Identifier:**
+- 0x27 = Character LCD with PCF8574 I2C backpack
+- 0x3C = OLED SSD1306 display
+- 0x28 = RFID RC522 reader (in this project)
+- Always run I2C scan to verify actual hardware!
+
+**MicroPython Library Management:**
+- No package manager like pip - manual file uploads required
+- `/Lib/` folder = global library location (like site-packages)
+- Libraries with dependencies need ALL files uploaded (e.g., i2c_lcd.py + lcd_api.py)
+
+### Files Created/Modified
+
+**Created:**
+- `embedded/display/oled.py` - LCD display class (26 lines)
+- `embedded/display/__init__.py` - Package marker
+- `embedded/tests/display/test_oled.py` - Display test with delays
+- `embedded/tests/display/__init__.py` - Package marker
+
+**Uploaded to ESP32 /Lib/:**
+- `i2c_lcd.py` - LCD I2C driver (from pj8_1_lcd1602)
+- `lcd_api.py` - HD44780 LCD API (dependency)
+
+**Modified:**
+- `planning/tasks.md` - Marked T1.15 complete, clarified LCD vs OLED
+
+### Test Results
+
+**Display Test (test_oled.py):**
+```
+✓ OLED initialized
+✓ Test 1: Displaying 'Hello' / 'World' (3 seconds)
+✓ Test 2: Displaying temp/humidity (3 seconds)  
+✓ Test 3: Clearing display
+✓ OLED test completed successfully!
+```
+
+All methods working correctly on 16x2 LCD hardware.
+
+### Next Session
+
+- Continue with **T1.16**: Implement WiFi connection manager
+- File: `embedded/network/wifi_manager.py`
+- Methods: `connect()`, `is_connected()`, `get_ip()`
+- Features: Auto-connect on boot, retry logic with exponential backoff
+
+---
