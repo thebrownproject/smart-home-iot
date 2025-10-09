@@ -95,35 +95,46 @@
 
 ### Milestone 1.3: Actuator Module Implementation
 
-- [x] **T1.10**: Implement LED control class (Started)
+- [x] **T1.10**: Implement LED control class
 
   - File: `embedded/actuators/led.py`
   - Methods: `on()`, `off()`, `toggle()`
   - Test: Turn LED on/off programmatically
+  - **Started**: 2025-10-09
+  - **Completed**: 2025-10-09
 
-- [ ] **T1.11**: Implement RGB LED (SK6812) class
+- [x] **T1.11**: Implement RGB LED (SK6812) class
 
   - File: `embedded/actuators/rgb.py`
   - Methods: `set_color(r, g, b)`, `flash(color, times)`, `off()`
   - Support orange, blue, red colors for requirements
   - Test: Flash RGB in different colors
+  - **Started**: 2025-10-09
+  - **Completed**: 2025-10-09
 
-- [ ] **T1.12**: Implement Servo motor class
+- [x] **T1.12**: Implement Servo motor class
 
   - File: `embedded/actuators/servo.py`
-  - Methods: `open()`, `close()`, `set_angle(degrees)`
+  - Methods: `open()`, `close()`
+  - Generic class accepts pin parameter for door (pin 13) and window (pin 5)
   - Test: Open/close door and window servos
+  - **Started**: 2025-10-09
+  - **Completed**: 2025-10-09
 
-- [ ] **T1.13**: Implement Fan control class
+- [x] **T1.13**: Implement Fan control class
 
   - File: `embedded/actuators/fan.py`
   - Methods: `on()`, `off()`, `is_running()`
   - Test: Turn fan on/off, verify operation
+  - **Started**: 2025-10-09
+  - **Completed**: 2025-10-09
 
-- [ ] **T1.14**: Implement Buzzer class
+- [x] **T1.14**: Implement Buzzer class
   - File: `embedded/actuators/buzzer.py`
   - Methods: `beep(duration)`, `pattern(beeps, interval)`, `stop()`
   - Test: Play buzzer patterns
+  - **Started**: 2025-10-09
+  - **Completed**: 2025-10-09
 
 ---
 

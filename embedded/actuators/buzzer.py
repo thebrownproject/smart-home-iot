@@ -4,71 +4,17 @@ import time
 class Buzzer:
     def __init__(self):
         self.buzzer = PWM(Pin(25))
+        self.buzzer.freq(2000)  # Set frequency once (2kHz = clear beep tone)
 
-    def run(self):
-        self.buzzer.duty(100)
-        buzzer.freq(100)
-        time.sleep(1)
+    def beep(self, duration=0.2):
+        self.buzzer.duty(100)  # ~10% duty cycle (quieter)
+        time.sleep(duration)
         self.buzzer.duty(0)
-        
-    
+
     def stop(self):
         self.buzzer.duty(0)
 
-#Test the Buzzer class
-buzzer = Buzzer()
-buzzer.run()
-time.sleep(2)
-buzzer.stop()
-
-
-# from machine import Pin, PWM
-# from time import sleep
-# buzzer = PWM(Pin(25))
-
-# buzzer.duty(1000) 
-
-# # Happy birthday
-# buzzer.freq(294)
-# sleep(0.25)
-# buzzer.freq(440)
-# sleep(0.25)
-# buzzer.freq(392)
-# sleep(0.25)
-# buzzer.freq(532)
-# sleep(0.25)
-# buzzer.freq(494)
-# sleep(0.25)
-# buzzer.freq(392)
-# sleep(0.25)
-# buzzer.freq(440)
-# sleep(0.25)
-# buzzer.freq(392)
-# sleep(0.25)
-# buzzer.freq(587)
-# sleep(0.25)
-# buzzer.freq(532)
-# sleep(0.25)
-# buzzer.freq(392)
-# sleep(0.25)
-# buzzer.freq(784)
-# sleep(0.25)
-# buzzer.freq(659)
-# sleep(0.25)
-# buzzer.freq(532)
-# sleep(0.25)
-# buzzer.freq(494)
-# sleep(0.25)
-# buzzer.freq(440)
-# sleep(0.25)
-# buzzer.freq(698)
-# sleep(0.25)
-# buzzer.freq(659)
-# sleep(0.25)
-# buzzer.freq(532)
-# sleep(0.25)
-# buzzer.freq(587)
-# sleep(0.25)
-# buzzer.freq(532)
-# sleep(0.5)
-# buzzer.duty(0)
+    def pattern(self, beeps, interval=0.1):
+        for i in range(beeps):
+            self.beep()
+            time.sleep(interval)

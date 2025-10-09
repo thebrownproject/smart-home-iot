@@ -687,3 +687,131 @@ All sensors tested and validated with hardware!
 - Will need reference code from `Docs/reference-code/` for each actuator
 
 ---
+## Session 8 - October 9, 2025 - Actuator Module Implementation ✅
+
+**Phase**: Phase 1 - Embedded System Core  
+**Milestone**: 1.3 - Actuator Module Implementation  
+**Branch**: phase-1-embedded-core
+
+### Tasks Completed
+
+- [x] **T1.10**: Implement LED control class - Fixed from previous session, added test
+- [x] **T1.11**: Implement RGB LED (SK6812) class - NeoPixel control with color methods
+- [x] **T1.12**: Implement Servo motor class - Generic class for door/window servos
+- [x] **T1.13**: Implement Fan control class - H-bridge motor control with PWM
+- [x] **T1.14**: Implement Buzzer class - PWM-based beep patterns with volume control
+
+### Decisions Made
+
+1. **RGB LED Implementation:**
+   - Used `neopixel.NeoPixel.fill()` for efficient multi-LED control (all 4 LEDs same color)
+   - Tuple unpacking (`*color`) in `flash()` method to match `set_color(r, g, b)` signature
+   - Hardcoded pin 26 and 4 LEDs (from reference docs)
+   - Rationale: Matches requirements (solid colors + flashing), simple API
+
+2. **Servo Motor Simplification (YAGNI Applied):**
+   - Removed `set_angle(degrees)` method - not required by any FR
+   - Kept only `open()` and `close()` methods (0° and 180°)
+   - Generic class accepts pin parameter (door: pin 13, window: pin 5)
+   - Duty cycle mapping: 0° = 25, 180° = 128 (from Keyestudio docs)
+   - Rationale: All requirements only use fully open or fully closed positions
+
+3. **Fan Motor Control:**
+   - H-bridge driver with two PWM pins (INA: 19, INB: 18)
+   - Only one direction needed (fans don't reverse)
+   - `duty(700)` = ~68% power (good balance of speed and noise)
+   - `is_running()` checks both pins for non-zero duty
+   - Rationale: Simple on/off control matches FR4.2 requirement
+
+4. **Buzzer Volume and Frequency:**
+   - Initial frequency `100Hz` caused weird noises (too low, bass rumble)
+   - **Fixed**: Set frequency to `2000Hz` in `__init__()` (clear beep tone)
+   - Initial `duty(512)` too loud → reduced to `duty(100)` (~10% volume)
+   - Added `duration` parameter to `beep()` for flexible beep lengths
+   - Rationale: User comfort + classroom environment (can't be too loud!)
+
+5. **Utility Script Organization:**
+   - Created `embedded/utils/init_window_servo.py` for one-time servo calibration
+   - Copied from Keyestudio docs (moves servo through 0° → 90° → 0°)
+   - Purpose: Set servo to known position before installing servo arm
+   - Rationale: Utils folder for setup scripts that aren't part of main application
+
+### Issues Encountered & Resolutions
+
+1. **RGB LED Flash Method - Tuple Unpacking:**
+   - **Problem**: `flash(color, times)` called `set_color(color)` but `set_color` expects `(r, g, b)` not tuple
+   - **Error**: `TypeError: function takes 4 positional arguments but 2 were given`
+   - **Solution**: Use unpacking operator: `self.set_color(*color)`
+   - **Learning**: `*` unpacks tuple `(255, 0, 0)` into separate args `255, 0, 0`
+
+2. **Servo set_angle() Removed:**
+   - **Question**: Task spec said `set_angle(degrees)` but requirements only need open/close
+   - **Decision**: Removed method (YAGNI principle)
+   - **Updated**: tasks.md line 118 to remove `set_angle()` from method list
+   - **Rationale**: No FR uses intermediate angles (45°, 90°, etc.)
+
+3. **Buzzer Frequency Issues:**
+   - **Problem**: First beep normal, subsequent beeps had "weird noises"
+   - **Root Cause**: `beep()` called `freq(100)` every time, re-setting frequency
+   - **Solution**: Move `freq(2000)` to `__init__()`, only set duty in `beep()`
+   - **Also fixed**: Changed 100Hz → 2000Hz for clearer tone
+   - **Learning**: PWM frequency = pitch (set once), duty cycle = volume (change dynamically)
+
+4. **Buzzer Too Loud:**
+   - **Problem**: `duty(512)` (50%) extremely loud in classroom
+   - **Solution**: Reduced to `duty(100)` (~10% volume)
+   - **User note**: "Working much better, however... way too loud"
+   - **Adjustable**: Can tune further to `duty(50)` if still too loud
+
+### Test Files Created
+
+**Actuators:**
+- `embedded/tests/actuators/test_led.py` - Basic LED on/off/toggle test
+- `embedded/tests/actuators/test_rgb.py` - RGB solid colors + flashing patterns
+- `embedded/tests/actuators/test_fan.py` - Fan on/off with `is_running()` verification  
+- `embedded/tests/actuators/test_buzzer.py` - Beep patterns with various durations
+
+**All tests passed on hardware** - actuators respond correctly!
+
+### Key Learning Moments
+
+**PWM Control Patterns:**
+- **Servo**: Frequency 50Hz (standard), duty cycle controls angle (25-128)
+- **Fan**: Frequency 10kHz, duty cycle controls speed (0-1023, use ~700)
+- **Buzzer**: Frequency controls pitch (2kHz = clear beep), duty controls volume (100 = quiet)
+- **RGB LED**: Uses NeoPixel protocol (not PWM), `fill()` sets all LEDs at once
+
+**YAGNI in Practice:**
+- Servo `set_angle()` removed - no requirement needs it
+- Fan only spins one direction - no reverse needed
+- Buzzer no custom frequencies - 2kHz works for all beeps
+- Simpler code = fewer bugs = easier maintenance
+
+**Hardware Testing Philosophy:**
+- Volume/speed settings need human judgment (too loud? too fast?)
+- Can't programmatically verify "correct" buzzer volume
+- Tests validate hardware responds + code doesn't crash
+- User confirms: "passes" = works acceptably in real environment
+
+### Milestone 1.3 Status
+
+**Milestone 1.3: Actuator Module Implementation** ✅ **COMPLETE**
+
+All tasks finished:
+- ✅ T1.10: LED control class
+- ✅ T1.11: RGB LED (SK6812) class
+- ✅ T1.12: Servo motor class
+- ✅ T1.13: Fan control class  
+- ✅ T1.14: Buzzer class
+
+All actuators tested and hardware-validated!
+
+### Next Session
+
+- Begin **Milestone 1.4**: Display & Network Integration
+- T1.15: Implement OLED display class (SSD1306, I2C)
+- T1.16: WiFi connection manager (with retry logic)
+- T1.17: MQTT client wrapper (pub/sub methods)
+- T1.18: Supabase HTTP client (database logging)
+
+---
