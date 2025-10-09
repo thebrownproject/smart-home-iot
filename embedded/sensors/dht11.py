@@ -7,8 +7,8 @@ from machine import Pin
 
 #Associate DHT11 with Pin(17).
 class DHT11Sensor:
-    def __init__(self, pin_number=17):
-        self.dht = dht.DHT11(machine.Pin(pin_number))
+    def __init__(self):
+        self.dht = dht.DHT11(machine.Pin(17))
     
     def read_data(self):
         try:

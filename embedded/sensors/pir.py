@@ -2,8 +2,8 @@ from machine import Pin
 import time
 
 class PIRSensor:
-    def __init__(self, pin_number=14):
-        self.pir = Pin(pin_number, Pin.IN)
+    def __init__(self):
+        self.pir = Pin(14, Pin.IN)
         self.last_trigger_time = 0
         self.debounce_time = 500
     
@@ -17,23 +17,3 @@ class PIRSensor:
                 self.last_trigger_time = now
                 return True
         return False
-
-pir = PIRSensor()
-
-# while True:
-#     print(pir.read_data())
-#     time.sleep(0.5)
-
-
-# from machine import Pin
-# import time
-
-# PIR = Pin(14, Pin.IN)
-# while True:
-#     value = PIR.value()
-#     print(value, end = " ")
-#     if value == 1:
-#         print("Some body is in this area!")
-#     else:
-#         print("No one!")
-#     time.sleep(0.1)

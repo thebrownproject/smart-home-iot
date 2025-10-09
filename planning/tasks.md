@@ -58,38 +58,38 @@
   - Test: Read values every 2 seconds for 1 minute, verify reasonable range (-20 to 60°C)
   - **Completed**: 2025-10-08
 
-- [~] **T1.6**: Implement PIR motion sensor class **(FR2.1 - HOUSE)**
+- [x] **T1.6**: Implement PIR motion sensor class **(FR2.1 - HOUSE)**
 
   - File: `embedded/sensors/pir.py`
   - Methods: `is_motion_detected()`, `read()` (returns boolean)
   - Debounce logic to prevent rapid triggers
   - Test: Wave hand in front of sensor, verify detection
   - **Started**: 2025-10-08
-  - **Status**: Implementation complete, needs hardware testing
+  - **Completed**: 2025-10-09
 
-- [~] **T1.7**: Implement Gas sensor class **(FR4.1 - HOUSE)**
+- [x] **T1.7**: Implement Gas sensor class **(FR4.1 - HOUSE)**
 
   - File: `embedded/sensors/gas.py`
   - Methods: `is_gas_detected()`, `read_value()` (digital pin value)
   - Test: Trigger sensor, verify digital signal
   - **Started**: 2025-10-08
-  - **Status**: Implementation complete, needs hardware testing
+  - **Completed**: 2025-10-09
 
-- [~] **T1.8**: Implement Steam/Moisture sensor class **(FR3.1 - HOUSE)**
+- [x] **T1.8**: Implement Steam/Moisture sensor class **(FR3.1 - HOUSE)**
 
   - File: `embedded/sensors/steam.py`
   - Methods: `is_moisture_detected()`, `read()`
   - Test: Simulate steam/water droplet detection
   - **Started**: 2025-10-08
-  - **Status**: Implementation complete, needs hardware testing
+  - **Completed**: 2025-10-09
 
-- [~] **T1.9**: Implement RFID reader class **(FR5.1 - HOUSE)**
+- [x] **T1.9**: Implement RFID reader class **(FR5.1 - HOUSE)**
   - File: `embedded/sensors/rfid.py`
   - Use MFRC522 library from `Docs/reference-code/pj10_rc522_RFID/`
   - Methods: `scan_card()`, `get_card_id()`
   - Test: Scan known RFID card, print card ID
   - **Started**: 2025-10-08
-  - **Status**: Implementation complete, needs hardware testing
+  - **Completed**: 2025-10-09
 
 ---
 

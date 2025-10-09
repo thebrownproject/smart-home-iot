@@ -4,7 +4,7 @@ from mfrc522_i2c import mfrc522
 
 class RFIDSensor:
     def __init__(self):
-        self.rfid = mfrc522(Pin(22), Pin(21), 0x28)
+        self.rfid = mfrc522(22, 21, 0x28)
         self.rfid.PCD_Init()
         self.rfid.ShowReaderDetails()
 
