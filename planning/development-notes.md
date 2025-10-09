@@ -17,7 +17,7 @@ A running diary of development decisions, important context, and session-to-sess
 
 1. **Architecture Pattern - 4-Layer System:**
 
-   - **HOUSE Layer**: ESP32 with MicroPython (sensors/actuators)
+   - **HOUSE Layer**: ESP32 with MicroPython (sensors/outputs)
    - **DATABASE Layer**: Supabase PostgreSQL (persistence)
    - **API Layer**: C# ASP.NET Core 9.0 (read endpoints, MVC pattern)
    - **WEB Layer**: Next.js dashboard (frontend, MQTT client)
@@ -28,7 +28,7 @@ A running diary of development decisions, important context, and session-to-sess
    - **Persistence**: ESP32 → Supabase (direct HTTPS POST for data logging)
    - **Real-time updates**: ESP32 → HiveMQ MQTT → Next.js (sensor broadcasts)
    - **Historical queries**: Next.js → C# API → Supabase (GET endpoints)
-   - **Control commands**: Next.js → HiveMQ MQTT → ESP32 (actuator control)
+   - **Control commands**: Next.js → HiveMQ MQTT → ESP32 (output control)
    - **Key decision**: ESP32 writes directly to Supabase (not through C# API)
 
 3. **C# API Requirement:**
@@ -338,7 +338,7 @@ SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIs
    - Deleted `deploy.py` Python script (unreliable `cp -r` with wildcards)
    - Updated `/deploy` slash command with manual file-by-file copying
    - Slash command includes venv activation (fixes mpremote not found error)
-   - Complete sync of all `embedded/` directories (sensors, actuators, display, network, utils, tests)
+   - Complete sync of all `embedded/` directories (sensors, outputs, display, network, utils, tests)
    - Rationale: More reliable, visible, and flexible than automated script
 
 5. **MQTT Test Strategy:**
@@ -397,7 +397,7 @@ All credentials working:
 ### Next Session
 
 - Continue with T1.4: Create project file structure
-- Note: Most structure already exists (sensors/, actuators/, display/, network/, utils/, tests/)
+- Note: Most structure already exists (sensors/, outputs/, display/, network/, utils/, tests/)
 - May just need to verify placeholder files and boot.py WiFi initialization
 - Then move to Milestone 1.2: Sensor Module Implementation
 
@@ -408,7 +408,7 @@ All credentials working:
 ### Additional Tasks Completed
 
 - [x] **T1.4**: Create project file structure
-  - Verified all directories exist (sensors/, actuators/, display/, network/, utils/, tests/)
+  - Verified all directories exist (sensors/, outputs/, display/, network/, utils/, tests/)
   - Updated `embedded/boot.py` with WiFi initialization and timeout handling
   - Placeholder files already created from previous setup
   - `.gitignore` already includes `config.py`
@@ -526,7 +526,7 @@ All tasks finished:
 **Separation of Concerns:**
 - Sensors read hardware, return data (pure functions)
 - Main loop handles business logic (what to do with sensor data)
-- Actuator control, MQTT publishing, database logging = main.py responsibility
+- Output control, MQTT publishing, database logging = main.py responsibility
 
 ### Next Session
 
@@ -534,7 +534,7 @@ All tasks finished:
 - Connect ESP32 and test each sensor individually
 - Verify readings match expected behavior
 - Only mark tasks complete after successful hardware validation
-- Next: Continue Milestone 1.2 testing, or move to Milestone 1.3 (Actuators)
+- Next: Continue Milestone 1.2 testing, or move to Milestone 1.3 (Outputs)
 
 ---
 ## Session 7 - October 9, 2025 - Sensor Testing & Validation ✅
@@ -680,17 +680,17 @@ All sensors tested and validated with hardware!
 
 ### Next Session
 
-- Begin **Milestone 1.3**: Actuator Module Implementation
+- Begin **Milestone 1.3**: Output Module Implementation
 - Start with T1.11: Implement RGB LED (SK6812) class
 - Note: T1.10 (basic LED) already complete from previous work
 - Next tasks: RGB LED, Servo, Fan, Buzzer
-- Will need reference code from `Docs/reference-code/` for each actuator
+- Will need reference code from `Docs/reference-code/` for each output
 
 ---
-## Session 8 - October 9, 2025 - Actuator Module Implementation ✅
+## Session 8 - October 9, 2025 - Output Module Implementation ✅
 
 **Phase**: Phase 1 - Embedded System Core  
-**Milestone**: 1.3 - Actuator Module Implementation  
+**Milestone**: 1.3 - Output Module Implementation  
 **Branch**: phase-1-embedded-core
 
 ### Tasks Completed
@@ -765,13 +765,13 @@ All sensors tested and validated with hardware!
 
 ### Test Files Created
 
-**Actuators:**
-- `embedded/tests/actuators/test_led.py` - Basic LED on/off/toggle test
-- `embedded/tests/actuators/test_rgb.py` - RGB solid colors + flashing patterns
-- `embedded/tests/actuators/test_fan.py` - Fan on/off with `is_running()` verification  
-- `embedded/tests/actuators/test_buzzer.py` - Beep patterns with various durations
+**Outputs:**
+- `embedded/tests/outputs/test_led.py` - Basic LED on/off/toggle test
+- `embedded/tests/outputs/test_rgb.py` - RGB solid colors + flashing patterns
+- `embedded/tests/outputs/test_fan.py` - Fan on/off with `is_running()` verification  
+- `embedded/tests/outputs/test_buzzer.py` - Beep patterns with various durations
 
-**All tests passed on hardware** - actuators respond correctly!
+**All tests passed on hardware** - outputs respond correctly!
 
 ### Key Learning Moments
 
@@ -795,7 +795,7 @@ All sensors tested and validated with hardware!
 
 ### Milestone 1.3 Status
 
-**Milestone 1.3: Actuator Module Implementation** ✅ **COMPLETE**
+**Milestone 1.3: Output Module Implementation** ✅ **COMPLETE**
 
 All tasks finished:
 - ✅ T1.10: LED control class
@@ -804,7 +804,7 @@ All tasks finished:
 - ✅ T1.13: Fan control class  
 - ✅ T1.14: Buzzer class
 
-All actuators tested and hardware-validated!
+All outputs tested and hardware-validated!
 
 ### Next Session
 

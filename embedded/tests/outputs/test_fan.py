@@ -1,4 +1,4 @@
-from actuators.fan import Fan
+from outputs.fan import Fan
 import time
 
 fan = Fan()

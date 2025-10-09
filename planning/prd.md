@@ -82,7 +82,7 @@ Build an ESP32-based smart home automation system that demonstrates IoT integrat
 
 #### US9: Remote Control
 
-**As a user, I want to control actuators from the web app**
+**As a user, I want to control outputs from the web app**
 
 - **FR9.1 (WEB)**: Open window via web interface (publishes MQTT command)
 - **FR9.2 (WEB)**: Open door via web interface
@@ -98,7 +98,7 @@ Build an ESP32-based smart home automation system that demonstrates IoT integrat
 - **Language**: MicroPython 1.20+
 - **Hardware**: ESP32 microcontroller + KS5009 smart home kit
 - **Sensors**: DHT11, PIR, Gas, Steam/Moisture, RFID (RC522)
-- **Actuators**: LED, RGB (SK6812), Servo motors, Fan, Buzzer
+- **Outputs**: LED, RGB (SK6812), Servo motors, Fan, Buzzer
 - **Display**: OLED (SSD1306) via I2C
 - **Connectivity**: WiFi (ESP32 built-in), MQTT client
 

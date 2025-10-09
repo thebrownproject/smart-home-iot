@@ -1,4 +1,4 @@
-from actuators.buzzer import Buzzer
+from outputs.buzzer import Buzzer
 import time
 
 buzzer = Buzzer()

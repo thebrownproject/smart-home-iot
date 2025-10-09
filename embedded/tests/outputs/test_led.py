@@ -1,4 +1,4 @@
-from actuators.led import LED
+from outputs.led import LED
 
 
 led = LED()

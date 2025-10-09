@@ -12,7 +12,7 @@ SmartHomeProject/
 │   │   ├── gas.py             # Gas/flame sensor
 │   │   ├── steam.py           # Moisture sensor
 │   │   └── rfid.py            # RFID reader (RC522)
-│   ├── actuators/
+│   ├── outputs/
 │   │   ├── led.py             # Simple LED control
 │   │   ├── rgb.py             # SK6812 RGB LED strip
 │   │   ├── servo.py           # Servo motor (door/window)
@@ -44,7 +44,7 @@ SmartHomeProject/
 │   │   │   ├── RfidController.cs      # GET scans with filtering
 │   │   │   ├── MotionController.cs    # GET events (last hour)
 │   │   │   ├── StatusController.cs    # GET door/window/fan status
-│   │   │   └── ControlController.cs   # POST actuator commands
+│   │   │   └── ControlController.cs   # POST output commands
 │   │   ├── Models/
 │   │   │   ├── DeviceModel.cs         # Maps to devices table
 │   │   │   ├── SensorReadingModel.cs  # Maps to sensor_logs table
@@ -65,7 +65,7 @@ SmartHomeProject/
 │   ├── components/
 │   │   ├── SensorCard.tsx     # Display sensor readings
 │   │   ├── RFIDLog.tsx        # RFID scan history
-│   │   ├── ControlPanel.tsx   # Actuator controls
+│   │   ├── ControlPanel.tsx   # Output controls
 │   │   └── MQTTProvider.tsx   # MQTT connection provider
 │   ├── lib/
 │   │   ├── api-client.ts      # Axios wrapper for C# API
@@ -129,13 +129,13 @@ SmartHomeProject/
 **Purpose**: All code that runs on the ESP32 hardware
 
 **Key Files**:
-- `main.py` - Main event loop, coordinates sensors/actuators
+- `main.py` - Main event loop, coordinates sensors/outputs
 - `boot.py` - WiFi connection, runs before main.py
 - `config.py` - Credentials (gitignored)
 
 **Subdirectories**:
 - `sensors/` - Classes for reading hardware sensors
-- `actuators/` - Classes for controlling outputs (LED, servo, etc.)
+- `outputs/` - Classes for controlling outputs (LED, servo, etc.)
 - `display/` - OLED screen driver
 - `network/` - MQTT and Supabase HTTP clients
 - `utils/` - Helper functions (logging, time sync)
@@ -193,12 +193,12 @@ SmartHomeProject/
 **Purpose**: Hardware kit documentation and example code from KS5009 kit
 
 **Subdirectories**:
-- `reference-code/` - Example MicroPython implementations for each sensor/actuator
+- `reference-code/` - Example MicroPython implementations for each sensor/output
 - `libraries/` - Pre-compiled MicroPython libraries (.mpy files) for ESP32
 - `manuals/` - PDF documentation for hardware kit and components
 - `tools/` - Development tools (Thonny IDE installers, ESP32 firmware)
 
-**Usage**: Reference when implementing sensors/actuators in `embedded/` directory
+**Usage**: Reference when implementing sensors/outputs in `embedded/` directory
 
 ### `/embedded/tests` - ESP32 Hardware Validation
 
@@ -206,7 +206,7 @@ SmartHomeProject/
 
 **Key Files**:
 - `run_all_tests.py` - Master test orchestrator with comprehensive reporting
-- `test_connections.py` - Tests all GPIO pins, I2C devices, sensors, actuators
+- `test_connections.py` - Tests all GPIO pins, I2C devices, sensors, outputs
 - `test_wifi.py` - Tests WiFi connectivity and network recovery
 
 **Usage**: Run on ESP32 to verify all hardware components are wired correctly
@@ -224,7 +224,7 @@ SmartHomeProject/
 
 1. **Read planning docs** - `prd.md` for requirements, `architecture.md` for data flow
 2. **Check file structure** - Identify which layer to modify (HOUSE/API/WEB)
-3. **Implement feature** - Follow modular structure (one class per sensor/actuator)
+3. **Implement feature** - Follow modular structure (one class per sensor/output)
 4. **Test incrementally** - Don't wait until all features are complete
 5. **Deploy to ESP32** - Run `/deploy` or `python deploy.py` to upload code
 6. **Commit with FR reference** - Link code changes to functional requirements

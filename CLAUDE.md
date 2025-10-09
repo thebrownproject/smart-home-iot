@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ESP32-based smart home automation system for Cert IV assessment. Four-layer IoT architecture:
 
-- **HOUSE layer**: ESP32 MicroPython (sensors/actuators)
+- **HOUSE layer**: ESP32 MicroPython (sensors/outputs)
 - **API layer**: C# ASP.NET Core 9.0 (REST endpoints, business logic)
 - **WEB layer**: Next.js dashboard (monitoring/control)
 - **DATABASE layer**: Supabase PostgreSQL (persistence)
@@ -28,7 +28,7 @@ Communication: ESP32 → Supabase (HTTPS) for persistence, ESP32 ↔ HiveMQ MQTT
 ## Branch Strategy
 
 - `main` - Clean, stable baseline (all merged work)
-- `phase-1-embedded-core` - ESP32 implementation (sensors, actuators, MQTT, Supabase)
+- `phase-1-embedded-core` - ESP32 implementation (sensors, outputs, MQTT, Supabase)
 - `phase-2-api-layer` - C# ASP.NET Core API (future)
 - `phase-3-web-dashboard` - Next.js frontend (future)
 
@@ -74,7 +74,7 @@ Example: `FR2.1 (HOUSE): PIR sensor detects motion`
 2. VS Code → MicroPico extension
 3. `MicroPico: Connect` then `MicroPico: Upload project to Pico`
 
-**Reference code**: `Docs/Python/microPython Code/pj*_*.py` - Example implementations for each sensor/actuator
+**Reference code**: `Docs/Python/microPython Code/pj*_*.py` - Example implementations for each sensor/output
 
 **Critical constraints**:
 
@@ -97,7 +97,7 @@ Example: `FR2.1 (HOUSE): PIR sensor detects motion`
 
 **Real-time**: ESP32 → MQTT publish → Next.js subscribes → UI update
 
-**Control**: Next.js → MQTT publish → ESP32 subscribes → Actuator executes
+**Control**: Next.js → MQTT publish → ESP32 subscribes → Output executes
 
 **Historical**: Next.js → GET C# API → Query Supabase → Display charts/logs
 
@@ -143,7 +143,7 @@ Detailed workflow steps are in `/continue` command. Always use these commands fo
 
 ## Development Phases
 
-**Phase 1: Embedded Core** - ESP32 sensors/actuators, MQTT pub/sub, Supabase direct logging, main event loop
+**Phase 1: Embedded Core** - ESP32 sensors/outputs, MQTT pub/sub, Supabase direct logging, main event loop
 **Phase 2: C# API** - ASP.NET Core 9.0 with Models/Controllers/Contracts, Supabase queries, Swagger docs
 **Phase 3: Web Dashboard** - Next.js with MQTT subscriptions (real-time) and C# API calls (historical data)
 **Phase 4: Bonus Features** - JWT authentication, user roles (Parent/Child), PIR arm/disarm, analytics

@@ -1,4 +1,4 @@
-from actuators.servo import Servo
+from outputs.servo import Servo
 import time
 
 door_servo = Servo(13)

@@ -1,4 +1,4 @@
-from actuators.rgb import RGB
+from outputs.rgb import RGB
 import time
 
 rgb = RGB()

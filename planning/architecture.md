@@ -82,7 +82,7 @@ Returns JSON to Next.js
 Chart displays data
 ```
 
-### Pattern 4: Web Control → Actuator
+### Pattern 4: Web Control → Output
 ```
 User clicks "Open Door" (Next.js)
     ↓
@@ -176,7 +176,7 @@ home/status/window       # Servo position
 home/status/fan          # Fan state
 ```
 
-### ESP32 Subscribes (Cloud → Actuators)
+### ESP32 Subscribes (Cloud → Outputs)
 ```
 home/control/door        # Open/close door
 home/control/window      # Open/close window
@@ -206,7 +206,7 @@ home/control/led         # LED control
 
 ### ✅ Web control via MQTT (not C# API)
 - **Pattern**: Next.js publishes directly to MQTT control topics
-- **ESP32 subscribes**: Receives commands, activates actuators
+- **ESP32 subscribes**: Receives commands, activates outputs
 - **Why**: Lower latency, no backend needed for simple commands
 
 ### ✅ Event Priority (State Machine)

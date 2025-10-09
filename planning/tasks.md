@@ -39,7 +39,7 @@
   - **Completed**: 2025-10-08
 
 - [x] **T1.4**: Create project file structure
-  - Create `embedded/` directory with subdirectories (sensors, actuators, network, display, utils)
+  - Create `embedded/` directory with subdirectories (sensors, outputs, network, display, utils)
   - Set up `embedded/boot.py` for WiFi initialization
   - Create placeholder files for all modules listed in `prd.md`
   - Add `.gitignore` for `config.py` and sensitive files
@@ -93,11 +93,11 @@
 
 ---
 
-### Milestone 1.3: Actuator Module Implementation
+### Milestone 1.3: Output Module Implementation
 
 - [x] **T1.10**: Implement LED control class
 
-  - File: `embedded/actuators/led.py`
+  - File: `embedded/outputs/led.py`
   - Methods: `on()`, `off()`, `toggle()`
   - Test: Turn LED on/off programmatically
   - **Started**: 2025-10-09
@@ -105,7 +105,7 @@
 
 - [x] **T1.11**: Implement RGB LED (SK6812) class
 
-  - File: `embedded/actuators/rgb.py`
+  - File: `embedded/outputs/rgb.py`
   - Methods: `set_color(r, g, b)`, `flash(color, times)`, `off()`
   - Support orange, blue, red colors for requirements
   - Test: Flash RGB in different colors
@@ -114,7 +114,7 @@
 
 - [x] **T1.12**: Implement Servo motor class
 
-  - File: `embedded/actuators/servo.py`
+  - File: `embedded/outputs/servo.py`
   - Methods: `open()`, `close()`
   - Generic class accepts pin parameter for door (pin 13) and window (pin 5)
   - Test: Open/close door and window servos
@@ -123,14 +123,14 @@
 
 - [x] **T1.13**: Implement Fan control class
 
-  - File: `embedded/actuators/fan.py`
+  - File: `embedded/outputs/fan.py`
   - Methods: `on()`, `off()`, `is_running()`
   - Test: Turn fan on/off, verify operation
   - **Started**: 2025-10-09
   - **Completed**: 2025-10-09
 
 - [x] **T1.14**: Implement Buzzer class
-  - File: `embedded/actuators/buzzer.py`
+  - File: `embedded/outputs/buzzer.py`
   - Methods: `beep(duration)`, `pattern(beeps, interval)`, `stop()`
   - Test: Play buzzer patterns
   - **Started**: 2025-10-09
@@ -243,7 +243,7 @@
 
   - Gas alarm disable button: Turn off fan and buzzer when pressed
   - PIR toggle button: Enable/disable motion detection
-  - Test: Press buttons, verify actuator responses
+  - Test: Press buttons, verify output responses
 
 - [ ] **T1.28**: Implement MQTT control subscriptions **(FR9.1, FR9.2, FR9.3, FR9.4 - WEB/HOUSE)**
 
@@ -255,7 +255,7 @@
 
 - [ ] **T1.29**: Build main event loop with state machine
   - File: `embedded/main.py`
-  - Initialize all sensors, actuators, network connections
+  - Initialize all sensors, outputs, network connections
   - Non-blocking loop: Poll sensors, check MQTT messages, update displays
   - Handle priority events (gas > steam > motion)
   - Comprehensive error handling with recovery
@@ -268,7 +268,7 @@
 - [ ] **T1.30**: End-to-end hardware test
 
   - Trigger all sensors sequentially
-  - Verify correct actuator responses
+  - Verify correct output responses
   - Check MQTT messages in HiveMQ console
   - Verify database entries in Supabase dashboard
   - Document any issues
@@ -378,7 +378,7 @@
 
 ### Milestone 3.3: Control Panel (US9)
 
-- [ ] **T3.9**: Create actuator control panel
+- [ ] **T3.9**: Create output control panel
 
   - File: `web/components/ControlPanel.tsx`
   - Buttons: "Open Door", "Close Door", "Open Window", "Close Window"
@@ -415,7 +415,7 @@
   - Start ESP32 system
   - Open web dashboard
   - Trigger sensors, verify real-time updates
-  - Test control commands, verify actuators respond
+  - Test control commands, verify outputs respond
   - Check RFID log filtering
 
 - [ ] **T3.14**: Add error handling
@@ -442,7 +442,7 @@
   - Protect routes based on role
 
 - [ ] **T4.2**: Role-based access control
-  - Parent role: Full control (view + control actuators)
+  - Parent role: Full control (view + control outputs)
   - Child role: View-only (no control buttons)
   - C# API enforces permissions
 
