@@ -6,7 +6,7 @@ This document covers environment variable configuration for all system layers.
 
 ## ESP32 (MicroPython)
 
-**File**: `embedded/config.py`
+**File**: `esp32/config.py`
 
 **⚠️ Important**: This file contains secrets and is gitignored. Create it locally on your machine.
 
@@ -145,7 +145,7 @@ const mqttBroker = process.env.NEXT_PUBLIC_MQTT_BROKER;
 ## Environment Variable Checklist
 
 ### ESP32 Setup
-- [ ] Create `embedded/config.py` locally
+- [ ] Create `esp32/config.py` locally
 - [ ] Add WiFi credentials
 - [ ] Add HiveMQ MQTT credentials
 - [ ] Add Supabase URL and anon key
@@ -222,7 +222,7 @@ const mqttBroker = process.env.NEXT_PUBLIC_MQTT_BROKER;
 
 ```bash
 # 1. Create ESP32 config
-cat > embedded/config.py << EOF
+cat > esp32/config.py << EOF
 WIFI_SSID = "your_network"
 WIFI_PASSWORD = "your_password"
 MQTT_BROKER = "broker.hivemq.cloud"
@@ -255,7 +255,7 @@ EOF
 ```bash
 git status
 # Should NOT show:
-# - embedded/config.py
+# - esp32/config.py
 # - api/SmartHomeApi/appsettings.Development.json
 # - web/.env.local
 ```

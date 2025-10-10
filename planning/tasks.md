@@ -31,7 +31,7 @@
 
 - [x] **T1.3**: Set up MQTT credentials in ESP32 config
 
-  - Create `embedded/config.py` with MQTT broker details
+  - Create `esp32/config.py` with MQTT broker details
   - Add WiFi credentials (SSID, password)
   - Add Supabase URL and anon key
   - Test MQTT connection using simple publish/subscribe test
@@ -39,8 +39,8 @@
   - **Completed**: 2025-10-08
 
 - [x] **T1.4**: Create project file structure
-  - Create `embedded/` directory with subdirectories (sensors, outputs, network, display, utils)
-  - Set up `embedded/boot.py` for WiFi initialization
+  - Create `esp32/` directory with subdirectories (sensors, outputs, comms, display, utils)
+  - Set up `esp32/boot.py` for WiFi initialization
   - Create placeholder files for all modules listed in `prd.md`
   - Add `.gitignore` for `config.py` and sensitive files
   - **Started**: 2025-10-08
@@ -52,7 +52,7 @@
 
 - [x] **T1.5**: Implement DHT11 sensor class **(FR6.1 - HOUSE)**
 
-  - File: `embedded/sensors/dht11.py`
+  - File: `esp32/sensors/dht11.py`
   - Methods: `read_temperature()`, `read_humidity()`
   - Error handling for sensor timeouts (return None on failure)
   - Test: Read values every 2 seconds for 1 minute, verify reasonable range (-20 to 60°C)
@@ -60,7 +60,7 @@
 
 - [x] **T1.6**: Implement PIR motion sensor class **(FR2.1 - HOUSE)**
 
-  - File: `embedded/sensors/pir.py`
+  - File: `esp32/sensors/pir.py`
   - Methods: `is_motion_detected()`, `read()` (returns boolean)
   - Debounce logic to prevent rapid triggers
   - Test: Wave hand in front of sensor, verify detection
@@ -69,7 +69,7 @@
 
 - [x] **T1.7**: Implement Gas sensor class **(FR4.1 - HOUSE)**
 
-  - File: `embedded/sensors/gas.py`
+  - File: `esp32/sensors/gas.py`
   - Methods: `is_gas_detected()`, `read_value()` (digital pin value)
   - Test: Trigger sensor, verify digital signal
   - **Started**: 2025-10-08
@@ -77,14 +77,14 @@
 
 - [x] **T1.8**: Implement Steam/Moisture sensor class **(FR3.1 - HOUSE)**
 
-  - File: `embedded/sensors/steam.py`
+  - File: `esp32/sensors/steam.py`
   - Methods: `is_moisture_detected()`, `read()`
   - Test: Simulate steam/water droplet detection
   - **Started**: 2025-10-08
   - **Completed**: 2025-10-09
 
 - [x] **T1.9**: Implement RFID reader class **(FR5.1 - HOUSE)**
-  - File: `embedded/sensors/rfid.py`
+  - File: `esp32/sensors/rfid.py`
   - Use MFRC522 library from `Docs/reference-code/pj10_rc522_RFID/`
   - Methods: `scan_card()`, `get_card_id()`
   - Test: Scan known RFID card, print card ID
@@ -97,7 +97,7 @@
 
 - [x] **T1.10**: Implement LED control class
 
-  - File: `embedded/outputs/led.py`
+  - File: `esp32/outputs/led.py`
   - Methods: `on()`, `off()`, `toggle()`
   - Test: Turn LED on/off programmatically
   - **Started**: 2025-10-09
@@ -105,7 +105,7 @@
 
 - [x] **T1.11**: Implement RGB LED (SK6812) class
 
-  - File: `embedded/outputs/rgb.py`
+  - File: `esp32/outputs/rgb.py`
   - Methods: `set_color(r, g, b)`, `flash(color, times)`, `off()`
   - Support orange, blue, red colors for requirements
   - Test: Flash RGB in different colors
@@ -114,7 +114,7 @@
 
 - [x] **T1.12**: Implement Servo motor class
 
-  - File: `embedded/outputs/servo.py`
+  - File: `esp32/outputs/servo.py`
   - Methods: `open()`, `close()`
   - Generic class accepts pin parameter for door (pin 13) and window (pin 5)
   - Test: Open/close door and window servos
@@ -123,14 +123,14 @@
 
 - [x] **T1.13**: Implement Fan control class
 
-  - File: `embedded/outputs/fan.py`
+  - File: `esp32/outputs/fan.py`
   - Methods: `on()`, `off()`, `is_running()`
   - Test: Turn fan on/off, verify operation
   - **Started**: 2025-10-09
   - **Completed**: 2025-10-09
 
 - [x] **T1.14**: Implement Buzzer class
-  - File: `embedded/outputs/buzzer.py`
+  - File: `esp32/outputs/buzzer.py`
   - Methods: `beep(duration)`, `pattern(beeps, interval)`, `stop()`
   - Test: Play buzzer patterns
   - **Started**: 2025-10-09
@@ -142,7 +142,7 @@
 
 - [x] **T1.15**: Implement OLED display class
 
-  - File: `embedded/display/oled.py`
+  - File: `esp32/display/oled.py`
   - Use LCD1602 library for I2C communication (hardware is 16x2 LCD, not OLED)
   - Methods: `show_text(line1, line2)`, `clear()`, `show_temp_humidity(temp, humidity)`
   - Test: Display "Hello World" on LCD
@@ -163,14 +163,14 @@
 
 - [ ] **T1.17**: Implement MQTT client wrapper
 
-  - File: `embedded/network/mqtt_client.py`
+  - File: `esp32/comms/mqtt_client.py`
   - Use `umqtt.simple` or `umqtt.robust` library
   - Methods: `connect()`, `publish(topic, payload)`, `subscribe(topic, callback)`, `check_messages()`
   - Handle connection failures gracefully
   - Test: Publish to `home/test` topic, verify on HiveMQ web console
 
 - [ ] **T1.18**: Implement Supabase HTTP client
-  - File: `embedded/network/supabase.py`
+  - File: `esp32/comms/supabase.py`
   - Methods: `insert_sensor_log(sensor_type, value, unit)`, `insert_rfid_scan(card_id, result)`
   - Use `urequests` library for HTTP POST
   - Include API key in headers
@@ -182,7 +182,7 @@
 
 - [ ] **T1.19**: Implement time-based LED control **(FR1.1, FR1.2, FR1.3 - HOUSE)**
 
-  - Add NTP time sync in `embedded/utils/time_sync.py`
+  - Add NTP time sync in `esp32/utils/time_sync.py`
   - Main loop: Check if time between 8pm-7am
   - Turn LED on during nighttime hours, off during day
   - Test: Set ESP32 time manually, verify LED behavior
@@ -210,7 +210,7 @@
   - Test: Trigger gas sensor, verify fan activation
 
 - [ ] **T1.23**: Implement RFID access control **(FR5.1-FR5.5 - HOUSE/DATABASE)**
-  - Create `embedded/utils/rfid_database.py` with authorised card list
+  - Query Supabase `authorised_cards` table for card validation
   - Main loop: Scan for RFID cards
   - Unknown card: Flash RGB red + buzzer (FR5.2)
   - Known card: Open door servo, show "ACCESS GRANTED" on OLED (FR5.3, FR5.5)
@@ -260,7 +260,7 @@
   - Test: Publish control commands via HiveMQ console, verify actions
 
 - [ ] **T1.29**: Build main event loop with state machine
-  - File: `embedded/main.py`
+  - File: `esp32/main.py`
   - Initialize all sensors, outputs, network connections
   - Non-blocking loop: Poll sensors, check MQTT messages, update displays
   - Handle priority events (gas > steam > motion)

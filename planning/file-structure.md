@@ -2,7 +2,7 @@
 
 ```
 SmartHomeProject/
-├── embedded/                    # ESP32 MicroPython code
+├── esp32/                       # ESP32 MicroPython code
 │   ├── main.py                 # Entry point, main loop
 │   ├── boot.py                 # Network setup, runs on startup
 │   ├── config.py               # WiFi, MQTT, Supabase credentials
@@ -19,18 +19,20 @@ SmartHomeProject/
 │   │   ├── fan.py             # Fan control
 │   │   └── buzzer.py          # Buzzer alerts
 │   ├── display/
-│   │   └── oled.py            # OLED display (SSD1306)
-│   ├── network/
+│   │   └── oled.py            # OLED display (LCD1602)
+│   ├── comms/
+│   │   ├── wifi_manager.py    # WiFi connection with retry logic
 │   │   ├── mqtt_client.py     # MQTT pub/sub handler
 │   │   └── supabase.py        # Supabase HTTP client
 │   ├── utils/
 │   │   ├── time_sync.py       # NTP time synchronization
-│   │   └── logger.py          # Debug logging utility
+│   │   └── rfid_database.py   # Authorised RFID cards list
 │   └── tests/                  # ESP32 hardware validation tests
-│       ├── run_all_tests.py   # Master test suite orchestrator
-│       ├── test_connections.py # Hardware component tests
-│       ├── test_wifi.py       # WiFi connectivity tests
-│       └── README.md          # Test suite documentation
+│       ├── sensors/            # Sensor validation tests
+│       ├── outputs/            # Output validation tests
+│       ├── display/            # Display validation tests
+│       ├── test_mqtt.py        # MQTT connectivity test
+│       └── I2Ctst.py           # I2C bus scanner
 │
 ├── api/                        # C# .NET Web API (Phase 2)
 │   ├── SmartHomeApi.sln       # Solution file
@@ -110,7 +112,7 @@ SmartHomeProject/
 │
 ├── venv/                       # Python virtual environment (desktop tools)
 ├── requirements.txt            # Desktop Python dependencies (mpremote, pyserial)
-├── deploy.py                   # ESP32 deployment script (uploads embedded/ to device)
+├── deploy.py                   # ESP32 deployment script (uploads esp32/ to device)
 ├── .claude/                    # Claude Code configuration
 │   └── commands/
 │       ├── continue.md         # /continue - Resume development workflow
@@ -124,20 +126,22 @@ SmartHomeProject/
 
 ## Directory Purposes
 
-### `/embedded` - ESP32 MicroPython Code
+### `/esp32` - ESP32 MicroPython Code
 
 **Purpose**: All code that runs on the ESP32 hardware
 
 **Key Files**:
+
 - `main.py` - Main event loop, coordinates sensors/outputs
 - `boot.py` - WiFi connection, runs before main.py
 - `config.py` - Credentials (gitignored)
 
 **Subdirectories**:
+
 - `sensors/` - Classes for reading hardware sensors
 - `outputs/` - Classes for controlling outputs (LED, servo, etc.)
 - `display/` - OLED screen driver
-- `network/` - MQTT and Supabase HTTP clients
+- `comms/` - MQTT and Supabase HTTP clients
 - `utils/` - Helper functions (logging, time sync)
 
 ### `/api` - C# ASP.NET Core Backend
@@ -145,10 +149,12 @@ SmartHomeProject/
 **Purpose**: REST API layer for querying historical data from Supabase
 
 **Key Files**:
+
 - `Program.cs` - Entry point, dependency injection, middleware
 - `appsettings.json` - Configuration (Supabase URL, CORS)
 
 **Subdirectories**:
+
 - `Controllers/` - API endpoints (GET requests)
 - `Models/` - Data models mapping to database tables
 - `Contracts/` - Request/response DTOs
@@ -160,11 +166,13 @@ SmartHomeProject/
 **Purpose**: Web dashboard for monitoring and controlling the smart home
 
 **Key Files**:
+
 - `app/page.tsx` - Main dashboard page
 - `lib/api-client.ts` - Axios wrapper for C# API
 - `lib/mqtt.ts` - MQTT client for real-time updates
 
 **Subdirectories**:
+
 - `components/` - React components (sensor cards, control buttons)
 
 ### `/planning` - Design Documents
@@ -172,6 +180,7 @@ SmartHomeProject/
 **Purpose**: Architecture decisions, requirements, database schema
 
 **Files**:
+
 - `prd.md` - Functional requirements with user stories
 - `architecture.md` - Data flow diagrams, MQTT topics, API endpoints
 - `database-schema.sql` - Supabase table definitions
@@ -183,6 +192,7 @@ SmartHomeProject/
 **Purpose**: Reference documentation for implementation
 
 **Files**:
+
 - `api-endpoints.md` - REST API documentation
 - `hardware-pinout.md` - ESP32 GPIO pin assignments
 - `mqtt-topics.md` - MQTT topic structure
@@ -193,18 +203,20 @@ SmartHomeProject/
 **Purpose**: Hardware kit documentation and example code from KS5009 kit
 
 **Subdirectories**:
+
 - `reference-code/` - Example MicroPython implementations for each sensor/output
 - `libraries/` - Pre-compiled MicroPython libraries (.mpy files) for ESP32
 - `manuals/` - PDF documentation for hardware kit and components
 - `tools/` - Development tools (Thonny IDE installers, ESP32 firmware)
 
-**Usage**: Reference when implementing sensors/outputs in `embedded/` directory
+**Usage**: Reference when implementing sensors/outputs in `esp32/` directory
 
-### `/embedded/tests` - ESP32 Hardware Validation
+### `/esp32/tests` - ESP32 Hardware Validation
 
 **Purpose**: Validate hardware connections before software implementation
 
 **Key Files**:
+
 - `run_all_tests.py` - Master test orchestrator with comprehensive reporting
 - `test_connections.py` - Tests all GPIO pins, I2C devices, sensors, outputs
 - `test_wifi.py` - Tests WiFi connectivity and network recovery
@@ -213,12 +225,12 @@ SmartHomeProject/
 
 ## Configuration Files
 
-| File | Purpose | Gitignored |
-|------|---------|-----------|
-| `embedded/config.py` | WiFi, MQTT, Supabase credentials for ESP32 | ✅ Yes |
-| `api/appsettings.Development.json` | C# API dev overrides | ✅ Yes |
-| `web/.env.local` | Next.js environment variables | ✅ Yes |
-| `api/appsettings.json` | C# API base config (no secrets) | ❌ No |
+| File                               | Purpose                                    | Gitignored |
+| ---------------------------------- | ------------------------------------------ | ---------- |
+| `esp32/config.py`                  | WiFi, MQTT, Supabase credentials for ESP32 | ✅ Yes     |
+| `api/appsettings.Development.json` | C# API dev overrides                       | ✅ Yes     |
+| `web/.env.local`                   | Next.js environment variables              | ✅ Yes     |
+| `api/appsettings.json`             | C# API base config (no secrets)            | ❌ No      |
 
 ## Development Workflow
 
@@ -228,29 +240,6 @@ SmartHomeProject/
 4. **Test incrementally** - Don't wait until all features are complete
 5. **Deploy to ESP32** - Run `/deploy` or `python deploy.py` to upload code
 6. **Commit with FR reference** - Link code changes to functional requirements
-
-## ESP32 Deployment
-
-**Script**: `deploy.py` (root level)
-**Slash command**: `/deploy`
-
-Uploads `embedded/` directory to ESP32 via `mpremote`:
-```bash
-# Method 1: Slash command (recommended)
-/deploy
-
-# Method 2: Direct execution
-python deploy.py
-```
-
-After deployment, the ESP32 will run:
-1. `boot.py` - WiFi setup, runs on startup
-2. `main.py` - Main application loop
-
-**View ESP32 output**:
-```bash
-mpremote connect /dev/tty.usbserial-10 repl
-```
 
 ## Related Documentation
 
