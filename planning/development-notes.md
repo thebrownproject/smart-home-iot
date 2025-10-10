@@ -941,3 +941,195 @@ All methods working correctly on 16x2 LCD hardware.
 - Features: Auto-connect on boot, retry logic with exponential backoff
 
 ---
+
+## Session 10 - October 10, 2025 - WiFi Manager Implementation ✅
+
+**Phase**: Phase 1 - Embedded System Core  
+**Milestone**: 1.4 - Display & Network Integration  
+**Branch**: phase-1-embedded-core
+
+### Tasks Completed
+
+- [x] **T1.16**: Implement WiFi connection manager
+  - Created WiFiManager class with retry logic (5 attempts, 2-second intervals)
+  - WiFi interface reset on each connection to clear error states
+  - Integrated into main.py with LCD status display
+  - Displays network name (SSID) instead of IP for better UX
+
+### Decisions Made
+
+1. **Folder Naming Refactor:**
+   - Renamed `embedded/` → `esp32/` (hardware-specific naming)
+   - Renamed `network/` → `comms/` (avoids conflict with Python built-in `network` module)
+   - Rationale: `network` is a MicroPython built-in, causing import collision
+   - New structure: `esp32/comms/wifi_manager.py`
+
+2. **Simplified Retry Logic (Not Exponential Backoff):**
+   - Student opted for simple fixed 2-second intervals instead of exponential backoff
+   - 5 total attempts = 10 seconds max wait time
+   - Reasoning: YAGNI principle - single device, stable environment, easier to understand
+   - Exponential backoff is overkill for this use case
+
+3. **WiFi Interface Reset Pattern:**
+   - Added `disconnect()` + `active(False)` + `active(True)` before each connection
+   - Clears "WiFi Internal Error" state from previous failed attempts
+   - Critical for reusability - can call `connect()` multiple times
+
+4. **boot.py WiFi Removal:**
+   - Removed WiFi connection logic from boot.py (caused conflicts)
+   - WiFiManager now has full control from main.py
+   - boot.py only handles minimal system initialization (gc.collect, memory info)
+
+5. **User-Focused Display:**
+   - LCD shows network name (SSID) not IP address
+   - User confirmed: "Connected to CyFi" more useful than "Connected to 10.52.126.8"
+   - IP still printed to serial for debugging
+
+### Issues Encountered & Resolutions
+
+1. **ImportError: no module named 'network.wifi_manager':**
+   - **Problem**: `network` is a built-in MicroPython module
+   - **Root Cause**: Python prioritizes built-ins over user folders
+   - **Solution**: Renamed folder `network/` → `connectivity/` → `comms/`
+   - **Learning**: Always check for built-in module name conflicts
+
+2. **OSError: Wifi Internal Error:**
+   - **Problem**: Calling `wlan.connect()` when already connected or in error state
+   - **First attempt**: Added check for `isconnected()` before connecting
+   - **Second issue**: Failed connection left interface in bad state
+   - **Final solution**: Reset WiFi interface (disconnect + deactivate + activate) before every connection
+   - **Pattern**: `wlan.disconnect()` → `wlan.active(False)` → `time.sleep(0.5)` → `wlan.active(True)`
+
+3. **boot.py vs main.py Conflict:**
+   - **Problem**: boot.py connected to WiFi, then WiFiManager tried to connect again → "Internal Error"
+   - **Solution**: Removed all WiFi logic from boot.py
+   - **Decision**: boot.py = system init only, main.py = application init (including WiFi)
+
+4. **Serial Output Not Visible:**
+   - **Problem**: User couldn't see print statements from boot.py/main.py
+   - **Root Cause**: No serial monitor connected
+   - **Solution**: User connected via VS Code MicroPico REPL
+   - **Learning**: Always connect serial monitor when debugging ESP32 boot sequence
+
+### Implementation Details
+
+**WiFiManager Class (esp32/comms/wifi_manager.py):**
+- `__init__()`: Create WLAN interface, set max_retries = 5
+- `connect()`: Reset interface, connect with retry loop (2s intervals), return True/False
+- `is_connected()`: Returns `wlan.isconnected()` directly (no state caching)
+- `get_ip()`: Returns IP if connected, None otherwise
+
+**main.py Integration:**
+- Shows welcome message on LCD
+- Calls `wifi_manager.connect()`
+- Displays "WiFi Connected / [SSID]" on LCD
+- Enters "Test Mode" (placeholder for future event loop)
+
+**Test File (esp32/tests/network/test_wifi.py):**
+- Creates WiFiManager instance
+- Calls `connect()` method
+- Prints connection status and IP
+
+### Key Learning Moments
+
+**Built-in Module Name Collisions:**
+- MicroPython has built-in modules: `network`, `time`, `machine`, `gc`, etc.
+- User folders with same names cause import priority issues
+- Solution: Use different names (`comms`, `utils`, `helpers`)
+
+**WiFi Error Recovery Pattern:**
+- WiFi interfaces can get stuck in error states
+- Always reset interface before reconnecting: `disconnect()` → `deactivate()` → `activate()`
+- Common in production IoT systems (reset modem before retry)
+
+**UX Design in Embedded Systems:**
+- Technical info (IP) vs user-relevant info (network name)
+- Display what users recognize and care about
+- Keep technical details in logs/serial for developers
+
+### Files Created/Modified
+
+**Created:**
+- `esp32/comms/wifi_manager.py` - WiFiManager class (45 lines)
+- `esp32/comms/__init__.py` - Package marker
+- `esp32/tests/network/test_wifi.py` - WiFi connection test
+
+**Modified:**
+- `esp32/main.py` - Added WiFi connection with LCD status display
+- `esp32/boot.py` - Removed WiFi connection logic (now minimal system init)
+- `planning/tasks.md` - Marked T1.16 complete
+
+**Renamed:**
+- `embedded/` → `esp32/` (project-wide folder rename)
+- `embedded/network/` → `esp32/comms/` (avoid built-in module collision)
+
+### Test Results
+
+**WiFi Connection Test:**
+```
+WiFi Manager Test
+Connecting to WiFi: CyFi
+WiFi connected successfully!
+IP address: 10.52.126.8
+✓ Test PASSED
+```
+
+**Main.py Boot Sequence (LCD Display):**
+1. "Welcome to / Smart Home!" (2 seconds)
+2. "Connecting to / WiFi..." (during connection)
+3. "WiFi Connected / CyFi" (3 seconds)
+4. "Test Mode / Ready" (stays on screen)
+
+**Serial Output:**
+```
+Smart Home System - Boot Sequence Starting...
+System Memory: XXXXX bytes free
+Boot sequence complete - transferring to main.py
+=== Smart Home System Starting ===
+Connecting to WiFi...
+WiFi connected to CyFi at ip: 10.52.126.8
+=== System Ready ===
+Main loop not implemented yet - entering Test Mode
+```
+
+### Next Session - IMPORTANT HANDOVER NOTES
+
+**⚠️ CRITICAL: Documentation Update Required**
+
+All planning documents still reference old folder names. Next session MUST update:
+
+1. **`planning/file-structure.md`**:
+   - Change ALL `embedded/` → `esp32/`
+   - Change ALL `network/` → `comms/`
+   - Update file paths throughout
+
+2. **`planning/tasks.md`**:
+   - Update T1.17 (MQTT): `embedded/network/mqtt_client.py` → `esp32/comms/mqtt_client.py`
+   - Update T1.18 (Supabase): `embedded/network/supabase.py` → `esp32/comms/supabase.py`
+   - Search for ANY remaining `embedded/` or `network/` references
+
+3. **`planning/architecture.md`**:
+   - Update any code examples showing imports
+   - Update file paths in explanations
+
+4. **`CLAUDE.md`**:
+   - Update deployment instructions
+   - Update file structure references
+   - Update example imports
+
+5. **`README.md`** (when created):
+   - Use correct folder structure from start
+
+**Search commands to find remaining references:**
+```bash
+grep -r "embedded/" planning/
+grep -r "network/" planning/
+```
+
+**Next Technical Task:**
+- Continue with **T1.17**: Implement MQTT client wrapper
+- File: `esp32/comms/mqtt_client.py`
+- Use `umqtt.simple` library
+- Methods: `connect()`, `publish()`, `subscribe()`, `check_messages()`
+
+---

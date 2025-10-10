@@ -149,13 +149,17 @@
   - **Started**: 2025-10-09
   - **Completed**: 2025-10-09
 
-- [ ] **T1.16**: Implement WiFi connection manager
+- [x] **T1.16**: Implement WiFi connection manager
 
-  - File: `embedded/network/wifi_manager.py`
+  - File: `esp32/comms/wifi_manager.py`
   - Auto-connect on boot using credentials from config.py
-  - Retry logic with exponential backoff
+  - Retry logic with simple 2-second intervals (5 attempts)
   - Methods: `connect()`, `is_connected()`, `get_ip()`
-  - Test: Connect to WiFi, print IP address
+  - WiFi interface reset on each connection to clear error states
+  - Integrated into main.py with LCD status display showing network name
+  - Test: Connect to WiFi, display network name on LCD
+  - **Started**: 2025-10-10
+  - **Completed**: 2025-10-10
 
 - [ ] **T1.17**: Implement MQTT client wrapper
 
