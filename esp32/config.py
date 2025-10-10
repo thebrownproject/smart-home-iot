@@ -10,8 +10,8 @@ To set up your ESP32:
 """
 
 # WiFi Configuration
-WIFI_SSID = "CyFi"
-WIFI_PASSWORD = "SecurityA40"
+WIFI_SSID = "TP-LINK_DC8B"
+WIFI_PASSWORD = "27653975"
 
 # MQTT Broker (HiveMQ Cloud)
 MQTT_BROKER = "301d2478bf674954a8b8e5ad05732a73.s1.eu.hivemq.cloud"

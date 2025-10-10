@@ -10,7 +10,7 @@ wifi_manager = WiFiManager()
 oled = OLED()
 
 # Show welcome message
-oled.show_text("Welcome to", "Smart Home!")
+oled.show_text("Welcome to", "Smart Home Lab!")
 time.sleep(2)
 
 # Connect to WiFi

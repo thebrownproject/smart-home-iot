@@ -1133,3 +1133,53 @@ grep -r "network/" planning/
 - Methods: `connect()`, `publish()`, `subscribe()`, `check_messages()`
 
 ---
+
+## Session 11 - October 11, 2025 - MQTT Client Wrapper & Documentation Updates ✅
+
+**Phase**: Phase 1 - Embedded System Core
+**Milestone**: 1.4 - Display & Network Integration
+**Branch**: phase-1-embedded-core
+
+### Tasks Completed
+
+- [x] **T1.17**: Implement MQTT client wrapper
+  - Created `SmartHomeMQTTClient` class with full error handling
+  - All methods return boolean status for graceful error handling
+  - Comprehensive test with self-echo pattern (subscribe + publish + check_messages)
+  - Successfully tested on hardware with HiveMQ Cloud broker
+
+### Decisions Made
+
+1. **Class Naming to Avoid Collision:**
+   - Named class `SmartHomeMQTTClient` instead of `MQTTClient`
+   - Rationale: `MQTTClient` already imported from `umqtt.simple` - would cause name collision
+
+2. **Callback-First Subscribe Pattern:**
+   - Must call `set_callback()` BEFORE `subscribe()`
+   - Order matters: `self.client.set_callback(callback)` → `self.client.subscribe(topic)`
+
+3. **Library Organization:**
+   - Moved MicroPython libraries to `esp32/lib/` in repository
+   - Updated `planning/file-structure.md` to document library structure
+
+### Issues Encountered & Resolutions
+
+1. **Name Collision**: `MQTTClient` import vs class name → Renamed to `SmartHomeMQTTClient`
+2. **Subscribe Order**: Callback must be set before subscribe → Swapped order in method
+3. **Unreachable Code**: Duplicate line after return → Deleted line 51
+
+### Test Results
+
+MQTT Client Wrapper Test: ✅ ALL PASSED
+- Connected to HiveMQ Cloud
+- Subscribed to `home/test`
+- Published test message
+- Received message via callback
+
+### Next Session
+
+- Continue with **T1.18**: Implement Supabase HTTP client
+- File: `esp32/comms/supabase.py`
+- Use `urequests` for HTTP POST to Supabase
+
+---

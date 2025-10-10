@@ -161,13 +161,15 @@
   - **Started**: 2025-10-10
   - **Completed**: 2025-10-10
 
-- [ ] **T1.17**: Implement MQTT client wrapper
+- [x] **T1.17**: Implement MQTT client wrapper
 
   - File: `esp32/comms/mqtt_client.py`
   - Use `umqtt.simple` or `umqtt.robust` library
   - Methods: `connect()`, `publish(topic, payload)`, `subscribe(topic, callback)`, `check_messages()`
   - Handle connection failures gracefully
   - Test: Publish to `home/test` topic, verify on HiveMQ web console
+  - **Started**: 2025-10-11
+  - **Completed**: 2025-10-11
 
 - [ ] **T1.18**: Implement Supabase HTTP client
   - File: `esp32/comms/supabase.py`

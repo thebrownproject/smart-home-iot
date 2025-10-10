@@ -27,11 +27,24 @@ SmartHomeProject/
 │   ├── utils/
 │   │   ├── time_sync.py       # NTP time synchronization
 │   │   └── rfid_database.py   # Authorised RFID cards list
+│   ├── lib/                    # MicroPython libraries (deployed to ESP32)
+│   │   ├── dht.mpy            # DHT11/22 sensor library
+│   │   ├── ssl.mpy            # SSL/TLS support
+│   │   ├── umqtt/             # MQTT client library
+│   │   ├── mfrc522_i2c.py     # RFID reader driver
+│   │   ├── mfrc522_config.py  # RFID configuration
+│   │   ├── i2c_lcd.py         # I2C LCD driver
+│   │   ├── lcd_api.py         # LCD API implementation
+│   │   └── soft_iic.py        # Software I2C implementation
 │   └── tests/                  # ESP32 hardware validation tests
 │       ├── sensors/            # Sensor validation tests
 │       ├── outputs/            # Output validation tests
 │       ├── display/            # Display validation tests
-│       ├── test_mqtt.py        # MQTT connectivity test
+│       ├── comms/              # Communication module tests
+│       ├── test_mqtt.py        # MQTT connectivity test (legacy)
+│       ├── test_wifi.py        # WiFi connectivity test
+│       ├── test_connections.py # Complete hardware validation
+│       ├── run_all_tests.py    # Master test orchestrator
 │       └── I2Ctst.py           # I2C bus scanner
 │
 ├── api/                        # C# .NET Web API (Phase 2)
@@ -143,6 +156,8 @@ SmartHomeProject/
 - `display/` - OLED screen driver
 - `comms/` - MQTT and Supabase HTTP clients
 - `utils/` - Helper functions (logging, time sync)
+- `lib/` - Third-party MicroPython libraries (deployed with code)
+- `tests/` - Hardware validation and module testing
 
 ### `/api` - C# ASP.NET Core Backend
 
@@ -211,6 +226,22 @@ SmartHomeProject/
 
 **Usage**: Reference when implementing sensors/outputs in `esp32/` directory
 
+### `/esp32/lib` - MicroPython Libraries
+
+**Purpose**: Third-party libraries required by ESP32 code, deployed alongside application code
+
+**Key Libraries**:
+
+- `dht.mpy` - Pre-compiled DHT11/DHT22 sensor driver (binary format for performance)
+- `ssl.mpy` - SSL/TLS support for secure MQTT connections
+- `umqtt/` - MQTT client library (`simple` and `robust` implementations)
+- `mfrc522_i2c.py` - RFID RC522 reader driver for I2C communication
+- `i2c_lcd.py` / `lcd_api.py` - LCD1602 display drivers
+
+**Usage**: These libraries are imported by your application code (e.g., `from umqtt.simple import MQTTClient`). The deployment script uploads this folder to the ESP32 alongside your code.
+
+**Note**: Originally sourced from `Docs/libraries/`, now copied to `esp32/lib/` for easier deployment and version control.
+
 ### `/esp32/tests` - ESP32 Hardware Validation
 
 **Purpose**: Validate hardware connections before software implementation
@@ -220,6 +251,14 @@ SmartHomeProject/
 - `run_all_tests.py` - Master test orchestrator with comprehensive reporting
 - `test_connections.py` - Tests all GPIO pins, I2C devices, sensors, outputs
 - `test_wifi.py` - Tests WiFi connectivity and network recovery
+- `test_mqtt.py` - Legacy MQTT connectivity test
+
+**Subdirectories**:
+
+- `sensors/` - Individual sensor validation tests (DHT11, PIR, Gas, Steam, RFID)
+- `outputs/` - Individual output validation tests (LED, RGB, Servo, Fan, Buzzer)
+- `display/` - Display validation tests (LCD1602/OLED)
+- `comms/` - Communication module tests (WiFi, MQTT, Supabase)
 
 **Usage**: Run on ESP32 to verify all hardware components are wired correctly
 
