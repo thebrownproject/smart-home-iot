@@ -1267,3 +1267,127 @@ Database entry: id=2, device_id=1, sensor_type="temperature", value=25.00, unit=
 - Consider adding other helper methods if needed (motion_events, gas_alerts)
 
 ---
+
+## Session 13 - October 11, 2025 - Supabase HTTP Client Complete ✅
+
+**Phase**: Phase 1 - Embedded System Core
+**Milestone**: 1.4 - Display & Network Integration
+**Branch**: phase-1-embedded-core
+
+### Tasks Completed
+
+- [x] **T1.18**: Implement Supabase HTTP client
+  - Completed `insert_rfid_scan()` method with proper column naming
+  - Fixed column name from `result` to `access_result` (matches schema VARCHAR(20))
+  - Added `authorised_card_id` foreign key parameter with default None
+  - Tested RFID scan logging to database successfully
+
+### Decisions Made
+
+1. **RFID Scan Method Design - Three Parameters:**
+   - `insert_rfid_scan(card_id, result, authorised_card_id=None)`
+   - `card_id`: Raw RFID card identifier string (e.g., "147210521")
+   - `result`: Access outcome as string - `"granted"` or `"denied"` (VARCHAR, not boolean)
+   - `authorised_card_id`: Optional FK to `authorised_cards` table (audit trail for valid cards)
+   - Rationale: Supports both denied scans (FK=None) and authorized scans (FK=record ID)
+
+2. **Column Naming Alignment:**
+   - Database schema uses `access_result VARCHAR(20)` not `result BOOLEAN`
+   - Allows extensibility: `"granted"`, `"denied"`, future states like `"expired"`, `"revoked"`
+   - Method parameter name `result` maps to database column `access_result` in data dict
+
+3. **Foreign Key for Audit Trail:**
+   - `authorised_card_id` creates relational link: rfid_scans → authorised_cards → users
+   - Nullable FK allows logging denied scans (unknown cards) without breaking constraints
+   - When card is authorized, stores both raw card_id AND the authorised_cards.id reference
+   - Enables queries like "Who accessed the door?" via JOIN relationships
+
+4. **YAGNI Applied - Additional Methods Deferred:**
+   - Discussed need for `check_card_authorized()` (GET request), `insert_motion_event()`, `insert_gas_alert()`
+   - Decision: Add methods as-needed when tasks require them (T1.20, T1.22, T1.23)
+   - Rationale: Reduces current complexity, saves ESP32 memory, methods added incrementally
+
+5. **Consistent Implementation Pattern:**
+   - `insert_rfid_scan()` exactly matches `insert_sensor_log()` structure
+   - Same headers: `apikey`, `Authorization`, `Content-Type`
+   - Same encoding: `ujson.dumps(data).encode('utf-8')`
+   - Same response handling: Check 201 status, close immediately, return boolean
+   - Same error handling: Try/except with print, return False on failure
+
+### Issues Encountered & Resolutions
+
+1. **Schema Column Name Mismatch:**
+   - **Problem**: Initial implementation used `"result": result` in data dict
+   - **Root Cause**: Database column is `access_result`, not `result`
+   - **Solution**: Changed line 45 to `"access_result": result`
+   - **Learning**: Always verify exact column names from schema before implementation
+
+2. **RFID Workflow Clarification:**
+   - **Question**: Is `insert_rfid_scan()` for authorization or logging?
+   - **Answer**: It's for logging AFTER authorization check happens
+   - **Full workflow**:
+     1. Read card →
+     2. Check authorization (future `check_card_authorized()` GET method) →
+     3. Respond to user (door open or buzzer) →
+     4. Log event with result (`insert_rfid_scan()` POST method)
+   - **Learning**: Separate GET (query/validate) from POST (insert/log) operations in REST APIs
+
+3. **Parameter vs Column Name Discussion:**
+   - **Question**: Should method parameter be `result` or `access_result` to match schema?
+   - **Decision**: Keep parameter as `result` (simpler), map to `access_result` in data dict
+   - **Rationale**: Cleaner method signature, mapping happens in one place (line 45)
+
+### Key Learning Moments
+
+**REST API Design Patterns:**
+- **GET requests**: Query data (e.g., check if card exists in authorised_cards table)
+- **POST requests**: Create data (e.g., log scan event to rfid_scans table)
+- RFID access control needs BOTH operations in sequence
+
+**Database Schema Types:**
+- VARCHAR allows flexible categorical values ("granted", "denied", "expired")
+- BOOLEAN limits to true/false, less extensible for future states
+- Trade-off: VARCHAR uses slightly more storage but provides better future-proofing
+
+**Foreign Key Relationships:**
+- Nullable FKs (`ON DELETE SET NULL`) preserve history when referenced records deleted
+- Example: If authorised_card deleted, scan history remains with NULL FK (card no longer valid)
+- Enables audit queries even after card/user removal from system
+
+### Files Modified
+
+**Modified:**
+- `esp32/comms/supabase.py` - Fixed column name `result` → `access_result` (line 45)
+- `planning/tasks.md` - Marked T1.18 complete with updated method signatures
+
+### Test Results
+
+**RFID Scan Insert Test:**
+```
+Status Code: 201 (Success)
+Result: True
+Database entry: device_id=1, card_id="test123", access_result="denied", authorised_card_id=NULL
+```
+
+### Milestone 1.4 Status
+
+**Milestone 1.4: Display & Network Integration** ✅ **COMPLETE**
+
+All tasks finished:
+- ✅ T1.15: OLED/LCD display class
+- ✅ T1.16: WiFi connection manager
+- ✅ T1.17: MQTT client wrapper
+- ✅ T1.18: Supabase HTTP client (both methods working)
+
+**Ready to begin Milestone 1.5: Core Automation Logic!**
+
+### Next Session
+
+- Begin **Milestone 1.5**: Core Automation Logic (US1-US5)
+- Start with **T1.19**: Implement time-based LED control
+  - Add NTP time sync utility
+  - Check current time (8pm-7am range)
+  - Control LED based on time of day
+  - Implements FR1.1, FR1.2, FR1.3 (HOUSE)
+
+---
