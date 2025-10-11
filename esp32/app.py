@@ -1,30 +1,15 @@
 import time
-import gc
 
 class SmartHomeApp:
     def __init__(self, system):
-        # Communication
-        self.wifi_manager = system.wifi_manager
-        self.supabase = None  # Lazy-loaded when needed
-        self.mqtt_client = system.mqtt_client
-        # Display
-        self.oled = system.oled
-        # Outputs
-        self.buzzer = system.buzzer
-        self.fan = system.fan
-        self.led = system.led
-        self.rgb = system.rgb
-        self.door_servo = system.door_servo
-        self.window_servo = system.window_servo
-        # Sensors
-        self.dht11 = system.dht11
-        self.gas = system.gas
-        self.pir = system.pir
-        self.steam = system.steam
-        self.rfid = system.rfid
-        # Utils
-        self.time_sync = system.time_sync
+        # Store Memory reference
         self.memory = system.memory
+
+        # Create persistent MQTT connection (can't be deleted)
+        from comms.mqtt_client import SmartHomeMQTTClient
+        self.mqtt = SmartHomeMQTTClient()
+        self.mqtt.connect()
+        self.memory.collect("After MQTT setup")
 
     def run(self):
         print("App running...")
@@ -46,29 +31,44 @@ class SmartHomeApp:
             time.sleep(1)  # Loop runs every 1 second
     
     def _handle_time_based_lighting(self):
-        if self.time_sync.is_nighttime():
-            self.led.on()
-            self.oled.show_text("Good Evening", "lights are on")
+        from utils.time_sync import TimeSync
+        from outputs.led import LED
+        from display.oled import OLED
+
+        time_sync = TimeSync()
+        led = LED()
+        oled = OLED()
+
+        if time_sync.is_nighttime():
+            led.on()
+            oled.show_text("Good Evening", "lights are on")
         else:
-            self.led.off()
-            self.oled.show_text("Good day", "lights are off")
+            led.off()
+            oled.show_text("Good day", "lights are off")
+
+        del time_sync, led, oled
+        self.memory.collect("After time-based lighting")
 
     def _handle_motion_detection(self):
         """Check PIR and respond to motion (FR2.1, FR2.2, FR2.3)"""
-        if self.pir.is_motion_detected():
-            # Free memory BEFORE network operations
-            self.memory.collect("Motion detection")
+        from sensors.pir import PIRSensor
+        from outputs.rgb import RGB
 
-            self.rgb.set_color(255, 165, 0)  # Orange
+        pir = PIRSensor()
+        rgb = RGB()
 
-            # MQTT publish (lightweight, ~1KB)
-            if self.mqtt_client.publish("home/motion", '{"detected": true}'):
+        if pir.is_motion_detected():
+            self.memory.collect("Motion detected")
+
+            rgb.set_color(255, 165, 0)  # Orange
+
+            # MQTT publish (uses persistent connection)
+            if self.mqtt.publish("home/motion", '{"detected": true}'):
                 print("Motion - MQTT OK")
 
-            # Aggressive cleanup before HTTP
             self.memory.collect("Before DB insert")
 
-            # Lazy-load Supabase only when needed
+            # Supabase insert
             try:
                 from comms.supabase import Supabase
                 supabase = Supabase()
@@ -76,14 +76,15 @@ class SmartHomeApp:
                     print("Motion - DB OK")
                 else:
                     print("Motion - DB FAILED")
-                # Delete reference immediately to free memory
                 del supabase
             except Exception as e:
                 print(f"Motion - DB ERROR: {e}")
 
-            # Final cleanup
-            self.memory.collect("After DB insert")
+            self.memory.collect("After motion handling")
         else:
-            self.rgb.off()
+            rgb.off()
+
+        del pir, rgb
+        self.memory.collect("After motion check")
     
                 

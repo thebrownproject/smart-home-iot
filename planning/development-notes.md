@@ -1572,3 +1572,203 @@ Tasks remaining:
 - Will need to add database/MQTT methods as needed (YAGNI)
 
 ---
+## Session 15 - October 12, 2025 - Ultra-Lazy Loading Memory Optimization & PIR Motion Detection ✅
+
+**Phase**: Phase 1 - Embedded System Core
+**Milestone**: 1.5 - Core Automation Logic (US1-US5)
+**Branch**: phase-1-embedded-core
+
+### Tasks Completed
+
+- [x] **T1.20**: Implement PIR motion response (FR2.1, FR2.2, FR2.3 - HOUSE/DATABASE)
+  - PIR sensor polls every 5 seconds in main loop
+  - On motion: RGB sets to orange, publishes MQTT, logs to database
+  - Successfully inserts motion events to Supabase `motion_events` table
+  - Memory-optimized ultra-lazy loading pattern implemented throughout
+
+### Major Decisions Made
+
+1. **Ultra-Lazy Loading Architecture Pattern:**
+   - **Problem**: ESP32 running out of memory (ENOMEM errors) during HTTP POST operations
+   - **Root cause**: Loading all sensors/outputs at boot consumed 25KB, leaving only 70KB free (HTTP needs 25-30KB)
+   - **Solution**: Load sensors/outputs inside methods only when needed, delete immediately after use
+   - Pattern: `from module import Class` → `obj = Class()` → use → `del obj` → `self.memory.collect()`
+   - Applied to: system_init.py (all boot methods) and app.py (all event handlers)
+
+2. **SystemInit Refactor - Minimal Boot:**
+   - Removed ALL imports from top of file except essentials (time, Memory, config)
+   - `__init__()` creates ONLY Memory utility object (1 object vs previous 14)
+   - Each init method imports what it needs: WiFi, OLED, TimeSync, MQTT
+   - Objects deleted immediately after use with `del` and `memory.collect()`
+   - Result: Boot memory improved from 72KB → 95KB free (+23KB / +32%)
+
+3. **SmartHomeApp Refactor - Event-Scoped Objects:**
+   - `__init__()` creates ONLY Memory reference and persistent MQTT client (can't delete MQTT - needs persistent connection)
+   - Each event handler imports sensors/outputs locally
+   - Time-based lighting: Imports TimeSync, LED, OLED → uses → deletes
+   - Motion detection: Imports PIRSensor, RGB → uses → deletes, then lazy-loads Supabase for DB insert
+   - Memory baseline stable at 89-91KB throughout operation
+
+4. **MQTT Persistence Requirement:**
+   - Initial attempt deleted MQTT client after each publish → error: "'NoneType' object has no attribute 'write'"
+   - Learning: MQTT maintains TCP connection to broker, cannot be recreated each time
+   - Solution: Create MQTT once in app.__init__(), keep persistent (~3-5KB cost worth it)
+   - All other objects (sensors, outputs, Supabase) can be safely deleted
+
+5. **Memory Utility Class Pattern:**
+   - Created `esp32/utils/memory.py` for consistent garbage collection tracking
+   - Methods: `collect(reason)` prints memory after GC, `mem_free()` prints current free memory
+   - Used throughout codebase: `self.memory.collect("After X")` for visibility
+   - Helps debug memory leaks and track memory lifecycle
+
+### Memory Optimization Results
+
+| Metric | Before | After | Improvement |
+|--------|--------|-------|-------------|
+| **Boot start** | 96KB | **107KB** | +11KB |
+| **After init** | 72KB | **95KB** | **+23KB (+32%)** |
+| **App baseline** | 70KB | **91KB** | +21KB |
+| **During motion event** | 69KB (ENOMEM) | **86KB** | +17KB |
+| **HTTP POST success** | ❌ Failed | ✅ **Working** | Fixed! |
+
+**Memory stability:**
+- Baseline: 89-91KB free (idle)
+- Motion event: 86-88KB (peak HTTP usage 84KB)
+- Recovery: Returns to 89-91KB after event (GC working correctly)
+
+### Implementation Pattern Established
+
+**For one-time/infrequent operations (< 1Hz):**
+```python
+def _method(self):
+    from module import Class
+    obj = Class()
+    # ... use obj ...
+    del obj
+    self.memory.collect("After method")
+```
+
+**For frequent operations (> 1Hz):**
+- Keep object loaded (e.g., MQTT client)
+- Trade-off: Persistent memory cost vs performance
+
+**Objects that MUST persist:**
+- ❌ MQTT client (maintains TCP connection)
+- ❌ Memory utility (used throughout)
+
+**Objects that CAN be lazy-loaded:**
+- ✅ All sensors (PIR, DHT11, Gas, Steam, RFID)
+- ✅ All outputs (LED, RGB, Servo, Fan, Buzzer)
+- ✅ OLED display
+- ✅ Supabase client
+- ✅ WiFi manager (only needed at boot)
+- ✅ TimeSync (only needed periodically)
+
+### Issues Encountered & Resolutions
+
+1. **ENOMEM Error During HTTP POST:**
+   - **Problem**: `[Errno 12] ENOMEM` when calling `supabase.insert_motion_event()`
+   - **Root Cause**: Only 69KB free before HTTP, but `urequests` needs 25-30KB for headers + body + response buffer
+   - **First attempt**: Lazy-loaded Supabase → helped slightly (72KB free)
+   - **Second attempt**: Removed `.encode('utf-8')` redundancy (RFID project pattern) → saved 2KB
+   - **Final solution**: Ultra-lazy loading ALL objects → 91KB free baseline → HTTP works!
+
+2. **Learning from RFID Scanner Project:**
+   - Reviewed working RFID project code at `/Users/fraserbrown/Documents/Programming/Kangan/Web_Dev/Repos/rfid-rabbit-shelter-tracking-system/RFID/handheld-rfid-scanner-firmware.py`
+   - Key insight: That project imports WiFi inside `_connect_to_wifi()` method and deletes after use
+   - Pattern: `wifi_manager = WiFiManager()` → use → `del wifi_manager` → `gc.collect()`
+   - Also learned: Send JSON directly without `.encode('utf-8')` - urequests handles it
+
+3. **MQTT Persistence Issue:**
+   - **Problem**: Created new MQTT client in each motion event → `'NoneType' object has no attribute 'write'`
+   - **Root Cause**: MQTT needs persistent TCP socket connection to broker
+   - **Solution**: Create MQTT once in `app.__init__()`, store as `self.mqtt`, reuse for all publishes
+   - **Memory cost**: 3-5KB permanent (acceptable for reliability)
+
+4. **Memory Class Import in Supabase:**
+   - **Problem**: `supabase.py` had `import gc` and used `gc.collect()`, inconsistent with project pattern
+   - **Solution**: Added `from utils.memory import Memory` and `self.memory = Memory()` to Supabase class
+   - **Benefit**: Consistent memory tracking throughout codebase with labeled collection points
+
+### Key Learning Moments
+
+**Memory Fragmentation in Embedded Systems:**
+- It's not just about total free memory - need CONTIGUOUS blocks
+- 70KB fragmented memory < 90KB contiguous for large allocations
+- HTTP requests need 25-30KB contiguous block for buffers
+- Solution: Aggressive GC before expensive operations creates large free blocks
+
+**Import Timing Matters:**
+- Imports at top of file: Module loaded permanently into RAM
+- Imports inside function: Module still cached by Python, but object lifecycle controlled
+- `del` + `gc.collect()` frees object memory, not module code (acceptable trade-off)
+
+**GET vs POST Memory Footprint:**
+- GET requests: Small query string, small JSON response (~10-15KB)
+- POST requests: Large headers + JSON body + response buffer (~25-30KB)
+- For RFID auth: Can use GET for real-time checks (smaller memory), batch POST logs later
+
+**Which Objects Need Persistence:**
+- Stateful objects (MQTT, WiFi) maintain connections → must persist
+- Stateless objects (sensors, outputs) recreate instantly → can delete
+- Rule: If it holds a network socket or file handle, keep it loaded
+
+### Files Created/Modified
+
+**Modified:**
+- `esp32/system_init.py` - Ultra-lazy loading: only Memory in __init__, all else imported in methods
+- `esp32/app.py` - Ultra-lazy loading: only Memory + MQTT in __init__, sensors/outputs imported in handlers
+- `esp32/comms/supabase.py` - Added Memory class usage, removed `.encode('utf-8')` from POST data
+- `esp32/utils/memory.py` - Created Memory utility class for consistent GC tracking
+
+**Commits:**
+- "Implement lazy-loading pattern for Supabase client to optimize memory"
+- "Implement aggressive lazy-loading to solve ENOMEM memory issues"
+
+### Test Results
+
+**Motion Detection Test:**
+```
+=== Smart Home System Starting ===
+[MEMORY] GC after Before system init: 107040 bytes free.
+...
+[MEMORY] GC after After system init: 95696 bytes free.
+=== System Ready ===
+[MEMORY] GC after After MQTT setup: 91248 bytes free.
+App running...
+[MEMORY] GC after Motion detected: 88816 bytes free.
+Motion - MQTT OK
+[MEMORY] GC after Before DB insert: 88832 bytes free.
+[MEMORY] GC after Before insert_motion_event: 86704 bytes free.
+[MEMORY] GC after After insert_motion_event: 84112 bytes free.
+Motion - DB OK
+[MEMORY] GC after After motion handling: 86336 bytes free.
+[MEMORY] GC after After motion check: 86432 bytes free.
+```
+
+✅ **All systems working:**
+- Time-based LED control: Loading/deleting TimeSync, LED, OLED each check
+- Motion detection: Loading/deleting PIR, RGB each poll
+- MQTT publishing: Using persistent MQTT client
+- Database inserts: Lazy-loading Supabase, deleting after use
+- Memory stable: 86-91KB throughout operation
+
+### Architecture Impact
+
+**Scalability for remaining tasks:**
+- T1.21 (Steam): Will import Steam + WindowServo in handler
+- T1.22 (Gas): Will import Gas + Fan in handler
+- T1.23 (RFID): Will import RFID + Buzzer + DoorServo in handler (GET for auth check, batch POST for logs)
+- T1.24 (DHT11): Will import DHT11 + OLED in handler
+
+**Pattern is proven and repeatable** - each automation loads only what it needs, memory stays stable ~85-90KB.
+
+### Next Session
+
+- Mark T1.20 complete in tasks.md
+- Continue with **T1.21**: Steam detection & window control
+- Apply same ultra-lazy pattern: Import Steam + WindowServo inside handler
+- Expected memory: Stable ~85-90KB
+
+---
+
