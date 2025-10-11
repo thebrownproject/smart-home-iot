@@ -68,13 +68,24 @@ Example: `FR2.1 (HOUSE): PIR sensor detects motion`
 
 ## ESP32 Development (MicroPython)
 
-**System Architecture (3-Layer Boot Pattern)**:
+**System Architecture (3-Layer Boot Pattern with Modular Handlers)**:
 
 - `main.py` - Entry point (15 lines): Creates SystemInit → calls init() → creates SmartHomeApp → calls run()
 - `system_init.py` - Hardware abstraction layer: Initializes all sensors, outputs, comms modules; handles boot sequence (WiFi, time sync, display messages)
-- `app.py` - Application logic layer: SmartHomeApp class with main event loop containing automation rules (time-based LED, PIR motion, gas detection, etc.)
+- `app.py` - Event loop orchestrator: SmartHomeApp class imports and calls handler functions in main loop
+- `handlers/` - Modular automation logic: One file per feature (lighting, motion, steam, gas, rfid, environment)
 
-**Pattern**: main.py is minimal orchestration, system_init handles hardware, app handles business logic. This separation makes code maintainable as automation complexity grows.
+**Pattern**: main.py is minimal orchestration, system_init handles hardware initialization, app.py orchestrates the event loop, and handlers/ contain the automation rules. Each handler lazy-loads dependencies (sensors/outputs) inside the function, uses them, then deletes and runs garbage collection for memory efficiency.
+
+**Handler Structure Example**:
+```python
+# handlers/motion.py
+def handle_motion_detection(system, mqtt):
+    """Check PIR sensor and respond to motion events"""
+    from sensors.pir import PIRSensor
+    from outputs.rgb import RGB
+    # ... lazy load, use, delete pattern
+```
 
 **Deploy to hardware**:
 

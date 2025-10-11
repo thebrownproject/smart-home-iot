@@ -193,12 +193,14 @@
   - **Started**: 2025-10-11
   - **Completed**: 2025-10-11
 
-- [ ] **T1.20**: Implement PIR motion response **(FR2.1, FR2.2, FR2.3 - HOUSE/DATABASE)**
+- [x] **T1.20**: Implement PIR motion response **(FR2.1, FR2.2, FR2.3 - HOUSE/DATABASE)**
 
   - Main loop: Poll PIR sensor
   - On motion: Set RGB to orange, log to `motion_events` table
   - Publish MQTT event to `home/motion`
   - Test: Trigger motion, verify RGB and MQTT message
+  - **Started**: 2025-10-12
+  - **Completed**: 2025-10-12
 
 - [ ] **T1.21**: Implement steam detection & window control **(FR3.1, FR3.2, FR3.3 - HOUSE)**
 

@@ -4,9 +4,16 @@
 SmartHomeProject/
 ├── esp32/                       # ESP32 MicroPython code
 │   ├── main.py                 # Entry point (orchestration only, 15 lines)
-│   ├── app.py                  # SmartHomeApp class (event loop with automation logic)
+│   ├── app.py                  # SmartHomeApp class (event loop orchestrator)
 │   ├── system_init.py          # SystemInit class (hardware init, boot sequence)
 │   ├── config.py               # WiFi, MQTT, Supabase credentials
+│   ├── handlers/               # Event handler modules (automation logic)
+│   │   ├── lighting.py         # Time-based LED control (FR1)
+│   │   ├── motion.py           # PIR motion detection (FR2)
+│   │   ├── steam.py            # Moisture detection & window control (FR3)
+│   │   ├── gas.py              # Gas detection & emergency response (FR4)
+│   │   ├── rfid.py             # RFID access control (FR5)
+│   │   └── environment.py      # DHT11 monitoring & asthma alerts (FR6, FR7)
 │   ├── sensors/
 │   │   ├── dht11.py           # Temperature/humidity sensor
 │   │   ├── pir.py             # Motion detection
@@ -147,12 +154,13 @@ SmartHomeProject/
 **Key Files**:
 
 - `main.py` - Entry point, orchestrates SystemInit → SmartHomeApp (15 lines)
-- `app.py` - SmartHomeApp class with main event loop and automation logic
+- `app.py` - SmartHomeApp class: event loop orchestrator, imports and calls handlers
 - `system_init.py` - SystemInit class: hardware initialization, WiFi, time sync, boot sequence
 - `config.py` - Credentials (gitignored)
 
 **Subdirectories**:
 
+- `handlers/` - Event handler modules containing automation logic (one file per feature)
 - `sensors/` - Classes for reading hardware sensors
 - `outputs/` - Classes for controlling outputs (LED, servo, etc.)
 - `display/` - OLED screen driver

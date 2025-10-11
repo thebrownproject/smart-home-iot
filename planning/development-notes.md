@@ -1772,3 +1772,84 @@ Motion - DB OK
 
 ---
 
+
+## Session 16 - October 12, 2025 - Architecture Refactor: Modular Handlers Pattern (In Progress)
+
+**Phase**: Phase 1 - Embedded System Core
+**Milestone**: 1.5 - Core Automation Logic (US1-US5)
+**Branch**: phase-1-embedded-core
+
+### Tasks In Progress
+
+- [~] **Architecture Refactor**: Extract automation logic into modular handlers
+  - Created `esp32/handlers/` directory structure
+  - Created placeholder files: `__init__.py`, `lighting.py`, `motion.py`
+  - Status: Directory created, files empty, extraction not yet complete
+  - Next: Extract `_handle_time_based_lighting()` and `_handle_motion_detection()` from app.py into handler modules
+
+### Decisions Made
+
+1. **Modular Handlers Architecture Pattern:**
+   - **Problem**: app.py growing with inline methods for each automation rule (projected 200-300 lines for 7 features)
+   - **Solution**: Extract each automation feature into separate handler file in `handlers/` directory
+   - **Rationale**: Better organization, easier to test, scales well, professional structure for portfolio
+   - **Pattern**: One handler file per functional requirement group
+
+2. **Naming Convention - "handlers/" over "events/":**
+   - Chose `handlers/` as industry-standard term for IoT/embedded event response
+   - "Events" typically refers to data/messages, not the code that responds to them
+   - Common in event-driven systems, network programming, GUI applications
+
+3. **Handler File Organization:**
+   ```
+   esp32/handlers/
+     ├── lighting.py       # Time-based LED control (FR1)
+     ├── motion.py         # PIR detection (FR2)
+     ├── steam.py          # Moisture + window (FR3)
+     ├── gas.py            # Gas + fan (FR4)
+     ├── rfid.py           # Access control (FR5)
+     └── environment.py    # DHT11 + asthma alerts (FR6, FR7)
+   ```
+
+4. **Handler Function Pattern:**
+   - Each handler is a standalone function, not a class
+   - Takes `system` and `mqtt` parameters (dependency injection)
+   - Lazy-loads sensors/outputs inside function (preserves Session 15 memory pattern)
+   - Pattern: `import → use → delete → gc.collect()`
+
+5. **Documentation Updates Completed:**
+   - Updated `planning/file-structure.md`: Added handlers/ directory
+   - Updated `CLAUDE.md`: Expanded architecture section with handler pattern
+   - Updated `.claude/commands/deploy.md`: Added handlers/ to deployment
+   - Updated `.claude/commands/continue.md`: Referenced handlers/ in key files
+
+### Key Learning Moments
+
+**When to Refactor for Modularity:**
+- "Rule of Three": When you have 2-3 similar patterns, consider extracting
+- Inflection point: Now (2 handlers complete, 5 more to add) is ideal timing
+- Good code organization prevents future technical debt
+- Portfolio value: Demonstrates understanding of maintainability
+
+### Files Created/Modified
+
+**Created:**
+- `esp32/handlers/__init__.py`, `lighting.py`, `motion.py` (placeholders, empty)
+
+**Modified:**
+- `planning/file-structure.md`, `CLAUDE.md`, `.claude/commands/deploy.md`, `.claude/commands/continue.md`
+- `planning/tasks.md` - Marked T1.20 complete
+
+**Not Yet Modified** (next session):
+- `esp32/app.py` - Still contains inline methods
+- Handler files still empty
+
+### Next Session
+
+- Complete handler extraction: Move code from app.py to handler files
+- Refactor app.py run() loop to call handlers
+- Test on ESP32
+- Continue with T1.21: Steam detection (implement in handlers/steam.py)
+
+---
+
