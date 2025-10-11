@@ -171,12 +171,14 @@
   - **Started**: 2025-10-11
   - **Completed**: 2025-10-11
 
-- [ ] **T1.18**: Implement Supabase HTTP client
+- [~] **T1.18**: Implement Supabase HTTP client
   - File: `esp32/comms/supabase.py`
   - Methods: `insert_sensor_log(sensor_type, value, unit)`, `insert_rfid_scan(card_id, result)`
   - Use `urequests` library for HTTP POST
   - Include API key in headers
   - Test: Insert dummy sensor log, verify in Supabase dashboard
+  - **Started**: 2025-10-11
+  - **Status**: `insert_sensor_log()` complete and tested, `insert_rfid_scan()` pending
 
 ---
 

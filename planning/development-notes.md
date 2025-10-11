@@ -1183,3 +1183,87 @@ MQTT Client Wrapper Test: ✅ ALL PASSED
 - Use `urequests` for HTTP POST to Supabase
 
 ---
+## Session 12 - October 11, 2025 - Supabase HTTP Client (Partial)
+
+**Phase**: Phase 1 - Embedded System Core
+**Milestone**: 1.4 - Display & Network Integration
+**Branch**: phase-1-embedded-core
+
+### Tasks In Progress
+
+- [~] **T1.18**: Implement Supabase HTTP client
+  - Created `insert_sensor_log()` method with proper REST API integration
+  - Successfully tested sensor logging to database (temperature=25°C)
+  - Learned about ESP32 urequests constraints (manual JSON encoding, UTF-8 bytes)
+  - `insert_rfid_scan()` method still needs implementation
+
+### Decisions Made
+
+1. **Database Device Record:**
+   - Inserted device record via Supabase MCP: `device_id=1`, `device_type='esp32_main'`, `device_name='Smart Home Lab'`
+   - Rationale: Foreign key constraint requires device record before sensor logs can be inserted
+
+2. **HTTP Client Implementation Pattern:**
+   - Use `urequests.post()` with manual JSON encoding: `ujson.dumps(data).encode('utf-8')`
+   - Required headers: `apikey`, `Authorization`, `Content-Type: application/json`
+   - REST API endpoint: `/rest/v1/table_name` (not direct PostgreSQL connection)
+   - Status code 201 = successful INSERT (not 200)
+
+3. **Memory Safety for ESP32:**
+   - Always call `response.close()` immediately after checking status
+   - Boolean return pattern (`True/False`) matches MQTT client for consistency
+   - Manual JSON string encoding required (MicroPython urequests doesn't auto-handle `json=` parameter reliably)
+
+4. **UTF-8 Encoding Requirement:**
+   - HTTP requires bytes, not strings: `.encode('utf-8')` converts JSON string to bytes
+   - Kept explicit encoding for clarity and reliability across MicroPython builds
+
+### Issues Encountered & Resolutions
+
+1. **HTTP 400 "Empty or invalid json":**
+   - **Problem**: Initial attempts with `json=` parameter and `data=ujson.dumps()` both failed
+   - **Root Cause**: MicroPython urequests expects byte-encoded data, not plain strings
+   - **Solution**: Use `.encode('utf-8')` to convert JSON string to bytes
+   - **Learning**: ESP32 HTTP libraries behave differently than desktop Python requests
+
+2. **HTTP 409 Foreign Key Violation:**
+   - **Problem**: `device_id=1` didn't exist in devices table
+   - **Root Cause**: Schema has foreign key constraint (sensor_logs → devices)
+   - **Solution**: Inserted device record via Supabase MCP with proper device type and name
+   - **Learning**: Always verify database constraints before testing inserts
+
+3. **Garbled Degree Symbol (°C):**
+   - **Problem**: Degree symbol displayed as "��C" in debug output
+   - **Impact**: None - Supabase stored it correctly as "°C" in database
+   - **Note**: MicroPython ujson encoding quirk, doesn't affect actual data
+
+### Test Results
+
+**Supabase Insert Test:**
+```
+Status Code: 201 (Success)
+Result: True
+Database entry: id=2, device_id=1, sensor_type="temperature", value=25.00, unit="°C"
+```
+
+### Files Created/Modified
+
+**Created:**
+- `esp32/comms/supabase.py` - Supabase HTTP client class (partial - only `insert_sensor_log()` complete)
+- `esp32/tests/comms/test_supabase.py` - Basic test for sensor log insertion
+
+**Modified:**
+- `planning/tasks.md` - Marked T1.18 as in-progress with status note
+
+**Database:**
+- Inserted device record: id=1 ("Smart Home Lab")
+- Verified sensor_logs table working with test insert
+
+### Next Session
+
+- **Complete T1.18**: Implement `insert_rfid_scan(card_id, result)` method
+- Add `device_id` foreign key to RFID scan data
+- Test RFID scan logging to database
+- Consider adding other helper methods if needed (motion_events, gas_alerts)
+
+---
