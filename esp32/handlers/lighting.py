@@ -1,4 +1,10 @@
-def _handle_time_based_lighting(self):
+from utils.memory import Memory
+
+class LightingHandler:
+    def __init__(self):
+        self.memory = Memory()
+
+    def handle_time_based_lighting(self):
         from utils.time_sync import TimeSync
         from outputs.led import LED
         from display.oled import OLED

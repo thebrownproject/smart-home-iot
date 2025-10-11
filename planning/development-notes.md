@@ -1773,83 +1773,97 @@ Motion - DB OK
 ---
 
 
-## Session 16 - October 12, 2025 - Architecture Refactor: Modular Handlers Pattern (In Progress)
+## Session 16 - October 12, 2025 - Architecture Refactor: Modular Handlers Pattern ✅
 
 **Phase**: Phase 1 - Embedded System Core
 **Milestone**: 1.5 - Core Automation Logic (US1-US5)
 **Branch**: phase-1-embedded-core
 
-### Tasks In Progress
+### Tasks Completed
 
-- [~] **Architecture Refactor**: Extract automation logic into modular handlers
-  - Created `esp32/handlers/` directory structure
-  - Created placeholder files: `__init__.py`, `lighting.py`, `motion.py`
-  - Status: Directory created, files empty, extraction not yet complete
-  - Next: Extract `_handle_time_based_lighting()` and `_handle_motion_detection()` from app.py into handler modules
+- [x] **Architecture Refactor**: Extract automation logic into modular handler classes
+  - Created handler classes: `LightingHandler`, `MotionHandler`
+  - Refactored `app.py` to use handler pattern with dependency injection
+  - Fixed missing imports and parameter passing
+  - Added RGB orange color to motion detection (FR2.2)
 
 ### Decisions Made
 
-1. **Modular Handlers Architecture Pattern:**
-   - **Problem**: app.py growing with inline methods for each automation rule (projected 200-300 lines for 7 features)
-   - **Solution**: Extract each automation feature into separate handler file in `handlers/` directory
-   - **Rationale**: Better organization, easier to test, scales well, professional structure for portfolio
-   - **Pattern**: One handler file per functional requirement group
+1. **Handler Class Design Pattern (Evolved from Initial Plan):**
+   - **Initial plan**: Standalone functions taking `system` and `mqtt` parameters
+   - **Final implementation**: Handler classes with `__init__()` and method taking `mqtt` parameter
+   - **Rationale**: Classes provide better encapsulation, can own Memory utility, easier to test
+   - **Pattern**: `LightingHandler().handle_time_based_lighting()` - stateless processors
 
-2. **Naming Convention - "handlers/" over "events/":**
-   - Chose `handlers/` as industry-standard term for IoT/embedded event response
-   - "Events" typically refers to data/messages, not the code that responds to them
-   - Common in event-driven systems, network programming, GUI applications
+2. **Dependency Injection for MQTT:**
+   - Handlers don't store MQTT client as instance variable
+   - MQTT passed as method parameter: `handle_motion_detection(self, mqtt)`
+   - App layer owns persistent connections, handlers own business logic
+   - Keeps handlers focused and testable - receive what they need, use it, done
 
-3. **Handler File Organization:**
+3. **Handler Structure:**
+   ```python
+   class MotionHandler:
+       def __init__(self):
+           self.memory = Memory()
+
+       def handle_motion_detection(self, mqtt):
+           from sensors.pir import PIRSensor
+           # ... lazy load, use, delete pattern
    ```
-   esp32/handlers/
-     ├── lighting.py       # Time-based LED control (FR1)
-     ├── motion.py         # PIR detection (FR2)
-     ├── steam.py          # Moisture + window (FR3)
-     ├── gas.py            # Gas + fan (FR4)
-     ├── rfid.py           # Access control (FR5)
-     └── environment.py    # DHT11 + asthma alerts (FR6, FR7)
-   ```
 
-4. **Handler Function Pattern:**
-   - Each handler is a standalone function, not a class
-   - Takes `system` and `mqtt` parameters (dependency injection)
-   - Lazy-loads sensors/outputs inside function (preserves Session 15 memory pattern)
-   - Pattern: `import → use → delete → gc.collect()`
+4. **Ultra-Lazy Loading Preserved:**
+   - Handlers continue Session 15's memory optimization pattern
+   - Each handler imports sensors/outputs inside method
+   - Objects deleted after use with garbage collection
+   - Memory stays stable at 85-90KB
 
-5. **Documentation Updates Completed:**
-   - Updated `planning/file-structure.md`: Added handlers/ directory
-   - Updated `CLAUDE.md`: Expanded architecture section with handler pattern
-   - Updated `.claude/commands/deploy.md`: Added handlers/ to deployment
-   - Updated `.claude/commands/continue.md`: Referenced handlers/ in key files
+### Issues Encountered & Resolutions
+
+1. **Missing Memory Import in motion.py:**
+   - **Problem**: `NameError: name 'Memory' is not defined`
+   - **Solution**: Added `from utils.memory import Memory` at top of file
+   - **Learning**: Each handler needs its own Memory utility for garbage collection
+
+2. **MQTT Reference Error:**
+   - **Problem**: `handle_motion_detection()` referenced `self.mqtt` which doesn't exist
+   - **Solution**: Changed method signature to accept `mqtt` parameter, updated app.py to pass `self.mqtt`
+   - **Pattern**: Dependency injection keeps handlers stateless
+
+3. **Missing RGB Color Change:**
+   - **Problem**: Motion handler checked PIR but didn't set RGB to orange (FR2.2 requirement)
+   - **Solution**: Added `rgb.set_color(255, 165, 0)` when motion detected
+   - **Learning**: Review FRs carefully when refactoring - easy to miss requirements
 
 ### Key Learning Moments
 
-**When to Refactor for Modularity:**
-- "Rule of Three": When you have 2-3 similar patterns, consider extracting
-- Inflection point: Now (2 handlers complete, 5 more to add) is ideal timing
-- Good code organization prevents future technical debt
-- Portfolio value: Demonstrates understanding of maintainability
+**Handler Design Pattern:**
+- Handlers are stateless processors - they don't store app-level resources
+- Dependency injection passes needed resources as method parameters
+- This keeps handlers focused and testable
+- App layer owns persistent connections (MQTT), handlers own business logic
+
+**Refactoring Checklist:**
+- When extracting code to new files, check ALL dependencies (imports, parameters, references)
+- Test immediately after refactor to catch issues early
+- Small, incremental changes are safer than big rewrites
 
 ### Files Created/Modified
 
 **Created:**
-- `esp32/handlers/__init__.py`, `lighting.py`, `motion.py` (placeholders, empty)
+- `esp32/handlers/lighting.py` - LightingHandler class with ultra-lazy loading (24 lines)
+- `esp32/handlers/motion.py` - MotionHandler class with MQTT and Supabase integration (42 lines)
 
 **Modified:**
-- `planning/file-structure.md`, `CLAUDE.md`, `.claude/commands/deploy.md`, `.claude/commands/continue.md`
-- `planning/tasks.md` - Marked T1.20 complete
-
-**Not Yet Modified** (next session):
-- `esp32/app.py` - Still contains inline methods
-- Handler files still empty
+- `esp32/app.py` - Refactored to use handler classes, passes MQTT to handlers
+- `esp32/handlers/motion.py` - Added Memory import, RGB color change, fixed MQTT parameter
 
 ### Next Session
 
-- Complete handler extraction: Move code from app.py to handler files
-- Refactor app.py run() loop to call handlers
-- Test on ESP32
-- Continue with T1.21: Steam detection (implement in handlers/steam.py)
+- Continue with **T1.21**: Steam detection & window control
+- Create `handlers/steam.py` following established pattern
+- Implement: Poll steam sensor → close window servo → flash RGB blue → publish MQTT
+- Expected memory: Stable ~85-90KB with lazy loading pattern
 
 ---
 
