@@ -10,7 +10,7 @@ time.sleep(1)
 
 # Test 1: Show text on two lines
 print("Test 1: Displaying 'Hello' / 'World'")
-oled.show_text("Hello", "World")
+oled.show_text("Hello", "World!")
 time.sleep(3)
 
 # Test 2: Show temperature and humidity

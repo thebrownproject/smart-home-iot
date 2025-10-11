@@ -22,3 +22,8 @@ MQTT_PASSWORD = "StrongPassword123!"
 # Supabase (Direct HTTP)
 SUPABASE_URL = "https://uehfuypnccdqvdssknqq.supabase.co"
 SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlaGZ1eXBuY2NkcXZkc3NrbnFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4ODMwNzksImV4cCI6MjA3NTQ1OTA3OX0.r4L-PRdbqae7nm23-H3FQQFNWnnh4kkA_HrlwGjnPE8"
+
+# Time Configuration (NTP)
+TIMEZONE_OFFSET_HOURS = 10  # AEDT (Melbourne/Sydney) UTC+10
+NIGHT_START_HOUR = 20       # 8pm
+NIGHT_END_HOUR = 7          # 7am
