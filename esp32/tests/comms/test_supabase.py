@@ -13,3 +13,7 @@ print(f"  Result: {result}")
 print("\nTesting insert_rfid_scan")
 result = supabase.insert_rfid_scan("1234567890", "granted", 1)
 print(f"  Result: {result}")
+
+print("\nTesting insert_motion_event")
+result = supabase.insert_motion_event()
+print(f"  Result: {result}")

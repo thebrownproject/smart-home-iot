@@ -1,4 +1,5 @@
 import time
+import gc
 
 class SmartHomeApp:
     def __init__(self, system):
@@ -26,22 +27,55 @@ class SmartHomeApp:
 
     def run(self):
         print("App running...")
+        loop_count = 0
         while True:
-            self._handle_time_based_lighting()
-            self._handle_motion_detection()
-            time.sleep(1)
+            # Check time-based lighting every 60 seconds (1 minute)
+            if loop_count % 60 == 0:
+                self._handle_time_based_lighting()
+
+            # Check motion every 5 seconds
+            if loop_count % 5 == 0:
+                self._handle_motion_detection()
+
+            # Garbage collection every 10 seconds
+            if loop_count % 10 == 0:
+                gc.collect()
+
+            loop_count += 1
+            time.sleep(1)  # Loop runs every 1 second
     
     def _handle_time_based_lighting(self):
         if self.time_sync.is_nighttime():
             self.led.on()
-            self.oled.show_text("Good Evening", "Light is on")
+            self.oled.show_text("Good Evening", "lights are on")
         else:
             self.led.off()
-            self.oled.show_text("Good day", "Light is off")
+            self.oled.show_text("Good day", "lights are off")
 
     def _handle_motion_detection(self):
+        """Check PIR and respond to motion (FR2.1, FR2.2, FR2.3)"""
         if self.pir.is_motion_detected():
-            self.rgb.set_color(0, 165, 165)
-            self.mqtt_client.publish("home/motion", "Motion detected")
-            # todo: log to database
+            # Free memory BEFORE network operations
+            gc.collect()
+            print(f"Free memory before DB: {gc.mem_free()} bytes")
+
+            self.rgb.set_color(255, 165, 0)  # Orange
+
+            # MQTT publish
+            if self.mqtt_client.publish("home/motion", '{"detected": true}'):
+                print("Motion - MQTT OK")
+
+            gc.collect()
+            print(f"Free memory after MQTT: {gc.mem_free()} bytes")
+
+            # Database insert
+            if self.supabase.insert_motion_event():
+                print("Motion - DB OK")
+            else:
+                print("Motion - DB FAILED")
+
+            gc.collect()
+        else:
+            self.rgb.off()
+    
                 
