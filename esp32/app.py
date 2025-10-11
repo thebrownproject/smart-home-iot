@@ -5,7 +5,7 @@ class SmartHomeApp:
     def __init__(self, system):
         # Communication
         self.wifi_manager = system.wifi_manager
-        self.supabase = system.supabase
+        self.supabase = None  # Lazy-loaded when needed
         self.mqtt_client = system.mqtt_client
         # Display
         self.oled = system.oled
@@ -24,6 +24,7 @@ class SmartHomeApp:
         self.rfid = system.rfid
         # Utils
         self.time_sync = system.time_sync
+        self.memory = system.memory
 
     def run(self):
         print("App running...")
@@ -39,7 +40,7 @@ class SmartHomeApp:
 
             # Garbage collection every 10 seconds
             if loop_count % 10 == 0:
-                gc.collect()
+                self.memory.collect("App loop")
 
             loop_count += 1
             time.sleep(1)  # Loop runs every 1 second
@@ -56,25 +57,32 @@ class SmartHomeApp:
         """Check PIR and respond to motion (FR2.1, FR2.2, FR2.3)"""
         if self.pir.is_motion_detected():
             # Free memory BEFORE network operations
-            gc.collect()
-            print(f"Free memory before DB: {gc.mem_free()} bytes")
+            self.memory.collect("Motion detection")
 
             self.rgb.set_color(255, 165, 0)  # Orange
 
-            # MQTT publish
+            # MQTT publish (lightweight, ~1KB)
             if self.mqtt_client.publish("home/motion", '{"detected": true}'):
                 print("Motion - MQTT OK")
 
-            gc.collect()
-            print(f"Free memory after MQTT: {gc.mem_free()} bytes")
+            # Aggressive cleanup before HTTP
+            self.memory.collect("Before DB insert")
 
-            # Database insert
-            if self.supabase.insert_motion_event():
-                print("Motion - DB OK")
-            else:
-                print("Motion - DB FAILED")
+            # Lazy-load Supabase only when needed
+            try:
+                from comms.supabase import Supabase
+                supabase = Supabase()
+                if supabase.insert_motion_event():
+                    print("Motion - DB OK")
+                else:
+                    print("Motion - DB FAILED")
+                # Delete reference immediately to free memory
+                del supabase
+            except Exception as e:
+                print(f"Motion - DB ERROR: {e}")
 
-            gc.collect()
+            # Final cleanup
+            self.memory.collect("After DB insert")
         else:
             self.rgb.off()
     

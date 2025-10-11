@@ -1,5 +1,4 @@
 from comms.wifi_manager import WiFiManager
-from comms.supabase import Supabase
 from comms.mqtt_client import SmartHomeMQTTClient
 from display.oled import OLED
 from outputs.buzzer import Buzzer
@@ -13,6 +12,7 @@ from sensors.pir import PIRSensor
 from sensors.steam import SteamSensor
 from sensors.rfid import RFIDSensor
 from utils.time_sync import TimeSync
+from utils.memory import Memory
 import time
 from config import WIFI_SSID
 
@@ -20,7 +20,7 @@ class SystemInit:
     def __init__(self):
         # Communication
         self.wifi_manager = WiFiManager()
-        self.supabase = Supabase()
+        self.supabase = None  # Lazy-loaded when needed
         self.mqtt_client = SmartHomeMQTTClient()
         # Display
         self.oled = OLED()
@@ -39,14 +39,17 @@ class SystemInit:
         self.rfid = RFIDSensor()
         # Utils
         self.time_sync = TimeSync()
-    
+        self.memory = Memory()
+
     def init(self):
         print("=== Smart Home System Starting ===")
+        self.memory.collect("Before system init")
         self._show_welcome_message()
         self._connect_to_wifi()
         self._sync_time()
         self._connect_to_mqtt()
         self.oled.show_text("System Ready", "")
+        self.memory.collect("After system init")
         print("=== System Ready ===")
     
     def _show_welcome_message(self):
