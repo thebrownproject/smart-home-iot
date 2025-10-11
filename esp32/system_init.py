@@ -1,13 +1,43 @@
 from comms.wifi_manager import WiFiManager
+from comms.supabase import Supabase
+from comms.mqtt_client import SmartHomeMQTTClient
 from display.oled import OLED
+from outputs.buzzer import Buzzer
+from outputs.fan import Fan
+from outputs.led import LED
+from outputs.rgb import RGB
+from outputs.servo import Servo
+from sensors.dht11 import DHT11Sensor
+from sensors.gas import GasSensor
+from sensors.pir import PIRSensor
+from sensors.steam import SteamSensor
+from sensors.rfid import RFIDSensor
 from utils.time_sync import TimeSync
 import time
 from config import WIFI_SSID
 
 class SystemInit:
     def __init__(self):
+        # Communication
         self.wifi_manager = WiFiManager()
+        self.supabase = Supabase()
+        self.mqtt_client = SmartHomeMQTTClient()
+        # Display
         self.oled = OLED()
+        # Outputs
+        self.buzzer = Buzzer()
+        self.fan = Fan()
+        self.led = LED()
+        self.rgb = RGB()
+        self.door_servo = Servo(pin=13)  # Door servo on pin 13
+        self.window_servo = Servo(pin=5)  # Window servo on pin 5
+        # Sensors
+        self.dht11 = DHT11Sensor()
+        self.gas = GasSensor()
+        self.pir = PIRSensor()
+        self.steam = SteamSensor()
+        self.rfid = RFIDSensor()
+        # Utils
         self.time_sync = TimeSync()
     
     def show_welcome_message(self):

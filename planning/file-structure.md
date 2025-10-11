@@ -3,8 +3,9 @@
 ```
 SmartHomeProject/
 ├── esp32/                       # ESP32 MicroPython code
-│   ├── main.py                 # Entry point, main loop
-│   ├── boot.py                 # Network setup, runs on startup
+│   ├── main.py                 # Entry point (orchestration only, 15 lines)
+│   ├── app.py                  # SmartHomeApp class (event loop with automation logic)
+│   ├── system_init.py          # SystemInit class (hardware init, boot sequence)
 │   ├── config.py               # WiFi, MQTT, Supabase credentials
 │   ├── sensors/
 │   │   ├── dht11.py           # Temperature/humidity sensor
@@ -145,8 +146,9 @@ SmartHomeProject/
 
 **Key Files**:
 
-- `main.py` - Main event loop, coordinates sensors/outputs
-- `boot.py` - WiFi connection, runs before main.py
+- `main.py` - Entry point, orchestrates SystemInit → SmartHomeApp (15 lines)
+- `app.py` - SmartHomeApp class with main event loop and automation logic
+- `system_init.py` - SystemInit class: hardware initialization, WiFi, time sync, boot sequence
 - `config.py` - Credentials (gitignored)
 
 **Subdirectories**:

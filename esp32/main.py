@@ -1,12 +1,15 @@
 # main.py - Smart Home System Entry Point
-
-from outputs.led import LED
+from app import SmartHomeApp
 from system_init import SystemInit
 
+# Initialize system
 system_init = SystemInit()
 
+# Run startup sequence
 system_init.init()
 
-# TODO: Main application loop will go here
-# For now, just keep system running
-print("Main loop not implemented yet - entering Test Mode")
+# Initialize app
+app = SmartHomeApp(system_init)
+
+# Run app
+app.run()

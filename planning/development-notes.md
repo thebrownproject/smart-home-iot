@@ -1391,3 +1391,184 @@ All tasks finished:
   - Implements FR1.1, FR1.2, FR1.3 (HOUSE)
 
 ---
+
+## Session 14 - October 11, 2025 - Time-Based LED Control & Architecture Refactor ✅
+
+**Phase**: Phase 1 - Embedded System Core
+**Milestone**: 1.5 - Core Automation Logic (US1-US5)
+**Branch**: phase-1-embedded-core
+
+### Tasks Completed
+
+- [x] **T1.19**: Implement time-based LED control (FR1.1, FR1.2, FR1.3 - HOUSE)
+  - Created `esp32/utils/time_sync.py` with NTP synchronization
+  - Implemented timezone conversion (UTC+10 AEDT)
+  - Built `is_nighttime()` logic (8pm-7am detection)
+  - Refactored ESP32 architecture to 3-layer pattern
+  - Created `esp32/app.py` (SmartHomeApp with event loop)
+  - Created `esp32/system_init.py` (hardware initialization & boot sequence)
+  - Simplified `esp32/main.py` to minimal orchestrator (15 lines)
+  - Deleted `esp32/boot.py` (no longer needed)
+  - LED control working: on during nighttime, off during daytime
+
+### Decisions Made
+
+1. **3-Layer Architecture Pattern:**
+   - `main.py` - Entry point (orchestration only, 15 lines)
+   - `system_init.py` - Hardware abstraction layer (initializes all sensors/outputs, boot sequence with WiFi/time sync)
+   - `app.py` - Application logic layer (SmartHomeApp class with event loop containing automation rules)
+   - Rationale: Clean separation of concerns, maintainable as complexity grows, professional structure for portfolio
+
+2. **NTP Time Synchronization:**
+   - Created `TimeSync` class with timezone-aware methods
+   - Timezone offset stored in `config.py` (TIMEZONE_OFFSET_HOURS = 10 for AEDT)
+   - `sync_time()` - Call once at boot to sync with NTP servers
+   - `get_local_time()` - Returns timezone-adjusted time tuple
+   - `is_nighttime()` - Boolean check for 8pm-7am range with wraparound logic
+   - Rationale: ESP32 has no RTC battery, must sync time on each boot
+
+3. **Nighttime Detection Logic:**
+   - Wraparound time range: `hour >= 20 OR hour < 7`
+   - Cannot use `AND` logic for ranges crossing midnight
+   - Pattern appears in overnight shifts, time-based scheduling systems
+   - Returns boolean for simple LED control: `if is_nighttime(): led.on() else: led.off()`
+
+4. **Deleted boot.py:**
+   - MicroPython runs boot.py (optional) then main.py
+   - All initialization now in `system_init.py` called from `main.py`
+   - No need for boot.py - simplified to 2-file boot pattern
+   - Rationale: Reduces file count, clearer control flow
+
+5. **Dependency Injection Pattern:**
+   - `main.py` creates SystemInit, passes to SmartHomeApp
+   - All hardware objects flow through system object
+   - SmartHomeApp extracts references: `self.led = system.led`
+   - Single source of truth for hardware objects
+   - Rationale: Professional pattern, scales well, easy to test
+
+### Issues Encountered & Resolutions
+
+1. **Timezone Calculation Bug:**
+   - **Problem**: `is_nighttime()` returned True at 3pm
+   - **Root Cause**: Forgot to multiply hours by 3600 (seconds conversion)
+   - **Wrong**: `self.timezone_offset = TIMEZONE_OFFSET_HOURS` (stored 10)
+   - **Correct**: `self.timezone_offset = TIMEZONE_OFFSET_HOURS * 3600` (stored 36000)
+   - **Learning**: Always convert time units explicitly - hours → seconds = × 3600
+
+2. **Servo Constructor Missing Pin Parameter:**
+   - **Problem**: `TypeError: function takes 2 positional arguments but 1 were given`
+   - **Root Cause**: `Servo()` requires pin parameter, `system_init.py` called `Servo()` without pin
+   - **Solution**: Changed to `self.door_servo = Servo(pin=13)` and `self.window_servo = Servo(pin=5)`
+   - **Learning**: Python error "2 arguments" counts `self` as position 1
+
+3. **Buzzer Auto-Starting on Init:**
+   - **Problem**: Buzzer sounded on system boot
+   - **Root Cause**: PWM initialized without explicitly setting duty to 0
+   - **Solution**: Added `self.buzzer.duty(0)` to Buzzer `__init__()`
+   - **Learning**: Always initialize outputs to known safe state (duty=0, value=0)
+
+4. **LED Class Name Mismatch:**
+   - **Problem**: `ImportError: cannot import name 'Led'`
+   - **Root Cause**: Class is `LED` (all caps) but importing `Led` (mixed case)
+   - **Solution**: Fixed import to `from outputs.led import LED`
+   - **Learning**: Python imports are case-sensitive, class names must match exactly
+
+### Documentation Updates
+
+All documentation updated to reflect new architecture:
+
+1. **`planning/file-structure.md`:**
+   - Updated structure diagram: removed boot.py, added app.py and system_init.py
+   - Updated Key Files descriptions with 3-layer architecture explanation
+
+2. **`CLAUDE.md`:**
+   - Added "System Architecture (3-Layer Boot Pattern)" section
+   - Explained main → system_init → app flow with rationale
+
+3. **`.claude/commands/deploy.md`:**
+   - Updated core files list: removed boot.py, added app.py and system_init.py
+   - Changed folder references: `embedded/` → `esp32/`, `network/` → `comms/`
+
+4. **`.claude/commands/continue.md`:**
+   - Updated Key Files list to reflect new architecture
+
+5. **`planning/tasks.md`:**
+   - Updated T1.4 description to reference new architecture files
+
+### Key Learning Moments
+
+**Wraparound Time Logic:**
+- Time ranges crossing midnight require OR logic, not AND
+- Example: 8pm-7am = `hour >= 20 OR hour < 7`
+- Appears in overnight shifts, scheduling systems, automation rules
+
+**Dependency Injection in Embedded Systems:**
+- Create hardware objects once, pass container object to app
+- App extracts references: `self.led = system.led`
+- Benefits: Single initialization, easy testing, clear dependencies
+
+**Architecture Scalability:**
+- Simple monolithic code works for 1-2 features
+- Professional 3-layer separation necessary for 5+ automation rules
+- Invest in structure early - makes future tasks faster
+
+### Files Created/Modified
+
+**Created:**
+- `esp32/app.py` - SmartHomeApp class with event loop (35 lines)
+- `esp32/system_init.py` - SystemInit class with hardware init and boot sequence (80 lines)
+- `esp32/utils/time_sync.py` - TimeSync class with NTP and timezone handling (28 lines)
+- `esp32/tests/utils/test_time_sync.py` - Time sync test
+
+**Modified:**
+- `esp32/main.py` - Simplified to orchestrator (15 lines)
+- `esp32/system_init.py` - Added all hardware initialization (sensors, outputs, comms)
+- `esp32/outputs/buzzer.py` - Added `duty(0)` to `__init__()` for safe startup
+- `config.py` - Added TIMEZONE_OFFSET_HOURS, NIGHT_START_HOUR, NIGHT_END_HOUR
+- `planning/tasks.md` - Marked T1.19 complete
+- `planning/file-structure.md` - Updated with new architecture
+- `CLAUDE.md` - Added architecture documentation
+- `.claude/commands/deploy.md` - Updated file paths
+- `.claude/commands/continue.md` - Updated key files list
+
+**Deleted:**
+- `esp32/boot.py` - No longer needed with new architecture
+
+### Test Results
+
+**Time Sync Test:**
+```
+Time synchronized successfully
+(2025, 10, 11, 16, 1, 9, 5, 284)
+Is nighttime: False
+```
+✅ Timezone conversion working (UTC 6am → AEDT 4pm)
+✅ Nighttime detection accurate (4pm = daytime)
+
+**LED Control Test:**
+```
+App running...
+Daytime - LED OFF
+Good day / Light is off
+```
+✅ LED responds to time checks
+✅ LCD shows status messages
+
+### Milestone 1.5 Progress
+
+**Milestone 1.5: Core Automation Logic (US1-US5)** - 1/5 tasks complete
+
+Tasks remaining:
+- T1.20: PIR motion response
+- T1.21: Steam detection & window control
+- T1.22: Gas detection & emergency response
+- T1.23: RFID access control
+
+### Next Session
+
+- Continue with **T1.20**: Implement PIR motion response (FR2.1, FR2.2, FR2.3)
+- Add motion detection to app.py event loop
+- On motion: Set RGB to orange, log to database, publish MQTT
+- Will need to add database/MQTT methods as needed (YAGNI)
+
+---

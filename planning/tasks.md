@@ -40,7 +40,7 @@
 
 - [x] **T1.4**: Create project file structure
   - Create `esp32/` directory with subdirectories (sensors, outputs, comms, display, utils)
-  - Set up `esp32/boot.py` for WiFi initialization
+  - Set up `esp32/main.py`, `esp32/app.py`, `esp32/system_init.py` architecture
   - Create placeholder files for all modules listed in `prd.md`
   - Add `.gitignore` for `config.py` and sensitive files
   - **Started**: 2025-10-08
@@ -184,12 +184,14 @@
 
 ### Milestone 1.5: Core Automation Logic (US1-US5)
 
-- [ ] **T1.19**: Implement time-based LED control **(FR1.1, FR1.2, FR1.3 - HOUSE)**
+- [x] **T1.19**: Implement time-based LED control **(FR1.1, FR1.2, FR1.3 - HOUSE)**
 
   - Add NTP time sync in `esp32/utils/time_sync.py`
   - Main loop: Check if time between 8pm-7am
   - Turn LED on during nighttime hours, off during day
   - Test: Set ESP32 time manually, verify LED behavior
+  - **Started**: 2025-10-11
+  - **Completed**: 2025-10-11
 
 - [ ] **T1.20**: Implement PIR motion response **(FR2.1, FR2.2, FR2.3 - HOUSE/DATABASE)**
 

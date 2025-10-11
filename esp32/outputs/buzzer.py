@@ -5,6 +5,7 @@ class Buzzer:
     def __init__(self):
         self.buzzer = PWM(Pin(25))
         self.buzzer.freq(2000)  # Set frequency once (2kHz = clear beep tone)
+        self.buzzer.duty(0)     # Ensure buzzer starts silent
 
     def beep(self, duration=0.2):
         self.buzzer.duty(100)  # ~10% duty cycle (quieter)

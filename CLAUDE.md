@@ -68,6 +68,14 @@ Example: `FR2.1 (HOUSE): PIR sensor detects motion`
 
 ## ESP32 Development (MicroPython)
 
+**System Architecture (3-Layer Boot Pattern)**:
+
+- `main.py` - Entry point (15 lines): Creates SystemInit → calls init() → creates SmartHomeApp → calls run()
+- `system_init.py` - Hardware abstraction layer: Initializes all sensors, outputs, comms modules; handles boot sequence (WiFi, time sync, display messages)
+- `app.py` - Application logic layer: SmartHomeApp class with main event loop containing automation rules (time-based LED, PIR motion, gas detection, etc.)
+
+**Pattern**: main.py is minimal orchestration, system_init handles hardware, app handles business logic. This separation makes code maintainable as automation complexity grows.
+
 **Deploy to hardware**:
 
 1. Connect ESP32 via USB
