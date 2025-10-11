@@ -40,12 +40,21 @@ class SystemInit:
         # Utils
         self.time_sync = TimeSync()
     
-    def show_welcome_message(self):
+    def init(self):
+        print("=== Smart Home System Starting ===")
+        self._show_welcome_message()
+        self._connect_to_wifi()
+        self._sync_time()
+        self._connect_to_mqtt()
+        self.oled.show_text("System Ready", "")
+        print("=== System Ready ===")
+    
+    def _show_welcome_message(self):
         self.oled.show_text("Welcome to", "Smart Home Lab!")
         time.sleep(2)
         self.oled.clear()
     
-    def connect_to_wifi(self):
+    def _connect_to_wifi(self):
         self.oled.clear()
         self.oled.show_text("Connecting to", "WiFi...")
         print("Connecting to WiFi...")
@@ -63,18 +72,15 @@ class SystemInit:
             self.oled.show_text("WiFi Failed!", "Check config")
             time.sleep(3)
 
-    def sync_time(self):
+    def _sync_time(self):
         if self.time_sync.sync_time():
             print("Time synchronized successfully")
         else:
             print("Time sync failed - continuing anyway")
         print(self.time_sync.get_local_time())
         print(f"Is nighttime: {self.time_sync.is_nighttime()}")
+    
+    def _connect_to_mqtt(self):
+        self.mqtt_client.connect()
 
-    def init(self):
-        print("=== Smart Home System Starting ===")
-        self.show_welcome_message()
-        self.connect_to_wifi()
-        self.sync_time()
-        self.oled.show_text("System Ready", "")
-        print("=== System Ready ===")
+    

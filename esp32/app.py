@@ -24,14 +24,24 @@ class SmartHomeApp:
         # Utils
         self.time_sync = system.time_sync
 
-    
     def run(self):
         print("App running...")
         while True:
+            self._handle_time_based_lighting()
+            self._handle_motion_detection()
             time.sleep(1)
-            if self.time_sync.is_nighttime():
-                self.led.on()
-                self.oled.show_text("Good Evening", "Light is on")
-            else:
-                self.led.off()
-                self.oled.show_text("Good day", "Light is off")
+    
+    def _handle_time_based_lighting(self):
+        if self.time_sync.is_nighttime():
+            self.led.on()
+            self.oled.show_text("Good Evening", "Light is on")
+        else:
+            self.led.off()
+            self.oled.show_text("Good day", "Light is off")
+
+    def _handle_motion_detection(self):
+        if self.pir.is_motion_detected():
+            self.rgb.set_color(0, 165, 165)
+            self.mqtt_client.publish("home/motion", "Motion detected")
+            # todo: log to database
+                
