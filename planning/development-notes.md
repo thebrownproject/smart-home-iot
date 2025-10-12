@@ -2139,3 +2139,177 @@ Motion - DB OK
 
 ---
 
+## Session 19 - October 12, 2025 - RFID Access Control Handler ✅
+
+**Phase**: Phase 1 - Embedded System Core
+**Milestone**: 1.5 - Core Automation Logic (US1-US5)
+**Branch**: phase-1-embedded-core
+
+### Tasks Completed
+
+- [x] **T1.23**: Implement RFID access control (FR5.1-FR5.5 - HOUSE/DATABASE)
+  - Created `RFIDHandler` class with database query integration
+  - Implemented `Supabase.get_card_result()` method with REST API filtering
+  - Granted access: Green RGB, door opens, "ACCESS GRANTED" on LCD
+  - Denied access: Red RGB, buzzer beeps, "ACCESS DENIED" on LCD
+  - Logs all scans to `rfid_scans` table with card_id and authorised_card_id
+  - Publishes MQTT with card_id and access result (granted/denied)
+  - Integrated into main app loop (polls every 2 seconds)
+  - Created test file structure (hardware testing blocked - no RFID available)
+
+### Decisions Made
+
+1. **Supabase Query Pattern with REST API Filtering:**
+   - Query URL: `/authorised_cards?card_id=eq.{card_id}&is_active=eq.true`
+   - PostgREST filter syntax: `?field=eq.value&field2=eq.value2`
+   - Returns list of matching records, even if only one match: `[{...}]`
+   - Empty result is empty list: `[]`
+   - Check length and return first item or None
+   - **Why filtering matters**: Without filter, downloads entire table (wasteful bandwidth/memory)
+
+2. **HTTP Response Resource Management:**
+   - Critical order: Read data FIRST, then close connection
+   - Pattern: `response.json()` → `response.close()` → `return data`
+   - Closing before reading = data lost (like closing a book before reading the page)
+   - Prevents memory leaks on ESP32's limited RAM
+
+3. **RFID Handler Logic Flow:**
+   - Scan card → Query database → Check if record exists
+   - If card_record exists: Access granted path (green, door, LCD)
+   - If card_record is None: Access denied path (red, buzzer, LCD)
+   - Log ALL scans regardless of result (audit trail requirement FR5.4)
+   - MQTT payload includes card_id for web dashboard display
+
+4. **RFID Polling Interval:**
+   - Chose **2 seconds** (faster than gas/steam)
+   - Balance: Responsive access control vs not overwhelming database queries
+   - Security feature = should feel quick to users
+   - Can adjust in T1.29 if needed
+
+5. **Future Improvements Documented (Not Implemented):**
+   - RGB/Buzzer cleanup: Currently stay on indefinitely, should auto-off after 3s
+   - Door auto-close: Opens but doesn't close, should close after 5s
+   - Requires non-blocking timing pattern (can't use `time.sleep()` in main loop)
+   - Deferred to T1.23.1 (future enhancement)
+
+### Issues Encountered & Resolutions
+
+1. **Query Method Returns All Cards (No Filter):**
+   - **Problem**: Initial `get_card_result()` fetched entire `authorised_cards` table
+   - **Root Cause**: Missing URL query parameters
+   - **Solution**: Added `?card_id=eq.{card_id}&is_active=eq.true` filter to URL
+   - **Learning**: REST API filtering reduces bandwidth and improves ESP32 performance
+
+2. **Response.close() Before Response.json() Bug:**
+   - **Problem**: Student closed HTTP response before reading JSON data
+   - **Root Cause**: Incorrect order of operations (close → read instead of read → close)
+   - **Solution**: Reordered to `cards = response.json()` → `response.close()`
+   - **Learning**: Always consume response data before releasing network buffer
+
+3. **Variable Name Mismatch (result vs card_record):**
+   - **Problem**: Line 31 referenced `card_record['id']` but variable was named `result`
+   - **Root Cause**: Inconsistent naming during refactoring
+   - **Solution**: Renamed variable to `card_record` for clarity
+   - **Learning**: Descriptive names prevent bugs (card_record > result > data)
+
+4. **Missing time Import in Test File:**
+   - **Problem**: Test used `time.sleep(1)` without importing time
+   - **Root Cause**: Copy-paste from other test files, forgot import
+   - **Solution**: Added `import time` to test file
+   - **Learning**: Always verify imports when copying code patterns
+
+5. **No Physical RFID for Testing:**
+   - **Problem**: Can't test actual card scanning on hardware
+   - **Solution**: Created test file structure, documented T1.23.2 as blocked
+   - **Workaround**: Logic is sound, will test when RFID hardware available
+   - **Learning**: Document blockers clearly so future sessions know what's pending
+
+### Key Learning Moments
+
+**REST API Query Filtering:**
+- Supabase uses PostgREST syntax for filtering: `?column=operator.value`
+- Common operators: `eq` (equals), `gt` (greater than), `lt` (less than)
+- Multiple filters with `&`: `?field1=eq.value1&field2=eq.value2`
+- Returns JSON array of matching rows (even single match is `[{...}]`)
+- Critical for IoT: Filter server-side to reduce data transfer
+
+**Resource Management on Constrained Devices:**
+- HTTP responses hold network buffers in memory
+- Must close connections to free resources
+- Order matters: consume data → close connection → process data
+- ESP32 has ~100KB RAM, every byte counts
+
+**Database Query vs Insert Patterns:**
+- Inserts: POST with JSON body → 201 Created → close
+- Queries: GET with URL params → 200 OK → parse JSON → close → return data
+- Queries return arrays, inserts return success boolean
+- Both need error handling (network failures, invalid responses)
+
+**Student's Learning Progress:**
+- Tackled first database READ operation (previous tasks were only writes)
+- Successfully debugged order-of-operations bug independently
+- Understood REST API filtering concept quickly
+- Good instinct to document future improvements instead of over-engineering
+
+### Files Created/Modified
+
+**Created:**
+- `esp32/handlers/rfid_handler.py` - RFIDHandler class with database query (43 lines)
+- `esp32/tests/handlers/test_rfid_handler.py` - RFID handler test file (25 lines)
+
+**Modified:**
+- `esp32/comms/supabase.py` - Added `get_card_result(card_id)` query method (lines 60-77)
+- `esp32/app.py` - Added RFID handler to main loop (polls every 2 seconds, lines 19, 25, 46-48)
+- `planning/tasks.md` - Marked T1.23 complete, added T1.23.1-T1.23.3 for future work
+
+### Architecture Impact
+
+**First Database READ Operation:**
+- Previous handlers only INSERT data (motion_events, gas_alerts, sensor_logs)
+- RFID handler QUERIES database before deciding action
+- Pattern established: Query → Process → Act → Log
+- Opens door for other read operations (user lookups, historical queries)
+
+**Supabase Client Enhancement:**
+- Added query capability alongside existing insert methods
+- Pattern: `get_*` methods return data or None, `insert_*` methods return boolean
+- Memory efficient: Close responses immediately after reading
+- Can be extended for other queries (authorised users, device config, etc.)
+
+**Handler Polling Strategy:**
+- Lighting: 60s (time-based, no urgency)
+- Motion: 5s (security, moderate urgency)
+- Gas: 10s (safety-critical but sensor reliable)
+- Steam: 10s (convenience feature)
+- RFID: 2s (security + user experience, should feel responsive)
+
+**Complete Handler Pattern Now Established:**
+1. Import dependencies inside method (ultra-lazy loading)
+2. Instantiate sensors/outputs
+3. Read sensor state
+4. Query database if needed (NEW with RFID)
+5. Decide action based on business logic
+6. Execute outputs (RGB, servo, buzzer, LCD)
+7. Log to database
+8. Publish MQTT for real-time updates
+9. Delete objects and collect garbage
+10. Memory profiling after each handler run
+
+### Next Session
+
+- **Start Milestone 1.6**: Environmental Monitoring (US6, US7)
+- Begin with **T1.24**: Continuous temperature/humidity display
+  - Read DHT11 every 2 seconds
+  - Display on LCD: "Temp: 24.5C / Humid: 60%"
+  - Publish to MQTT: `home/temperature` and `home/humidity`
+  - Should be straightforward - DHT11 sensor class already implemented (T1.5)
+- Then **T1.25**: 30-minute sensor logging
+  - Timer-based database inserts
+  - Use `sensor_logs` table
+- Finally **T1.26**: Asthma alert system
+  - Conditional logic: humidity > 50% AND temp > 27°C
+  - Display "ASTHMA ALERT" on LCD
+  - Publish to MQTT: `home/asthma_alert`
+
+---
+

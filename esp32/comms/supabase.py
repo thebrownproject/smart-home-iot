@@ -56,7 +56,26 @@ class Supabase:
         except Exception as e:
             print("Error inserting motion event:", e)
             return False
-        
+    
+    def get_card_result(self, card_id):
+        try:
+            self.memory.collect("Before get_card_result")
+      
+            url = self.url + "/rest/v1/authorised_cards?card_id=eq." + card_id + "&is_active=eq.true"
+            headers = {
+                "apikey": self.anon_key,
+                "Authorization": "Bearer " + self.anon_key,
+                "Content-Type": "application/json"
+            }
+            response = urequests.get(url, headers=headers)
+            cards = response.json()
+            response.close()
+            self.memory.collect("After get_card_result")
+            return cards[0] if cards else None
+        except Exception as e:
+            print("Error getting card result:", e)
+            return False
+
     def insert_rfid_scan(self, card_id, result, authorised_card_id=None):
         try:
             url = self.url + "/rest/v1/rfid_scans"

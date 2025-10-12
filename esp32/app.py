@@ -16,11 +16,13 @@ class SmartHomeApp:
         from handlers.lighting_handler import LightingHandler
         from handlers.steam_handler import SteamHandler
         from handlers.gas_handler import GasHandler
+        from handlers.rfid_handler import RFIDHandler
 
         motion = MotionHandler()
         lighting = LightingHandler()
         steam = SteamHandler()
         gas = GasHandler()
+        rfid = RFIDHandler()
         
         print("App running...")
         loop_count = 0
@@ -40,6 +42,10 @@ class SmartHomeApp:
             # Check gas every 10 seconds
             if loop_count % 10 == 0:
                 gas.handle_gas_detection(self.mqtt)
+
+            # Check RFID every 2 seconds
+            if loop_count % 2 == 0:
+                rfid.handle_rfid_detection(self.mqtt)
 
             # Garbage collection every 10 seconds
             if loop_count % 10 == 0:

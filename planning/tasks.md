@@ -221,14 +221,32 @@
   - **Started**: 2025-10-12
   - **Completed**: 2025-10-12
 
-- [ ] **T1.23**: Implement RFID access control **(FR5.1-FR5.5 - HOUSE/DATABASE)**
+- [x] **T1.23**: Implement RFID access control **(FR5.1-FR5.5 - HOUSE/DATABASE)**
   - Query Supabase `authorised_cards` table for card validation
   - Main loop: Scan for RFID cards
   - Unknown card: Flash RGB red + buzzer (FR5.2)
   - Known card: Open door servo, show "ACCESS GRANTED" on OLED (FR5.3, FR5.5)
   - Log all scans to `rfid_scans` table (FR5.4)
-  - Publish MQTT event to `home/rfid`
+  - Publish MQTT event to `home/rfid` with card_id and access result
   - Test: Scan known/unknown cards, verify behavior
+  - **Started**: 2025-10-12
+  - **Completed**: 2025-10-12
+  - **Note**: Core functionality complete. Future improvements needed (see T1.23.1-T1.23.3)
+
+- [ ] **T1.23.1**: RFID handler timing improvements (Future Enhancement)
+  - Add automatic RGB off after 3 seconds
+  - Add automatic door close after 5 seconds
+  - Requires `import time` and non-blocking delay pattern
+
+- [ ] **T1.23.2**: RFID test with hardware (Blocked - No RFID Available)
+  - Deploy to ESP32 and test with physical RFID cards
+  - Verify Supabase query works correctly
+  - Test both known and unknown cards
+
+- [ ] **T1.23.3**: Add test RFID cards to database (Database Setup)
+  - Insert sample cards into `authorised_cards` table
+  - Document card IDs for testing
+  - SQL: `INSERT INTO authorised_cards (card_id, is_active) VALUES ('test_card_123', true);`
 
 ---
 
