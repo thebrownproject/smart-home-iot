@@ -202,12 +202,14 @@
   - **Started**: 2025-10-12
   - **Completed**: 2025-10-12
 
-- [ ] **T1.21**: Implement steam detection & window control **(FR3.1, FR3.2, FR3.3 - HOUSE)**
+- [x] **T1.21**: Implement steam detection & window control **(FR3.1, FR3.2, FR3.3 - HOUSE)**
 
   - Main loop: Poll steam sensor
   - On moisture: Close window servo, flash RGB blue
   - Publish MQTT event to `home/steam`
   - Test: Simulate steam, verify window closes
+  - **Started**: 2025-10-12
+  - **Completed**: 2025-10-12
 
 - [ ] **T1.22**: Implement gas detection & emergency response **(FR4.1, FR4.2, FR4.3, FR4.4 - HOUSE/DATABASE)**
 

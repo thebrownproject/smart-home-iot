@@ -12,7 +12,7 @@ class TimeSync:
         try:
             ntptime.settime()
             self.last_sync = time.time()
-            print("Time synchronized successfully")
+            return True  # Success
         except Exception as e:
             print(f"Error synchronizing time: {e}")
             return False

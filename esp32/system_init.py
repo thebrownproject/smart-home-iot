@@ -56,6 +56,7 @@ class SystemInit:
 
         if time_sync.sync_time():
             print("Time synchronized successfully")
+            return True
         else:
             print("Time sync failed - continuing anyway")
         print(time_sync.get_local_time())

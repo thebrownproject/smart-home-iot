@@ -12,11 +12,13 @@ class SmartHomeApp:
         self.memory.collect("After MQTT setup")
 
     def run(self):
-        from handlers.motion import MotionHandler
-        from handlers.lighting import LightingHandler
+        from handlers.motion_handler import MotionHandler
+        from handlers.lighting_handler import LightingHandler
+        from handlers.steam_handler import SteamHandler
 
         motion = MotionHandler()
         lighting = LightingHandler()
+        steam = SteamHandler()
         
         print("App running...")
         loop_count = 0
@@ -28,6 +30,10 @@ class SmartHomeApp:
             # Check motion every 5 seconds
             if loop_count % 5 == 0:
                 motion.handle_motion_detection(self.mqtt)
+
+            # Check steam every 10 seconds
+            if loop_count % 10 == 0:
+                steam.handle_steam_detection(self.mqtt)
 
             # Garbage collection every 10 seconds
             if loop_count % 10 == 0:

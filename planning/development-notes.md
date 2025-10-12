@@ -1867,3 +1867,132 @@ Motion - DB OK
 
 ---
 
+
+## Session 17 - October 12, 2025 - Steam Detection & Handler Refinements ✅
+
+**Phase**: Phase 1 - Embedded System Core
+**Milestone**: 1.5 - Core Automation Logic (US1-US5)
+**Branch**: phase-1-embedded-core
+
+### Tasks Completed
+
+- [x] **T1.21**: Implement steam detection & window control (FR3.1, FR3.2, FR3.3 - HOUSE)
+  - Created `SteamHandler` class following modular handlers pattern
+  - Implemented: Poll steam sensor → close window servo → flash RGB blue 3 times → publish MQTT
+  - Added counter-based timeout to motion handler (10 seconds)
+  - Fixed duplicate print statement in time sync
+  - Confirmed handler file naming convention (`*_handler.py`)
+
+### Decisions Made
+
+1. **Handler Naming Convention:**
+   - All handler files use `*_handler.py` suffix (e.g., `steam_handler.py`, `motion_handler.py`)
+   - Prevents naming collisions with sensor files (e.g., `sensors/steam.py` vs `handlers/steam_handler.py`)
+   - Improves IDE search results and file clarity
+   - Pattern: `handlers/lighting_handler.py`, `handlers/motion_handler.py`, `handlers/steam_handler.py`
+
+2. **RGB Control Strategy - Temporary Solution:**
+   - Steam: Flash blue 3 times using `rgb.flash((0, 0, 255), 3)` (temporary indicator per FR3.3)
+   - Motion: Set solid orange, turns off after timeout (persistent indicator per FR2.2)
+   - Handlers do NOT turn off RGB in else blocks - prevents conflicts
+   - Future: T1.29 will implement state machine with priority (gas > steam > motion)
+
+3. **Motion Timeout Implementation - Counter-Based:**
+   - User preferred simple countdown over `time.time()` timestamps
+   - Pattern: `motion_count = 3` decrements each handler call, RGB off when reaches 0
+   - Guard clause prevents underflow: `if motion_count > 0: motion_count -= 1`
+   - Motion handler runs every 2 seconds (per `app.py`), so timeout = 3 × 2sec = 6 seconds
+   - Simpler to understand and tune than epoch timestamp calculations
+
+4. **Window Servo Pin Configuration:**
+   - Window servo uses pin 5 (from T1.12 specification)
+   - Created as `Servo(pin=5)` with named parameter
+   - FR3.2 implemented: Servo closes window when moisture detected
+   - Follows same pattern as door servo (pin 13) from previous sessions
+
+### Issues Encountered & Resolutions
+
+1. **Missing Pin Parameter in Servo Constructor:**
+   - **Problem**: `TypeError: function takes 2 positional arguments but 1 were given`
+   - **Root Cause**: `Servo()` called without required `pin` parameter
+   - **Solution**: Changed to `Servo(pin=5)` for window servo
+   - **Learning**: Python error message "2 arguments" counts `self` as first position
+
+2. **RGB State Conflicts Between Handlers:**
+   - **Problem**: Steam handler turned RGB off in else block, killing motion orange indicator
+   - **Root Cause**: Multiple handlers competing for same output without priority system
+   - **Solution**: Removed `rgb.off()` from handler else blocks; use flash for temporary indicators
+   - **Future**: T1.29 will implement proper state machine with event priority (gas > steam > motion)
+
+3. **Duplicate Print in TimeSync:**
+   - **Problem**: User saw "Time synchronized successfully" printed twice
+   - **Root Cause**: Print statement in `sync_time()` method AND in `system_init.py` caller
+   - **Solution**: Removed print from method, added `return True` for proper boolean status
+   - **Learning**: Methods returning status shouldn't print success messages - let caller handle display
+
+4. **Motion Handler Decrement Logic Bug:**
+   - **Problem**: Initial code decremented counter twice (lines 45 and 47)
+   - **Root Cause**: Decrement before guard clause, then again inside clause
+   - **Solution**: Removed line 45, kept only guarded decrement inside `if motion_count > 0`
+   - **Learning**: Guard clauses protect state variables from invalid transitions (e.g., negative counters)
+
+### Key Learning Moments
+
+**Event-Driven Systems & State Management:**
+- Multiple event handlers controlling same output creates conflicts
+- Quick fix: Only turn outputs ON, never OFF (works for simple cases)
+- Proper solution: State machine with priority levels (T1.29 task)
+- Pattern appears in interrupt handlers, RTOS scheduling, embedded control systems
+
+**Counter vs Timestamp for Timeouts:**
+- Counter-based: Intuitive ("10 loops = 5 seconds"), easy to tune, no time calculations
+- Timestamp-based: More accurate, but requires understanding epoch time and conversions
+- For student projects: Simpler > more accurate (easier to understand and debug)
+
+**Guard Clauses for State Management:**
+- `if counter > 0: counter -= 1` prevents underflow (counter going negative)
+- `if counter < MAX: counter += 1` prevents overflow
+- Without guards, state drifts into invalid ranges causing bugs
+- Common in battery indicators, retry counters, animation frames, debounce timers
+
+**Polling Intervals vs Response Time:**
+- Faster polling (every 1 sec): More responsive, more CPU/power usage
+- Slower polling (every 5 sec): Lower power, coarser timeout control
+- Motion: 2 second polling is good balance (feels instant, not wasteful)
+- Steam: 10 second polling acceptable (not time-critical)
+
+### Files Created/Modified
+
+**Created:**
+- `esp32/handlers/steam_handler.py` - SteamHandler class with flash RGB and window control (29 lines)
+
+**Modified:**
+- `esp32/handlers/motion_handler.py` - Added counter timeout (3 loops = 6 seconds), added RGB orange, removed rgb.off()
+- `esp32/handlers/steam_handler.py` - Fixed servo pin parameter, removed rgb.off() conflict
+- `esp32/utils/time_sync.py` - Removed duplicate print, added return True for success
+- `esp32/app.py` - Integrated steam handler, runs every 10 seconds
+- `planning/tasks.md` - Marked T1.21 complete
+
+### Architecture Impact
+
+**Handler Pattern Proven:**
+- Lighting, Motion, Steam handlers all follow same pattern
+- Ultra-lazy loading working perfectly (memory stable 85-90KB)
+- Handlers are stateless processors receiving `mqtt` parameter
+- Pattern is repeatable for remaining tasks (gas, RFID, environment)
+
+**Next handlers to implement:**
+- T1.22 (Gas): `GasHandler` - Turn on fan, set RGB red, log to `gas_alerts` table
+- T1.23 (RFID): `RFIDHandler` - Scan cards, check authorization, control door servo
+- Then T1.29: Implement state machine to handle RGB priority properly
+
+### Next Session
+
+- Continue with **T1.22**: Gas detection & emergency response
+- Create `handlers/gas_handler.py` following established pattern
+- Implement: Poll gas sensor → turn on fan → set RGB solid red → log to `gas_alerts` table
+- Fan runs until sensor clears, then log end time
+- Expected memory: Stable ~85-90KB
+
+---
+

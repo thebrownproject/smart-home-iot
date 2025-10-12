@@ -1,9 +1,11 @@
 from utils.memory import Memory
 
+
 class MotionHandler:
 
     def __init__(self):
         self.memory = Memory()
+        self.motion_count = 0
         
     def handle_motion_detection(self, mqtt):
             """Check PIR and respond to motion (FR2.1, FR2.2, FR2.3)"""
@@ -14,12 +16,15 @@ class MotionHandler:
             rgb = RGB()
 
             if pir.is_motion_detected():
-                rgb.set_color(255, 165, 0)  # Orange color (FR2.2)
-                self.memory.collect("Motion detected")
+                self.memory.collect("MotionHandler - Motion detected")
+                self.motion_count = 3
+
+                # Set RGB to orange (FR2.2)
+                rgb.set_color(255, 165, 0)  # Orange
 
                 # MQTT publish (uses persistent connection)
                 if mqtt.publish("home/motion", '{"detected": true}'):
-                    print("Motion - MQTT OK")
+                    print("MotionHandler - MQTT Publish OK")
 
                 self.memory.collect("Before DB insert")
 
@@ -27,17 +32,17 @@ class MotionHandler:
                 try:
                     from comms.supabase import Supabase
                     supabase = Supabase()
-                    if supabase.insert_motion_event():
-                        print("Motion - DB OK")
-                    else:
-                        print("Motion - DB FAILED")
+                    supabase.insert_motion_event()
+                    print("MotionHandler - DB Insert OK")
                     del supabase
                 except Exception as e:
-                    print(f"Motion - DB ERROR: {e}")
+                    print(f"MotionHandler - DB Insert ERROR: {e}")
 
                 self.memory.collect("After motion handling")
-            else:
-                rgb.off()
-
+            # Don't turn off RGB - let state machine handle priority (T1.29)
+            if self.motion_count > 0:  # Only count down if timer active
+                self.motion_count -= 1
+                if self.motion_count == 0:  # Turn off when timer expires
+                    rgb.off()
             del pir, rgb
             self.memory.collect("After motion check")
