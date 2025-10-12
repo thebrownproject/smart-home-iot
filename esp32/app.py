@@ -17,12 +17,14 @@ class SmartHomeApp:
         from handlers.steam_handler import SteamHandler
         from handlers.gas_handler import GasHandler
         from handlers.rfid_handler import RFIDHandler
+        from handlers.enviroment_handler import EnvironmentHandler
 
         motion = MotionHandler()
         lighting = LightingHandler()
         steam = SteamHandler()
         gas = GasHandler()
         rfid = RFIDHandler()
+        environment = EnvironmentHandler()
         
         print("App running...")
         loop_count = 0
@@ -46,6 +48,10 @@ class SmartHomeApp:
             # Check RFID every 2 seconds
             if loop_count % 2 == 0:
                 rfid.handle_rfid_detection(self.mqtt)
+
+            # Check environment (temp/humidity) every 2 seconds
+            if loop_count % 2 == 0:
+                environment.handle_environment_detection(self.mqtt)
 
             # Garbage collection every 10 seconds
             if loop_count % 10 == 0:

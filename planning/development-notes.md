@@ -2313,3 +2313,144 @@ Motion - DB OK
 
 ---
 
+## Session 20 - October 12, 2025 - Environment Handler with JSON MQTT Payloads ✅
+
+**Phase**: Phase 1 - Embedded System Core
+**Milestone**: 1.6 - Environmental Monitoring (US6, US7)
+**Branch**: phase-1-embedded-core
+
+### Tasks Completed
+
+- [x] **T1.24**: Implement continuous temperature/humidity display (FR6.1, FR6.2, FR6.3 - HOUSE/WEB)
+  - Created `EnvironmentHandler` class with DHT11 sensor integration
+  - Student initially implemented with raw number MQTT publishing
+  - Reviewed and identified two critical issues: missing JSON format and no error handling
+  - Fixed MQTT payloads to use JSON format: `{"value": 24.5, "unit": "C"}`
+  - Added sensor read error handling (return early if DHT11 returns None)
+  - Integrated into app.py main loop (polls every 2 seconds)
+  - LCD displays: "Temp: XXC / Humid: XX%"
+  - Publishes to `home/temperature` and `home/humidity` MQTT topics
+
+### Decisions Made
+
+1. **Maintained Modular Handler Pattern:**
+   - Student asked excellent architecture question: "Should this be in handlers/ folder?"
+   - Confirmed: Yes - consistency with lighting/motion/gas/steam/rfid handlers
+   - Pattern: main.py orchestrates → app.py event loop → handlers/ automation logic
+   - Benefits: lazy-loading, memory management, maintainability
+
+2. **MQTT Payload Format - JSON Required:**
+   - **Student's initial approach**: Published raw numbers `mqtt.publish("home/temperature", 24.5)`
+   - **Problem**: Web dashboard (Next.js) expects structured JSON for parsing
+   - **Solution**: Use `json.dumps({"value": temp, "unit": "C"})` format
+   - **Why it matters**: Phase 3 web dashboard will subscribe and parse these messages
+   - **Learning moment**: Data contracts between systems must be explicit
+
+3. **Error Handling for Sensor Failures:**
+   - **Student's initial code**: No None check after `dht11.read_data()`
+   - **Problem**: DHT11 can fail (timeout, wiring), returns `(None, None)`
+   - **Impact**: Calling `oled.show_temp_humidity(None, None)` would crash system
+   - **Solution**: Early return pattern with memory cleanup on error
+   - **Defensive programming**: Always validate sensor readings before using
+
+4. **Environment Polling Interval - 2 Seconds:**
+   - Same as RFID handler (responsive user experience)
+   - Faster than gas/steam (10s), slower than per-second loops
+   - DHT11 sensor has ~2 second internal measurement cycle, so matches hardware
+
+### Issues Encountered & Resolutions
+
+1. **MQTT Payload Format Missing (Student Code Review):**
+   - **Issue**: Student implemented `mqtt.publish("home/temperature", temperature)` without JSON
+   - **Root Cause**: Worked for testing (MQTT accepts any payload), but wrong for web integration
+   - **Resolution**: Added `import json` and formatted payloads with `json.dumps()`
+   - **Learning**: Test-driven development can miss integration requirements if not thinking ahead
+
+2. **No Error Handling for Sensor Read Failures:**
+   - **Issue**: No check if `temperature is None or humidity is None`
+   - **Root Cause**: Student focused on happy path (sensor working correctly)
+   - **Resolution**: Added early return with cleanup if sensor fails
+   - **Learning**: IoT systems must handle sensor failures gracefully (24/7 operation)
+
+3. **Filename Typo (Minor):**
+   - **Issue**: Student created `enviroment_handler.py` (missing 'n')
+   - **Resolution**: Noted but not critical - maintained consistency with student's spelling
+   - **Decision**: Don't break working code for spelling - can refactor later
+
+### Key Learning Moments
+
+**Data Contracts Between Systems:**
+- ESP32 publishes → MQTT broker → Next.js subscribes
+- Both sides must agree on message format (JSON with `value` and `unit` keys)
+- Breaking this contract = silent failures (messages arrive but can't be parsed)
+- Document MQTT topic formats in `planning/architecture.md` for reference
+
+**Defensive Programming on Constrained Devices:**
+- ESP32 runs 24/7 with ~100KB RAM - can't afford crashes
+- Sensor failures are normal (electromagnetic interference, loose wiring, age)
+- Pattern: Read sensor → Validate result → Use data → Cleanup
+- Early returns prevent cascading failures down the handler chain
+
+**Consistency in Architecture:**
+- Student questioned handler placement - shows good architectural thinking
+- Consistency > perfection: All automation logic goes in `handlers/`
+- Breaking patterns creates technical debt and confusion for future developers
+- Established patterns make codebase predictable and maintainable
+
+**Student's Progress:**
+- Asked clarifying architecture question before implementing (excellent instinct)
+- Successfully tested on hardware independently
+- Receptive to code review feedback and understood the "why" behind fixes
+- Growing understanding of system integration (not just isolated modules)
+
+### Files Created/Modified
+
+**Created:**
+- `esp32/handlers/enviroment_handler.py` - EnvironmentHandler class (36 lines)
+- `esp32/tests/handlers/test_enviroment_handler.py` - Test file (25 lines)
+
+**Modified:**
+- `esp32/handlers/enviroment_handler.py` - Added JSON formatting and error handling (reviewed/fixed)
+- `esp32/app.py` - Added environment handler import and 2-second polling (lines 20, 27, 52-54)
+- `planning/tasks.md` - Marked T1.24 complete with dates
+
+### Architecture Impact
+
+**Complete Environmental Monitoring Pipeline:**
+- DHT11 sensor → Handler reads every 2s → LCD displays → MQTT publishes
+- Ready for Phase 3: Next.js can subscribe to `home/temperature` and `home/humidity`
+- JSON format enables web dashboard to display live sensor data
+
+**Handler Pattern Evolution:**
+- Lighting: Time-based (60s polling)
+- Motion: Event-driven with database logging (5s polling)
+- Gas: Stateful alarm with database start/end tracking (10s polling)
+- Steam: Window control automation (10s polling)
+- RFID: Database query for access control (2s polling)
+- **Environment (NEW)**: Continuous monitoring with real-time display + MQTT (2s polling)
+
+**All handler patterns now demonstrated:**
+- Time-based triggers (lighting)
+- Event detection (motion, gas, steam)
+- Database READ operations (RFID)
+- Database WRITE operations (motion, gas, RFID)
+- Output control (all handlers)
+- LCD display (RFID, environment)
+- MQTT publishing (all event handlers)
+
+### Next Session
+
+- **Start T1.25**: Implement 30-minute sensor logging (FR6.4 - DATABASE)
+  - Timer-based database inserts for temperature/humidity
+  - Insert to `sensor_logs` table every 30 minutes (1800 seconds)
+  - Use `loop_count % 1800 == 0` pattern in app.py
+  - Call `Supabase.insert_sensor_log()` method (already implemented in T1.18)
+  - Test by adjusting timer to shorter interval (e.g., 60s for testing)
+- Then **T1.26**: Asthma alert system (FR7.1, FR7.2, FR7.3)
+  - Conditional logic: `humidity > 50 AND temperature > 27`
+  - Display "ASTHMA ALERT" on LCD
+  - Publish to `home/asthma_alert` MQTT topic
+  - Should be quick - reuses environment handler's sensor readings
+
+---
+

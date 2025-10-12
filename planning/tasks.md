@@ -252,12 +252,14 @@
 
 ### Milestone 1.6: Environmental Monitoring (US6, US7)
 
-- [ ] **T1.24**: Implement continuous temperature/humidity display **(FR6.1, FR6.2, FR6.3 - HOUSE/WEB)**
+- [x] **T1.24**: Implement continuous temperature/humidity display **(FR6.1, FR6.2, FR6.3 - HOUSE/WEB)**
 
   - Main loop: Read DHT11 every 2 seconds
   - Display current values on OLED (e.g., "Temp: 24.5C\nHumid: 60%")
   - Publish to MQTT topics `home/temperature` and `home/humidity`
   - Test: Verify OLED updates and MQTT messages
+  - **Started**: 2025-10-12
+  - **Completed**: 2025-10-12
 
 - [ ] **T1.25**: Implement 30-minute sensor logging **(FR6.4 - DATABASE)**
 
