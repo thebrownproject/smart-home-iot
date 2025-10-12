@@ -79,3 +79,25 @@ class Supabase:
         except Exception as e:
             print("Error inserting RFID scan:", e)
             return False
+    
+    def insert_gas_alert(self):
+        try:
+            self.memory.collect("Before insert_gas_alert")
+            url = self.url + "/rest/v1/gas_alerts"
+            headers = {
+                "apikey": self.anon_key,
+                "Authorization": "Bearer " + self.anon_key,
+                "Content-Type": "application/json"
+            }
+            data = {
+                "device_id": 1,
+                "sensor_value": 0
+            }
+            response = urequests.post(url, headers=headers, data=ujson.dumps(data))
+            success = (response.status_code == 201)
+            response.close()
+            self.memory.collect("After insert_gas_alert")
+            return success
+        except Exception as e:
+            print("Error inserting gas alert:", e)
+            return False

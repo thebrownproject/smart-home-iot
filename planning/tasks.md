@@ -211,13 +211,15 @@
   - **Started**: 2025-10-12
   - **Completed**: 2025-10-12
 
-- [ ] **T1.22**: Implement gas detection & emergency response **(FR4.1, FR4.2, FR4.3, FR4.4 - HOUSE/DATABASE)**
+- [x] **T1.22**: Implement gas detection & emergency response **(FR4.1, FR4.2, FR4.3, FR4.4 - HOUSE/DATABASE)**
 
   - Main loop: Poll gas sensor
   - On gas detected: Turn on fan, set RGB to solid red
   - Log alert with start time to `gas_alerts` table
   - Fan runs until sensor clears, then log end time
   - Test: Trigger gas sensor, verify fan activation
+  - **Started**: 2025-10-12
+  - **Completed**: 2025-10-12
 
 - [ ] **T1.23**: Implement RFID access control **(FR5.1-FR5.5 - HOUSE/DATABASE)**
   - Query Supabase `authorised_cards` table for card validation

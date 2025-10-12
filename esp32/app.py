@@ -15,10 +15,12 @@ class SmartHomeApp:
         from handlers.motion_handler import MotionHandler
         from handlers.lighting_handler import LightingHandler
         from handlers.steam_handler import SteamHandler
+        from handlers.gas_handler import GasHandler
 
         motion = MotionHandler()
         lighting = LightingHandler()
         steam = SteamHandler()
+        gas = GasHandler()
         
         print("App running...")
         loop_count = 0
@@ -34,6 +36,10 @@ class SmartHomeApp:
             # Check steam every 10 seconds
             if loop_count % 10 == 0:
                 steam.handle_steam_detection(self.mqtt)
+
+            # Check gas every 10 seconds
+            if loop_count % 10 == 0:
+                gas.handle_gas_detection(self.mqtt)
 
             # Garbage collection every 10 seconds
             if loop_count % 10 == 0:

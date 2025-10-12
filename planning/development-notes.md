@@ -1996,3 +1996,146 @@ Motion - DB OK
 
 ---
 
+## Session 18 - October 12, 2025 - Gas Detection Handler & Test Infrastructure ✅
+
+**Phase**: Phase 1 - Embedded System Core
+**Milestone**: 1.5 - Core Automation Logic (US1-US5)
+**Branch**: phase-1-embedded-core
+
+### Tasks Completed
+
+- [x] **T1.22**: Implement gas detection & emergency response (FR4.1, FR4.2, FR4.3, FR4.4 - HOUSE/DATABASE)
+  - Created `GasHandler` class with stateful alarm tracking
+  - Implemented full state machine: detection → alarm active → gas cleared → alarm off
+  - Added MQTT publish for both detection and clearing events
+  - Created handler tests with WiFi initialization
+  - Integrated into main app loop (polling every 10 seconds)
+
+### Decisions Made
+
+1. **State Management in Handlers:**
+   - Added `self.gas_alarm_active` boolean to track alarm lifecycle
+   - Pattern: Track "are we in alert mode?" to prevent duplicate activations
+   - Chose simple boolean over alert_id approach for Phase 1 (can enhance in T1.29)
+   - Keeps handler stateful but simpler than database-tracking approach
+
+2. **Where State Belongs - Sensor vs Handler:**
+   - **Sensors remain stateless** - Just read hardware, return current value
+   - **Handlers are stateful** - Track context, decide actions, orchestrate components
+   - Separation of concerns: Sensor = "What is gas value?" Handler = "What should I do about it?"
+   - Keeps sensors reusable and testable in isolation
+
+3. **Gas Handler State Machine:**
+   ```
+   State 1 (No alarm): gas detected → Activate (fan on, RGB red, DB insert, MQTT)
+   State 2 (Alarm active): gas still detected → Do nothing (keep running)
+   State 3 (Alarm active): gas cleared → Deactivate (fan off, RGB off, MQTT clear)
+   State 4 (No alarm): no gas → Do nothing (normal state)
+   ```
+
+4. **Polling Interval for Gas Detection:**
+   - Chose **10 seconds** (same as steam)
+   - Safety-critical but sensor is reliable enough for 10s intervals
+   - Trade-off: Could be 2-5 seconds for faster response, but 10s acceptable for Phase 1
+   - Can adjust in T1.29 when implementing priority system
+
+5. **Test Infrastructure Improvements:**
+   - Added WiFi initialization to ALL handler tests (motion, steam, gas)
+   - Pattern: WiFi → MQTT → Handler instantiation → Test loop
+   - Fixes ENOTCONN errors (MQTT requires WiFi)
+   - Makes tests actually verify network communication
+
+### Issues Encountered & Resolutions
+
+1. **MQTT Connection Failures in Tests:**
+   - **Problem**: Tests showed error `-202` and `ENOTCONN` (not connected)
+   - **Root Cause**: Handler tests connected MQTT without WiFi first
+   - **Solution**: Added `WiFiManager().connect()` before `mqtt.connect()` in all handler tests
+   - **Learning**: MQTT and Supabase both require WiFi - must initialize in correct order
+
+2. **Logic Flow Bug - Alarm Never Deactivates:**
+   - **Problem**: First implementation only had activation logic, no deactivation
+   - **Root Cause**: Missing `else` block to check if alarm is currently active
+   - **Solution**: Added nested if/else to handle all 4 state combinations
+   - **Learning**: State machines need both transitions: inactive→active AND active→inactive
+
+3. **Missing MQTT Clear Message:**
+   - **Problem**: Web dashboard wouldn't know when gas cleared
+   - **Root Cause**: Only published `{"detected": true}`, never `{"detected": false}`
+   - **Solution**: Added MQTT publish when gas clears with "Gas cleared" message
+   - **Learning**: Always publish state changes, not just events (both edges matter)
+
+4. **Debug Output for Testing:**
+   - **Problem**: Test ran silently, couldn't see what was happening
+   - **Root Cause**: No print statements in "do nothing" branches
+   - **Solution**: Added prints for all 4 states (no gas, gas detected, still detected, cleared)
+   - **Learning**: Debug prints in every code path make testing easier
+
+### Key Learning Moments
+
+**Stateful vs Stateless Design:**
+- Sensors: Stateless hardware abstraction (just read pins)
+- Handlers: Stateful business logic (remember context, decide actions)
+- Analogy: Thermometer (sensor) vs Thermostat (handler with set point memory)
+- Keeps architecture clean and components reusable
+
+**State Machine Design Pattern:**
+- Gas alarm is a 2-state system: `inactive` and `active`
+- Each state has different behaviors based on sensor input
+- Must handle ALL combinations: (state × input) matrix
+- Missing any combination = incomplete logic = bugs
+
+**Test-Driven Development Benefits:**
+- Student created isolated handler tests BEFORE integration
+- Much faster iteration than testing in main loop
+- Can trigger specific scenarios without physical sensors
+- Catches bugs before deploying to hardware
+
+**Safety-Critical Features:**
+- Gas detection is life-threatening (not just convenience)
+- Polling intervals matter: 60s too slow, 10s acceptable, 2s ideal
+- Real-world analogy: Smoke detectors check continuously
+- Phase 1: 10s acceptable, can optimize in T1.29
+
+### Files Created/Modified
+
+**Created:**
+- `esp32/handlers/gas_handler.py` - GasHandler class with stateful alarm tracking (41 lines)
+- `esp32/tests/handlers/test_gas_handler.py` - Gas handler test with WiFi initialization
+
+**Modified:**
+- `esp32/app.py` - Added gas handler to main loop (polls every 10 seconds)
+- `esp32/comms/supabase.py` - Already had `insert_gas_alert()` method (lines 83-103)
+- `esp32/tests/handlers/test_motion_handler.py` - Added WiFi initialization
+- `esp32/tests/handlers/test_steam_handler.py` - Added WiFi initialization
+- `planning/tasks.md` - Marked T1.22 complete
+
+### Architecture Impact
+
+**Handler Pattern Consistency:**
+- All handlers now follow same pattern: Lighting, Motion, Steam, Gas
+- All use stateful class instances (motion_count, gas_alarm_active, etc.)
+- All use ultra-lazy loading (import inside method, delete after use)
+- Memory stable at 95KB (confirmed in gas handler test output)
+
+**Testing Infrastructure Established:**
+- `esp32/tests/handlers/` - Isolated handler tests
+- `esp32/tests/sensors/` - Sensor validation tests
+- Pattern: Test each layer independently before integration
+- Professional practice: Unit tests → Integration tests → System tests
+
+**Next Handler: RFID (T1.23)**
+- Will follow same pattern: RFIDHandler class with state if needed
+- More complex: Needs to query Supabase for card validation
+- Will handle: Unknown card rejection, known card door opening, database logging
+
+### Next Session
+
+- Continue with **T1.23**: RFID access control
+- Create `handlers/rfid_handler.py` following established pattern
+- Implement: Scan cards → query `authorised_cards` → door/buzzer/RGB response
+- Challenge: Query database for validation (read operation, not just insert)
+- Expected memory: Stable ~95KB
+
+---
+
