@@ -3,27 +3,51 @@ from utils.memory import Memory
 class SteamHandler:
     def __init__(self):
         self.memory = Memory()
+        self.flash_count = 0  # Non-blocking flash counter
 
     def handle_steam_detection(self, mqtt):
         from sensors.steam import SteamSensor
         from outputs.rgb import RGB
         from outputs.servo import Servo
-        
+        from config import TOPIC_SENSOR_DATA, TOPIC_STATUS_WINDOW
+        import ujson
+        from utils.time_sync import TimeSync
+
         steam = SteamSensor()
         rgb = RGB()
-        window_servo = Servo(pin=5)  # Window servo
+        window_servo = Servo(pin=5)
+        time_sync = TimeSync()
 
+        # Check for new steam detection
         if steam.is_moisture_detected():
-            self.memory.collect("SteamHandler - Steam detected")
-            # Flash RGB blue (FR3.3) - use RGB flash method for temporary indicator
-            rgb.flash((0, 0, 255), 3)  # Blue flash 3 times
-            window_servo.close()
-            if mqtt.publish("home/steam", '{"detected": true}'):
-                print("SteamHandler - MQTT Publish OK")
-            self.memory.collect("SteamHandler - Steam detected")
-        # Don't turn off RGB - let other handlers control their states
-        else:
-            print("SteamHandler - No steam detected")
+            if self.flash_count == 0:  # First detection (not already flashing)
+                self.flash_count = 6  # 3 flashes = 6 states (on/off/on/off/on/off)
+                window_servo.close()
 
-        del steam, rgb, window_servo
+                # Publish steam detection (FR3.1)
+                payload = ujson.dumps({
+                    "sensor_type": "steam",
+                    "detected": True,
+                    "timestamp": time_sync.get_iso_timestamp()
+                })
+                if not mqtt.publish(TOPIC_SENSOR_DATA, payload):
+                    print("SteamHandler - Steam detection MQTT publish FAILED")
+
+                # Publish window status (FR8.4)
+                payload = ujson.dumps({
+                    "state": "closed",
+                    "timestamp": time_sync.get_iso_timestamp()
+                })
+                if not mqtt.publish(TOPIC_STATUS_WINDOW, payload):
+                    print("SteamHandler - Window status MQTT publish FAILED")
+
+        # Non-blocking flash logic (FR3.3 - RGB LED flashes blue)
+        if self.flash_count > 0:
+            self.flash_count -= 1
+            if self.flash_count % 2 == 0:
+                rgb.set_color(0, 0, 255)  # Blue on
+            else:
+                rgb.off()  # Off
+
+        del steam, rgb, window_servo, time_sync
         self.memory.collect("After steam handling")

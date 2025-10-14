@@ -26,3 +26,10 @@ class TimeSync:
         local_time = self.get_local_time()
         hour = local_time[3]
         return hour >= self.night_start or hour < self.night_end
+    
+    def get_iso_timestamp(self):
+        local_time = self.get_local_time()
+        return "{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z".format(
+          local_time[0], local_time[1], local_time[2],
+          local_time[3], local_time[4], local_time[5]
+      )

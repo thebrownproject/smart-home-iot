@@ -175,7 +175,6 @@ GET  /api/status
        "door": "open",
        "window": "closed",
        "fan": "off",
-       "led": "on",
        "lastUpdate": "..."
      }
 ```
@@ -187,7 +186,7 @@ POST /api/control
      → Publishes to MQTT control topic
      Response: { "success": true, "message": "Command sent" }
 
-     Supported devices: door, window, fan, led
+     Supported devices: door, window, fan
      Supported actions: open, close, on, off
 ```
 
@@ -207,7 +206,6 @@ devices/esp32_main/rfid/check          # RFID UID for validation
 devices/esp32_main/status/door         # Door servo position
 devices/esp32_main/status/window       # Window servo position
 devices/esp32_main/status/fan          # Fan state (on/off)
-devices/esp32_main/status/led          # LED state
 ```
 
 **Payload Examples**:
@@ -230,7 +228,6 @@ devices/esp32_main/status/led          # LED state
 devices/esp32_main/control/door        # Open/close door
 devices/esp32_main/control/window      # Open/close window
 devices/esp32_main/control/fan         # Turn on/off fan
-devices/esp32_main/control/led         # LED control
 devices/esp32_main/rfid/response       # RFID validation result from C# middleware
 ```
 

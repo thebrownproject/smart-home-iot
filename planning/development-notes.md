@@ -2454,3 +2454,230 @@ Motion - DB OK
 
 ---
 
+
+
+## Session 6 - 2025-10-14 - MQTT-Only Architecture Refactor ✅
+
+**Phase**: Phase 1 - Embedded System Core
+**Milestone**: 1.5 - MQTT Architecture Migration
+**Branch**: phase-1-embedded-core
+
+### Tasks Completed
+
+- [x] **T1.17** (partial): Removed Supabase HTTP client - MQTT-only architecture
+- [x] **T1.18**: Deprecated Supabase module - removed all direct HTTP database access
+- [x] **Configuration Cleanup**: Updated config.py and config.example.py with MQTT topic structure
+- [x] **Gas Handler**: Refactored to MQTT-only, added fan status publishing (FR8.5)
+- [x] **Environment Handler**: Refactored to MQTT-only, consolidated with database_log_handler
+- [x] **Motion Handler**: Refactored to MQTT-only, removed door status publishing bug
+- [x] **Steam Handler**: Refactored with non-blocking flash pattern, added window status publishing (FR8.4)
+- [x] **RGB Output Class**: Removed blocking `flash()` method to prevent event loop freezing
+- [x] **Documentation**: Removed LED control/status topics from architecture.md (not in PRD requirements)
+
+### Decisions Made
+
+**1. MQTT-Only Communication Pattern (Critical Architecture Change):**
+- **Decision**: ESP32 communicates EXCLUSIVELY via MQTT - NO HTTP/REST calls to Supabase
+- **Rationale**: MicroPython's `urequests` library causes memory leaks over time
+- **Impact**: All database writes now handled by C# middleware (Phase 2)
+- **Pattern**: ESP32 → MQTT publish → C# middleware subscribes → Supabase writes
+- **Security**: ESP32 no longer has database credentials - centralized in C# layer
+
+**2. Topic Structure Standardization:**
+- **Pattern**: `devices/{deviceId}/{category}/{subcategory}`
+- **Device ID**: `esp32_main` (scalable to multiple devices)
+- **Publish Topics**: `devices/esp32_main/data` (sensors), `devices/esp32_main/rfid/check`, `devices/esp32_main/status/*` (outputs)
+- **Subscribe Topics**: `devices/esp32_main/rfid/response`, `devices/esp32_main/control/*`
+- **Rationale**: Aligns with MQTT best practices, clear hierarchy, wildcard support
+
+**3. Non-Blocking Flash Pattern for RGB:**
+- **Issue**: `rgb.flash()` used `time.sleep()` which froze entire event loop for 3 seconds
+- **Decision**: Implemented countdown timer pattern in handlers (like motion_handler)
+- **Pattern**: `flash_count = 6` (3 flashes × 2 states), decrement each loop, toggle RGB on even/odd
+- **Removed**: Blocking `flash()` method from RGB class entirely
+- **Applied To**: Steam handler (blue flash - FR3.3), prepared for RFID handler (red flash - FR5.3)
+
+**4. Configuration-Driven Topic Management:**
+- **Decision**: Centralize all MQTT topics in `config.py` as constants
+- **Pattern**: `TOPIC_SENSOR_DATA`, `TOPIC_STATUS_FAN`, `TOPIC_RFID_REQUEST`, etc.
+- **Added Comments**: FR references for traceability (e.g., "# For web dashboard display - FR8.4, FR8.5")
+- **Removed**: LED status/control topics (not in PRD requirements FR8-FR9)
+
+**5. Output Status Publishing:**
+- **Decision**: Handlers must publish output state changes to status topics
+- **Implemented**: Gas handler publishes fan status, steam handler publishes window status
+- **Purpose**: Enables web dashboard to display output states (FR8.4, FR8.5)
+- **Pattern**: Publish to `devices/esp32_main/status/{output}` with payload `{"state": "on/off/open/closed", "timestamp": "..."}`
+
+**6. Consolidation of Duplicate Handlers:**
+- **Discovery**: `database_log_handler.py` and `environment_handler.py` both read DHT11
+- **Decision**: Keep `environment_handler.py` (displays on OLED + publishes MQTT), delete `database_log_handler.py`
+- **Rationale**: C# middleware handles database writes, no need for separate "log" handler
+- **Student Insight**: "I am pretty sure that the c# api will be handling all of the database posting" - excellent architectural thinking!
+
+**7. PRD-Driven Feature Removal:**
+- **Analyzed**: LED control/status not in PRD requirements (FR8.4, FR8.5, FR9.1-9.3 only mention door/window/fan)
+- **Decision**: Removed `TOPIC_STATUS_LED` and `TOPIC_CONTROL_LED` from config and architecture.md
+- **Principle**: YAGNI - only implement what's required, avoid feature creep
+- **Updated**: Architecture.md to match PRD exactly (documentation drift correction)
+
+### Issues Encountered
+
+**1. Blocking RGB Flash Discovered by Student:**
+- **Issue**: Student noticed steam_handler used `rgb.flash()` with blocking `time.sleep()` in tight event loop
+- **Root Cause**: RGB class method froze system for 3 seconds during flash animation
+- **Impact**: Motion detection, gas detection, RFID scanning all stopped during flash
+- **Resolution**: Implemented non-blocking countdown timer pattern across all handlers
+- **Learning**: Single-threaded event loops require non-blocking patterns - student recognized this independently!
+
+**2. Door Status in Motion Handler (Bug):**
+- **Issue**: Motion handler was publishing door status to `TOPIC_STATUS_DOOR` - incorrect logic
+- **Root Cause**: Undocumented feature creep - motion detection doesn't control door
+- **Resolution**: Removed door status publishing, only RGB orange and MQTT sensor data remain
+- **Lesson**: Always check PRD - if feature isn't documented, it's probably wrong
+
+**3. Inconsistent MQTT Topics:**
+- **Issue**: Old handlers used `home/*` topics, new architecture uses `devices/esp32_main/*`
+- **Resolution**: Updated all handlers to use topic constants from config.py
+- **Pattern**: Import topics from config: `from config import TOPIC_SENSOR_DATA, TOPIC_STATUS_FAN`
+
+**4. Missing RFID Request/Response Pattern:**
+- **Issue**: RFID handler doesn't implement MQTT request/response flow with C# middleware
+- **Current**: Handler validates ANY card as granted (no database check)
+- **Required**: Publish UID to `rfid/check`, wait for response on `rfid/response`, react to validation
+- **Status**: Identified but not completed this session - requires subscription callback setup
+- **Next Session**: Major refactor needed for RFID (most complex handler)
+
+**5. Motion Handler Countdown Timer Naming Confusion:**
+- **Issue**: Student had `motion_count = 3` countdown but loop runs every 1 second (not 1/3 second)
+- **Resolution**: Countdown of 3 = RGB stays on for 3 loop iterations = 3 seconds total
+- **Learning**: Non-blocking timers work at loop frequency, not absolute time
+
+### Key Learning Moments
+
+**Separation of Concerns - RGB Flash Logic:**
+- **Question**: "Could I write a flash method into rgb without using time?"
+- **Discussion**: Technically yes (add update() method), but architecturally wrong
+- **Principle**: RGB class should control hardware ONLY, not manage application state/timing
+- **Insight**: Handler owns business logic (when to flash), RGB owns hardware control (set color)
+- **Alternative Considered**: FlashTimer utility class for reusability
+- **Conclusion**: YAGNI applies - only 2-3 handlers flash, duplication is minimal
+
+**Documentation as Source of Truth:**
+- **Discovery**: architecture.md included LED topics, but PRD doesn't require them
+- **Learning**: When docs conflict, PRD wins (it's the contract for assessment)
+- **Action**: Updated architecture.md to remove LED, aligned with PRD requirements
+- **Insight**: Documentation drift is common - design docs from early project phases become stale
+
+**Request/Response in Pub/Sub Systems:**
+- **Challenge**: MQTT is publish/subscribe, not request/response like HTTP
+- **Pattern**: Publish request to one topic, subscribe to response topic, match via correlation
+- **ESP32 Limitation**: Can't maintain HTTP connections, so MQTT becomes transport layer
+- **Architecture**: RFID check/response uses this pattern with C# middleware as validator
+
+**Memory Management in Event Loops:**
+- **Pattern**: Lazy load dependencies inside handler methods
+- **Cleanup**: Delete objects after use, run garbage collection
+- **Rationale**: ESP32 has ~100KB RAM - can't keep all objects in memory permanently
+- **Student Applied**: Correctly added `time_sync` to all `del` statements after review
+
+**PRD-Driven Development:**
+- **Student Question**: "Is it a functional requirement that if motion is detected then the door needs to close?"
+- **Process**: Checked PRD (US2, FR2.1-2.3) - no door control mentioned
+- **Learning**: When uncertain about features, consult PRD - it's the requirements contract
+- **Prevented**: Implementing unnecessary features, kept scope focused
+
+### Architecture Impact
+
+**Complete MQTT-Only Migration:**
+- ✅ Gas handler: MQTT sensor data + fan status
+- ✅ Environment handler: MQTT temp/humidity data
+- ✅ Motion handler: MQTT motion events
+- ✅ Steam handler: MQTT steam detection + window status
+- ⚠️ RFID handler: Needs request/response pattern implementation (next session)
+- ❌ Removed: All Supabase HTTP client code (`esp32/comms/supabase.py` and subdirectory)
+
+**Handler Status Publishing Compliance:**
+- ✅ Fan status published by gas_handler (FR8.5)
+- ✅ Window status published by steam_handler (FR8.4)
+- ✅ Door status will be published by RFID handler (FR8.4) - pending refactor
+- ❌ LED status removed (not in PRD)
+
+**Non-Blocking Patterns Established:**
+- ✅ Motion handler: Countdown timer for RGB orange
+- ✅ Steam handler: Non-blocking blue flash (6-state countdown)
+- ⚠️ RFID handler: Needs non-blocking red flash (next session)
+- ✅ RGB class: Removed blocking flash() method entirely
+
+**Configuration Management:**
+- ✅ All MQTT topics centralized in config.py
+- ✅ Topic constants imported by handlers
+- ✅ FR references added as comments for traceability
+- ✅ Documentation (architecture.md) aligned with config.py and PRD
+
+### Files Modified This Session
+
+**Configuration:**
+- `esp32/config.py` - Removed LED topics, added FR comments
+- `esp32/config.example.py` - Matched changes to config.py
+
+**Handlers (Refactored):**
+- `esp32/handlers/gas_handler.py` - MQTT-only, fan status publishing
+- `esp32/handlers/environment_handler.py` - MQTT-only, consolidated with database logger
+- `esp32/handlers/motion_handler.py` - MQTT-only, removed door status bug
+- `esp32/handlers/steam_handler.py` - Non-blocking flash, window status publishing
+- `esp32/handlers/database_log_handler.py` - Deprecated (functionality moved to environment_handler)
+
+**Outputs:**
+- `esp32/outputs/rgb.py` - Removed blocking flash() method
+
+**Documentation:**
+- `planning/architecture.md` - Removed LED topics from status/control sections, aligned with PRD
+
+**Removed:**
+- ❌ `esp32/comms/supabase.py` - No longer needed (MQTT-only)
+- ❌ `esp32/comms/supabase/` directory - All modules deleted (gas_alerts.py, motion_events.py, rfid_scans.py, rfid_results.py, sensor_logs.py)
+
+### Next Session Priorities
+
+**High Priority - RFID Handler Refactor:**
+1. Implement MQTT request/response pattern (FR5.1, FR5.2)
+   - Publish card UID to `devices/esp32_main/rfid/check`
+   - Subscribe to `devices/esp32_main/rfid/response` (requires callback setup)
+   - Wait for C# middleware validation result
+   - React based on `valid: true/false`
+
+2. Add non-blocking red flash for denied access (FR5.3)
+   - Countdown timer pattern: `flash_count = 6`
+   - Red flash + buzzer on invalid card
+
+3. Publish door status after servo movement (FR8.4)
+   - `devices/esp32_main/status/door` with `{"state": "open"/"closed"}`
+
+**Medium Priority - MQTT Subscription Setup:**
+- Configure MQTT client to subscribe to `devices/esp32_main/rfid/response`
+- Implement callback routing in mqtt_client.py or app.py
+- Handle incoming validation responses in RFID handler
+
+**Low Priority - Cleanup:**
+- Remove `database_log_handler.py` import from app.py (line 22)
+- Test end-to-end flow with all refactored handlers
+- Update tasks.md with completed architecture refactor milestones
+
+**Preparation Needed:**
+- Review architecture.md RFID flow (Pattern 4, lines 97-115)
+- Understand MQTT subscription callback patterns
+- Plan state management for "pending validation" in RFID handler
+
+### Session Statistics
+
+**Duration**: ~2.5 hours (extensive architecture refactoring)
+**Files Modified**: 10 files
+**Lines Changed**: ~300 lines (refactored, not just added)
+**Handlers Refactored**: 4 complete (gas, environment, motion, steam)
+**Architecture Decisions**: 7 major decisions documented
+**Bugs Fixed**: 3 (blocking flash, door status in motion, LED topics not in PRD)
+**Student Insights**: 2 excellent questions (flash implementation, PRD requirements check)
+
+---
+

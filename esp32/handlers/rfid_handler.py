@@ -6,54 +6,51 @@ class RFIDHandler:
     def __init__(self):
         self.memory = Memory()
         self.rfid = RFIDSensor()  # Initialize once, reuse across calls
-        self.buzzer = Buzzer()
 
     def handle_rfid_detection(self, mqtt):
         from outputs.rgb import RGB
         from outputs.servo import Servo
         from display.oled import OLED
-        from comms.supabase.rfid_results import get_card_result
-        from comms.supabase.rfid_scans import insert_rfid_scan
+        from outputs.buzzer import Buzzer
+        from config import TOPIC_RFID_REQUEST, TOPIC_RFID_RESPONSE
+        import ujson
+        from utils.time_sync import TimeSync
+
+
         rgb = RGB()
         door_servo = Servo(pin=13)
         oled = OLED()
+        time_sync = TimeSync()
+        card_id = self.rfid.get_card_id()
+        buzzer = Buzzer()
 
-        self.memory.collect("Before RFID handling")
-        self.buzzer.stop()
+        buzzer.stop()
         rgb.off()
+        
 
-        print("starting rfid test")
-
-        if self.rfid.scan_card():
-            card_id = self.rfid.get_card_id()
-            print(f"DEBUG: Card scanned, ID: {card_id}")
-
-            if not card_id:
-                print("DEBUG: No card ID, exiting handler")
-                del rgb, door_servo, oled
-                self.memory.collect("After RFID handling")
-                return
-
-            card_record = get_card_result(card_id)
-            print(f"DEBUG: Card record from DB: {card_record}")
-            if card_record:
-                rgb.set_color(0, 255, 0)
-                door_servo.open()
-                oled.show_text("ACCESS GRANTED", "Welcome home")
-                payload = '{"card_id": "' + card_id + '", "access": "granted"}'
-                if mqtt.publish("home/rfid", payload):
-                    print("RFIDHandler - MQTT Publish OK")
-                insert_rfid_scan(card_id, "granted", card_record['id'])
-            else:
-                print("DEBUG: Access denied - buzzer is COMMENTED OUT")
-                rgb.set_color(255, 0, 0)
-                self.buzzer.start()
-                oled.show_text("ACCESS DENIED", "Unauthorised access")
-                payload = '{"card_id": "' + card_id + '", "access": "denied"}'
-                door_servo.close()
-                if mqtt.publish("home/rfid", payload):
-                    print("RFIDHandler - MQTT Publish OK")
-                insert_rfid_scan(card_id, "denied", None)
+        if card_id:
+            rgb.set_color(0, 255, 0)
+            door_servo.open()
+            oled.show_text("ACCESS GRANTED", "Welcome home")
+            payload = ujson.dumps({
+                "card_id": card_id,
+                "access": "granted",
+                "timestamp": time_sync.get_iso_timestamp()
+            })
+            if mqtt.publish(TOPIC_RFID_RESPONSE, payload):
+                print("RFIDHandler - MQTT Publish OK")
             self.rfid.clear_card()
-        del rgb, get_card_result, insert_rfid_scan, door_servo, oled
-        self.memory.collect("After RFID handling")
+        else:
+            rgb.set_color(255, 0, 0)
+            buzzer.start()
+            payload = ujson.dumps({
+                "card_id": card_id,
+                "access": "denied",
+                "timestamp": time_sync.get_iso_timestamp()
+            })
+            door_servo.close()
+            if mqtt.publish(TOPIC_RFID_RESPONSE, payload):
+                print("RFIDHandler - MQTT Publish OK")
+        self.rfid.clear_card()
+    del rgb, door_servo, oled, buzzer, time_sync
+    self.memory.collect("After RFID handling")
