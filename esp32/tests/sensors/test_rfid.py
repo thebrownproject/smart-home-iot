@@ -31,6 +31,11 @@ if result is not None:
     get_card_id_result = True
     test_score += 1
 
+print("\nTesting clear_card")
+sensor.clear_card()
+print("  Card cleared")
+test_score += 1
+
 print("\n" + "="*50)
 print(f"Test Score: {test_score}/6")
 if test_score >= 1 and get_card_id_result:

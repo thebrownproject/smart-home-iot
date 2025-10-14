@@ -1,9 +1,10 @@
 import time
+from utils.memory import Memory
 
 class SmartHomeApp:
-    def __init__(self, system):
+    def __init__(self):
         # Store Memory reference
-        self.memory = system.memory
+        self.memory = Memory()
 
         # Create persistent MQTT connection (can't be deleted)
         from comms.mqtt_client import SmartHomeMQTTClient

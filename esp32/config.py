@@ -12,6 +12,8 @@ To set up your ESP32:
 # WiFi Configuration
 WIFI_SSID = "TP-LINK_DC8B"
 WIFI_PASSWORD = "27653975"
+WIFI_SSID = "CyFi"
+WIFI_PASSWORD = "SecurityA40"
 
 # MQTT Broker (HiveMQ Cloud)
 MQTT_BROKER = "301d2478bf674954a8b8e5ad05732a73.s1.eu.hivemq.cloud"
@@ -20,7 +22,7 @@ MQTT_USER = "thebrownproject"
 MQTT_PASSWORD = "StrongPassword123!"
 
 # Supabase (Direct HTTP)
-SUPABASE_URL = "https://uehfuypnccdqvdssknqq.supabase.co"
+SUPABASE_URL = "http://uehfuypnccdqvdssknqq.supabase.co"
 SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlaGZ1eXBuY2NkcXZkc3NrbnFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk4ODMwNzksImV4cCI6MjA3NTQ1OTA3OX0.r4L-PRdbqae7nm23-H3FQQFNWnnh4kkA_HrlwGjnPE8"
 
 # Time Configuration (NTP)

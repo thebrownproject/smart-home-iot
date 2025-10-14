@@ -22,3 +22,9 @@ class RFIDSensor:
                 uid += str(byte)
             return uid
         return None  # No card was scanned
+    
+    def clear_card(self):
+        """Reset the stored card UID to allow re-scanning"""
+        self.rfid.uid.size = 0
+        for i in range(10):
+            self.rfid.uid.uidByte[i] = 0

@@ -9,7 +9,7 @@ system_init = SystemInit()
 system_init.init()
 
 # Initialize app
-app = SmartHomeApp(system_init)
+app = SmartHomeApp()
 
 # Run app
 app.run()

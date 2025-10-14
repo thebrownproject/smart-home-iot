@@ -1,27 +1,43 @@
 from utils.memory import Memory
+# from sensors.rfid import RFIDSensor
+from outputs.buzzer import Buzzer
 
 class RFIDHandler:
     def __init__(self):
         self.memory = Memory()
+        # self.rfid = RFIDSensor()  # Initialize once, reuse across calls
+        self.buzzer = Buzzer()
 
     def handle_rfid_detection(self, mqtt):
-        from sensors.rfid import RFIDSensor
         from outputs.rgb import RGB
-        from outputs.buzzer import Buzzer
         from outputs.servo import Servo
         from display.oled import OLED
         from comms.supabase import Supabase
-
-        rfid = RFIDSensor()
+        from sensors.rfid import RFIDSensor
         rgb = RGB()
-        buzzer = Buzzer()
         supabase = Supabase()
         door_servo = Servo(pin=13)
         oled = OLED()
+        rfid = RFIDSensor()
+
+        self.memory.collect("Before RFID handling")
+        self.buzzer.stop()
+        rgb.off()
+
+        print("starting rfid test")
 
         if rfid.scan_card():
             card_id = rfid.get_card_id()
+            print(f"DEBUG: Card scanned, ID: {card_id}")
+
+            if not card_id:
+                print("DEBUG: No card ID, exiting handler")
+                del rgb, supabase, door_servo, oled, rfid
+                self.memory.collect("After RFID handling")
+                return
+
             card_record = supabase.get_card_result(card_id)
+            print(f"DEBUG: Card record from DB: {card_record}")
             if card_record:
                 rgb.set_color(0, 255, 0)
                 door_servo.open()
@@ -31,12 +47,15 @@ class RFIDHandler:
                     print("RFIDHandler - MQTT Publish OK")
                 supabase.insert_rfid_scan(card_id, "granted", card_record['id'])
             else:
+                print("DEBUG: Access denied - buzzer is COMMENTED OUT")
                 rgb.set_color(255, 0, 0)
-                buzzer.beep(3)
+                self.buzzer.start()
                 oled.show_text("ACCESS DENIED", "Unauthorised access")
                 payload = '{"card_id": "' + card_id + '", "access": "denied"}'
+                door_servo.close()
                 if mqtt.publish("home/rfid", payload):
                     print("RFIDHandler - MQTT Publish OK")
                 supabase.insert_rfid_scan(card_id, "denied", None)
-        del rfid, rgb, buzzer, supabase, door_servo, oled
+            rfid.clear_card()
+        del rgb, supabase, door_servo, oled, rfid
         self.memory.collect("After RFID handling")

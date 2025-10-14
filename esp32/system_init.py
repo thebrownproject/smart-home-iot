@@ -69,8 +69,8 @@ class SystemInit:
         from comms.mqtt_client import SmartHomeMQTTClient
         mqtt_client = SmartHomeMQTTClient()
         mqtt_client.connect()
-        del mqtt_client
         self.memory.collect("After MQTT connect")
+        del mqtt_client
 
     def _show_ready(self):
         from display.oled import OLED

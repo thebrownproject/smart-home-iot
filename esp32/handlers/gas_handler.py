@@ -10,11 +10,14 @@ class GasHandler:
         from outputs.rgb import RGB
         from outputs.fan import Fan
         from comms.supabase import Supabase
+        from comms.mqtt_client import SmartHomeMQTTClient
         
         gas = GasSensor()
         rgb = RGB()
         fan = Fan()
         supabase = Supabase()
+        mqtt = SmartHomeMQTTClient()
+
         
         if not self.gas_alarm_active:
             if gas.is_gas_detected():
