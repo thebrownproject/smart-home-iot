@@ -27,10 +27,24 @@ class EnvironmentHandler:
         temp_payload = json.dumps({"value": temperature, "unit": "C"})
         humidity_payload = json.dumps({"value": humidity, "unit": "%"})
 
-        if mqtt.publish("home/temperature", temp_payload):
-            print("EnvironmentHandler - Temperature MQTT Publish OK")
-        if mqtt.publish("home/humidity", humidity_payload):
-            print("EnvironmentHandler - Humidity MQTT Publish OK")
+        # Publish to MQTT with error handling (connection may be unstable)
+        try:
+            print(f"EnvironmentHandler - Publishing temp: {temp_payload}")
+            if mqtt.publish("home/temperature", temp_payload):
+                print("EnvironmentHandler - Temperature MQTT Publish OK")
+            else:
+                print("EnvironmentHandler - Temperature MQTT Publish FAILED")
+        except Exception as e:
+            print(f"EnvironmentHandler - Temperature MQTT Error: {e}")
+
+        try:
+            print(f"EnvironmentHandler - Publishing humidity: {humidity_payload}")
+            if mqtt.publish("home/humidity", humidity_payload):
+                print("EnvironmentHandler - Humidity MQTT Publish OK")
+            else:
+                print("EnvironmentHandler - Humidity MQTT Publish FAILED")
+        except Exception as e:
+            print(f"EnvironmentHandler - Humidity MQTT Error: {e}")
 
         del dht11, oled
         self.memory.collect("After environment handling")

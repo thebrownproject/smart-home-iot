@@ -6,11 +6,11 @@ class DatabaseLogHandler:
 
     def handle_database_log(self):
         """Log temperature and humidity to database every 30 minutes (FR6.4)"""
-        from sensors.dht11 import DHT11
+        from sensors.dht11 import DHT11Sensor
         from comms.supabase.sensor_logs import insert_sensor_log
         import gc
 
-        dht11 = DHT11(17)
+        dht11 = DHT11Sensor()
         temp, humidity = dht11.read_data()
 
         if temp is not None and humidity is not None:
@@ -20,6 +20,6 @@ class DatabaseLogHandler:
         else:
             print("DatabaseLogHandler - Sensor read failed, skipping log")
 
-        del dht11, insert_sensor_log
+        del dht11, insert_sensor_log, DHT11Sensor
         gc.collect()
         self.memory.collect("After database log")

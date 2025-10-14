@@ -15,6 +15,7 @@ class SmartHomeMQTTClient:
             ssl=True,
             ssl_params={"server_hostname": MQTT_BROKER}
         )
+        self.client.sock = None  # Will be set on connect
     
     def connect(self):
         try:
@@ -37,8 +38,12 @@ class SmartHomeMQTTClient:
         try:
             self.client.publish(topic, payload)
             return True
+        except OSError as e:
+            # Socket timeout or connection error
+            print(f"MQTT publish timeout/error for {topic}: {e}")
+            return False
         except Exception as e:
-            print("Error publishing to MQTT broker:", e)
+            print(f"Error publishing to MQTT broker ({topic}): {e}")
             return False
     
     def subscribe(self, topic, callback):
