@@ -19,6 +19,7 @@ class SmartHomeApp:
         from handlers.gas_handler import GasHandler
         from handlers.rfid_handler import RFIDHandler
         from handlers.enviroment_handler import EnvironmentHandler
+        from handlers.database_log_handler import DatabaseLogHandler
 
         motion = MotionHandler()
         lighting = LightingHandler()
@@ -26,7 +27,8 @@ class SmartHomeApp:
         gas = GasHandler()
         rfid = RFIDHandler()
         environment = EnvironmentHandler()
-        
+        database_logger = DatabaseLogHandler()
+
         print("App running...")
         loop_count = 0
         while True:
@@ -53,6 +55,10 @@ class SmartHomeApp:
             # Check environment (temp/humidity) every 2 seconds
             if loop_count % 2 == 0:
                 environment.handle_environment_detection(self.mqtt)
+
+            # Log sensor data to database every 30 minutes (1800 seconds) - FR6.4
+            if loop_count % 1800 == 0:
+                database_logger.handle_database_log()
 
             # Garbage collection every 10 seconds
             if loop_count % 10 == 0:

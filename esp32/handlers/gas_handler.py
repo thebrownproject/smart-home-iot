@@ -9,20 +9,19 @@ class GasHandler:
         from sensors.gas import GasSensor
         from outputs.rgb import RGB
         from outputs.fan import Fan
-        from comms.supabase import Supabase
+        from comms.supabase.gas_alerts import insert_gas_alert
         from comms.mqtt_client import SmartHomeMQTTClient
-        
+
         gas = GasSensor()
         rgb = RGB()
         fan = Fan()
-        supabase = Supabase()
         mqtt = SmartHomeMQTTClient()
 
-        
+
         if not self.gas_alarm_active:
             if gas.is_gas_detected():
                 self.gas_alarm_active = True
-                supabase.insert_gas_alert()
+                insert_gas_alert()
                 self.memory.collect("GasHandler - Gas detected")
                 rgb.set_color(255, 0, 0)
                 fan.on()
@@ -39,6 +38,6 @@ class GasHandler:
                     print("GasHandler - Gas cleared, MQTT Publish OK")
             else:
                 print("GasHandler - Gas still detected, alarm active")
-        
-        del gas, rgb, fan, supabase
+
+        del gas, rgb, fan, insert_gas_alert
         self.memory.collect("After gas handling")

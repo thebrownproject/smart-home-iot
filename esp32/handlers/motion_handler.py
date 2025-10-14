@@ -30,11 +30,10 @@ class MotionHandler:
 
                 # Supabase insert
                 try:
-                    from comms.supabase import Supabase
-                    supabase = Supabase()
-                    supabase.insert_motion_event()
+                    from comms.supabase.motion_events import insert_motion_event
+                    insert_motion_event()
                     print("MotionHandler - DB Insert OK")
-                    del supabase
+                    del insert_motion_event
                 except Exception as e:
                     print(f"MotionHandler - DB Insert ERROR: {e}")
 
