@@ -11,7 +11,7 @@ ESP32-based smart home automation system for Cert IV assessment. Four-layer IoT 
 - **WEB layer**: Next.js dashboard (monitoring/control)
 - **DATABASE layer**: Supabase PostgreSQL (persistence)
 
-Communication: ESP32 → Supabase (HTTPS) for persistence, ESP32 ↔ HiveMQ MQTT ↔ Next.js for real-time updates, Next.js → C# API → Supabase for queries.
+Communication: ESP32 → HiveMQ MQTT (ONLY) → C# Middleware → Supabase for all persistence. Next.js → HiveMQ MQTT for real-time updates. Next.js → C# API → Supabase for historical queries.
 
 ## Available MCP Tools
 
@@ -112,11 +112,13 @@ def handle_motion_detection(system, mqtt):
 
 ## Data Flow Patterns
 
-**Persistence**: ESP32 → POST Supabase → sensor_logs table
+**Persistence**: ESP32 → MQTT publish `devices/{id}/data` → C# Middleware subscribes → POST Supabase → sensor_logs table
 
-**Real-time**: ESP32 → MQTT publish → Next.js subscribes → UI update
+**RFID Validation**: ESP32 → MQTT publish `devices/{id}/rfid/check` → C# queries Supabase → MQTT publish `devices/{id}/rfid/response` → ESP32 receives validation
 
-**Control**: Next.js → MQTT publish → ESP32 subscribes → Output executes
+**Real-time**: ESP32 → MQTT publish → Next.js subscribes (same topics) → UI update
+
+**Control**: Next.js → MQTT publish `devices/{id}/control/*` → ESP32 subscribes → Output executes
 
 **Historical**: Next.js → GET C# API → Query Supabase → Display charts/logs
 
@@ -158,12 +160,16 @@ Detailed workflow steps are in `/continue` command. Always use these commands fo
 
 **Database Schema**: `planning/database-schema.sql` - Tables: `devices`, `sensor_logs`, `rfid_scans`, `motion_events`, `gas_alerts`, `users`, `authorised_cards`
 
-**Key Architectural Decision**: ESP32 writes directly to Supabase (not through C# API). C# API is read-only for querying historical data.
+**Key Architectural Decisions**:
+- **MQTT-Only ESP32**: ESP32 communicates EXCLUSIVELY via MQTT (no HTTP/REST). This eliminates memory leaks from `urequests` library.
+- **C# Middleware Gateway**: C# API is the ONLY layer with Supabase credentials. It subscribes to MQTT device messages and handles all database writes.
+- **Security**: ESP32 has NO database credentials—all business logic and persistence centralized in C# middleware.
+- **RFID Validation**: Request/response pattern via MQTT topics (`devices/{id}/rfid/check` → C# validates → `devices/{id}/rfid/response`).
 
 ## Development Phases
 
-**Phase 1: Embedded Core** - ESP32 sensors/outputs, MQTT pub/sub, Supabase direct logging, main event loop
-**Phase 2: C# API** - ASP.NET Core 9.0 with Models/Controllers/Contracts, Supabase queries, Swagger docs
+**Phase 1: Embedded Core** - ESP32 sensors/outputs, MQTT pub/sub (ONLY), main event loop. NO direct database access.
+**Phase 2: C# API** - ASP.NET Core 9.0 with MQTT Background Service (subscriber), RFID validation service, sensor data writer, Models/Controllers/Contracts, Swagger docs
 **Phase 3: Web Dashboard** - Next.js with MQTT subscriptions (real-time) and C# API calls (historical data)
 **Phase 4: Bonus Features** - JWT authentication, user roles (Parent/Child), PIR arm/disarm, analytics
 

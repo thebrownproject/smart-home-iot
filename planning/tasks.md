@@ -161,24 +161,24 @@
   - **Started**: 2025-10-10
   - **Completed**: 2025-10-10
 
-- [x] **T1.17**: Implement MQTT client wrapper
+- [ ] **T1.17**: Update MQTT client wrapper for new topic structure
 
   - File: `esp32/comms/mqtt_client.py`
-  - Use `umqtt.simple` or `umqtt.robust` library
-  - Methods: `connect()`, `publish(topic, payload)`, `subscribe(topic, callback)`, `check_messages()`
-  - Handle connection failures gracefully
-  - Test: Publish to `home/test` topic, verify on HiveMQ web console
+  - Update to use new topic structure: `devices/esp32_main/*`
+  - Subscribe to `devices/esp32_main/rfid/response` for RFID validation
+  - Subscribe to `devices/esp32_main/control/#` for web control commands
+  - Test: Publish to `devices/esp32_main/data` topic, verify on HiveMQ web console
   - **Started**: 2025-10-11
-  - **Completed**: 2025-10-11
+  - **Previously Completed**: 2025-10-11
+  - **Status**: Needs update for new architecture
 
-- [x] **T1.18**: Implement Supabase HTTP client
-  - File: `esp32/comms/supabase.py`
-  - Methods: `insert_sensor_log(sensor_type, value, unit)`, `insert_rfid_scan(card_id, access_result, authorised_card_id)`
-  - Use `urequests` library for HTTP POST
-  - Include API key in headers
-  - Test: Insert dummy sensor log, verify in Supabase dashboard
+- [ ] **T1.18**: ~~Implement Supabase HTTP client~~ **DEPRECATED - Remove this module**
+  - **Architecture Change**: ESP32 now communicates ONLY via MQTT (no HTTP/REST)
+  - **Action Required**: Remove `esp32/comms/supabase.py` and `esp32/comms/supabase/` directory
+  - **Replacement**: All database writes handled by C# middleware (see T2.5, T2.6, T2.7)
   - **Started**: 2025-10-11
-  - **Completed**: 2025-10-11
+  - **Previously Completed**: 2025-10-11
+  - **Deprecated**: 2025-10-14
 
 ---
 
@@ -221,18 +221,21 @@
   - **Started**: 2025-10-12
   - **Completed**: 2025-10-12
 
-- [x] **T1.23**: Implement RFID access control **(FR5.1-FR5.5 - HOUSE/DATABASE)**
+- [ ] **T1.23**: Update RFID access control for MQTT request/response pattern **(FR5.1-FR5.6 - HOUSE/API/DATABASE)**
 
-  - Query Supabase `authorised_cards` table for card validation
-  - Main loop: Scan for RFID cards
-  - Unknown card: Flash RGB red + buzzer (FR5.2)
-  - Known card: Open door servo, show "ACCESS GRANTED" on OLED (FR5.3, FR5.5)
-  - Log all scans to `rfid_scans` table (FR5.4)
-  - Publish MQTT event to `home/rfid` with card_id and access result
-  - Test: Scan known/unknown cards, verify behavior
+  - **Architecture Change**: RFID validation now uses MQTT request/response with C# middleware
+  - ESP32: Scan card → Publish UID to `devices/esp32_main/rfid/check`
+  - ESP32: Subscribe to `devices/esp32_main/rfid/response` and wait for validation result
+  - ESP32: On valid response: Open door servo, green RGB, show "ACCESS GRANTED" on OLED (FR5.4, FR5.6)
+  - ESP32: On invalid response: Flash RGB red + buzzer, show "ACCESS DENIED" (FR5.3, FR5.6)
+  - C# Middleware: Subscribe to `devices/+/rfid/check` (see T2.7)
+  - C# Middleware: Query Supabase `authorised_cards` table (FR5.2)
+  - C# Middleware: Publish validation result to `devices/esp32_main/rfid/response`
+  - C# Middleware: Log scan to `rfid_scans` table (FR5.5)
+  - Test: Scan known/unknown cards, verify end-to-end flow
   - **Started**: 2025-10-12
-  - **Completed**: 2025-10-12
-  - **Note**: Core functionality complete. Future improvements needed (see T1.23.1-T1.23.3)
+  - **Previously Completed**: 2025-10-12 (old direct Supabase version)
+  - **Status**: Needs refactor for MQTT architecture
 
 - [ ] **T1.23.1**: RFID handler timing improvements (Future Enhancement)
 
@@ -268,11 +271,13 @@
   - **Started**: 2025-10-12
   - **Completed**: 2025-10-12
 
-- [ ] **T1.25**: Implement 30-minute sensor logging **(FR6.4 - DATABASE)**
+- [ ] **T1.25**: ~~Implement 30-minute sensor logging~~ **MOVED TO C# MIDDLEWARE**
 
-  - Use timer to trigger database insert every 30 minutes
-  - Insert temperature and humidity to `sensor_logs` table
-  - Test: Wait 30 mins, verify database entry
+  - **Architecture Change**: Database logging now handled by C# middleware, not ESP32
+  - ESP32 only publishes sensor data to MQTT every 2 seconds
+  - C# middleware subscribes and writes to database every 30 minutes (see T2.6)
+  - **Action Required**: Update environment handler to publish ALL readings to MQTT
+  - Test: Verify MQTT messages published correctly
 
 - [ ] **T1.26**: Implement asthma alert system **(FR7.1, FR7.2, FR7.3 - HOUSE/WEB)**
   - Check conditions: humidity > 50% AND temperature > 27°C
@@ -292,10 +297,10 @@
 
 - [ ] **T1.28**: Implement MQTT control subscriptions **(FR9.1, FR9.2, FR9.3, FR9.4 - WEB/HOUSE)**
 
-  - Subscribe to `home/control/door`, `home/control/window`, `home/control/fan`
+  - Subscribe to `devices/esp32_main/control/door`, `devices/esp32_main/control/window`, `devices/esp32_main/control/fan`
   - Parse JSON payload and execute commands
   - Example: `{"action": "open"}` → open door servo
-  - Publish status updates to `home/status/*` topics
+  - Publish status updates to `devices/esp32_main/status/*` topics
   - Test: Publish control commands via HiveMQ console, verify actions
 
 - [ ] **T1.29**: Build main event loop with state machine
@@ -334,16 +339,50 @@
 
   - Create `api/` directory
   - Initialize project: `dotnet new webapi -n SmartHomeApi`
-  - Install NuGet packages: `Supabase` (Supabase C# client)
-  - Configure `appsettings.json` with Supabase URL and API key
+  - Install NuGet packages: `Supabase` (Supabase C# client), `MQTTnet` (MQTT client)
+  - Configure `appsettings.json` with Supabase URL/API key AND MQTT broker credentials
 
 - [ ] **T2.2**: Implement Supabase data access layer
 
   - File: `api/Services/SupabaseService.cs`
   - Create methods to query sensor_logs, rfid_scans, motion_events, gas_alerts
+  - Create methods to INSERT sensor_logs, rfid_scans, motion_events, gas_alerts
   - Test database connection
 
-- [ ] **T2.3**: Create REST API endpoints (GET only)
+- [ ] **T2.5**: Implement MQTT Background Service **(NEW - Core Middleware)**
+
+  - File: `api/Services/MqttBackgroundService.cs`
+  - Implement `IHostedService` to run MQTT client in background
+  - Connect to HiveMQ broker on startup
+  - Subscribe to `devices/+/data` (all device sensor data)
+  - Subscribe to `devices/+/rfid/check` (RFID validation requests)
+  - Subscribe to `devices/+/status/#` (device status updates)
+  - Handle connection failures with reconnect logic
+  - Test: Verify service starts with application
+
+- [ ] **T2.6**: Implement Sensor Data Writer Service **(NEW - Replaces ESP32 direct writes)**
+
+  - File: `api/Services/SensorDataWriter.cs`
+  - Parse incoming MQTT messages from `devices/+/data` topic
+  - Validate sensor data (range checks, data types)
+  - Write to Supabase `sensor_logs` table every 30 minutes (FR6.4)
+  - Write motion events to `motion_events` table immediately
+  - Write gas alerts to `gas_alerts` table immediately
+  - Test: Publish MQTT message, verify database insert
+
+- [ ] **T2.7**: Implement RFID Validation Service **(NEW - Critical for access control)**
+
+  - File: `api/Services/RfidValidationService.cs`
+  - Subscribe to `devices/+/rfid/check` messages
+  - Extract card_id from payload
+  - Query Supabase: `SELECT * FROM authorised_cards WHERE card_id=? AND is_active=true`
+  - Publish validation result to `devices/{deviceId}/rfid/response`
+    - Payload: `{"card_id": "abc123", "valid": true, "authorised_card_id": 5}`
+    - Or: `{"card_id": "xyz789", "valid": false}`
+  - Insert scan record to `rfid_scans` table (success/failed)
+  - Test: Publish RFID check message, verify response published and database logged
+
+- [ ] **T2.3**: Create REST API endpoints (GET only for historical data)
 
   - File: `api/Controllers/SensorsController.cs`
   - `GET /api/sensors/temperature?hours=24` - Historical temperature
@@ -379,7 +418,8 @@
 - [ ] **T3.3**: Set up MQTT client provider
   - File: `web/lib/mqtt.ts` and `web/components/MQTTProvider.tsx`
   - Connect to HiveMQ WebSocket (wss://...)
-  - Subscribe to `home/#` (all topics)
+  - Subscribe to `devices/+/data` (all device sensor data)
+  - Subscribe to `devices/+/status/#` (device status updates)
   - Provide real-time updates via React Context
 
 ---
@@ -428,7 +468,7 @@
   - File: `web/components/ControlPanel.tsx`
   - Buttons: "Open Door", "Close Door", "Open Window", "Close Window"
   - Toggle for Fan: "Turn On" / "Turn Off"
-  - Click handler publishes MQTT command to `home/control/*`
+  - Click handler publishes MQTT command to `devices/esp32_main/control/*`
 
 - [ ] **T3.10**: Add control confirmation feedback
   - Show toast notification when command sent
@@ -447,8 +487,9 @@
   - Responsive design (mobile-friendly)
 
 - [ ] **T3.12**: Add asthma alert banner
-  - Subscribe to `home/asthma_alert` MQTT topic
-  - Show prominent yellow banner when alert active
+  - Subscribe to `devices/esp32_main/data` MQTT topic
+  - Parse humidity and temperature values
+  - Show prominent yellow banner when humidity > 50% AND temp > 27°C
   - Display: "⚠️ ASTHMA ALERT - Humidity: 55%, Temp: 28°C"
 
 ---

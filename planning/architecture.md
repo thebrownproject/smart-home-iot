@@ -12,38 +12,44 @@
                     │  • Gas       │
                     │  • RFID      │
                     │  • Steam     │
-                    └──┬────────┬──┘
-                       │        │
-              MQTT     │        │  HTTPS (Direct)
-              (Live)   │        │  (Persistence)
-                       │        │
-                       ↓        ↓
-            ┌─────────────┐  ┌─────────────┐
-            │   HiveMQ    │  │  Supabase   │
-            │   Broker    │  │  Database   │
-            │             │  │             │
-            │ (Real-time) │  │ (Storage)   │
-            └──────┬──────┘  └──────▲──────┘
-                   │                │
-                   │                │
-                   ↓                │
-            ┌─────────────┐         │
-            │  Next.js    │         │
-            │  Web App    │         │
-            │             │         │
-            │ • Subscribe │         │
-            │   to MQTT   │    GET  │
-            │ • Call C#   │─────────┤
-            │   API       │         │
-            └─────────────┘         │
-                                    │
-                             ┌──────┴──────┐
-                             │   C# API    │
-                             │             │
-                             │ • REST GET  │
-                             │   endpoints │
-                             │ • Query DB  │
-                             └─────────────┘
+                    └──────┬───────┘
+                           │
+                           │  MQTT ONLY
+                           │  (Publish sensor data)
+                           │  (Subscribe to validation responses)
+                           │
+                           ↓
+                    ┌─────────────┐
+                    │   HiveMQ    │
+                    │   Broker    │
+                    │             │
+                    │ (SSL/TLS)   │
+                    └──┬──────┬───┘
+                       │      │
+              ┌────────┘      └────────┐
+              ↓                        ↓
+       ┌─────────────┐          ┌─────────────┐
+       │  Next.js    │          │  C# API     │
+       │  Web App    │          │ Middleware  │
+       │             │          │             │
+       │ • Subscribe │          │ • Subscribe │
+       │   to MQTT   │          │   to MQTT   │
+       │ • Display   │          │ • Validate  │
+       │   Live Data │          │   RFID      │
+       └──────┬──────┘          │ • Write to  │
+              │                 │   Supabase  │
+              │                 └──────┬──────┘
+              │                        │
+              │                        │  HTTPS
+              │     GET (Historical)   │  (All DB Access)
+              │  ◄─────────────────────┤
+              │                        ↓
+              │                 ┌─────────────┐
+              └─────────────────┤  Supabase   │
+                                │  Database   │
+                                │             │
+                                │ (Storage)   │
+                                └─────────────┘
 ```
 
 ## Message Flow Patterns
@@ -52,10 +58,15 @@
 ```
 ESP32 reads DHT11
     ↓
-POST https://supabase.com/rest/v1/sensor_logs
-    {"sensor_type": "temperature", "value": 24.5, "unit": "C"}
+Publish MQTT: devices/esp32_main/data
+    {"sensor_type": "temperature", "value": 24.5, "unit": "C", "timestamp": "2025-10-14T10:30:00Z"}
     ↓
-Supabase stores data
+C# Middleware subscribes to devices/+/data
+    ↓
+C# validates and transforms payload
+    ↓
+POST https://supabase.com/rest/v1/sensor_logs (from C# only)
+    {"device_id": 1, "sensor_type": "temperature", "value": 24.5, "unit": "C"}
     ↓
 Done ✓
 ```
@@ -64,9 +75,10 @@ Done ✓
 ```
 ESP32 reads sensor
     ↓
-Publish MQTT: home/temperature {"value": 24.5}
+Publish MQTT: devices/esp32_main/data {"sensor_type": "temperature", "value": 24.5}
     ↓
-Next.js subscribes → Updates UI instantly (< 1 second)
+Next.js subscribes to devices/+/data → Updates UI instantly (< 1 second)
+C# Middleware also receives (for logging)
 ```
 
 ### Pattern 3: Web Reads Historical Data
@@ -82,15 +94,35 @@ Returns JSON to Next.js
 Chart displays data
 ```
 
-### Pattern 4: Web Control → Output
+### Pattern 4: RFID Validation Flow (NEW)
+```
+ESP32 scans RFID card (UID: "abc123")
+    ↓
+Publish MQTT: devices/esp32_main/rfid/check {"card_id": "abc123"}
+    ↓
+C# Middleware subscribes to devices/+/rfid/check
+    ↓
+C# queries Supabase: SELECT * FROM authorised_cards WHERE card_id='abc123' AND is_active=true
+    ↓
+C# publishes validation result: devices/esp32_main/rfid/response {"card_id": "abc123", "valid": true, "authorised_card_id": 5}
+    ↓
+ESP32 subscribes to devices/esp32_main/rfid/response
+    ↓
+If valid: Open door servo, green LED
+If invalid: Red LED + buzzer
+    ↓
+C# logs scan to database: INSERT INTO rfid_scans (card_id, access_result, authorised_card_id)
+```
+
+### Pattern 5: Web Control → Output
 ```
 User clicks "Open Door" (Next.js)
     ↓
-Publish MQTT: home/control/door {"action": "open"}
+Publish MQTT: devices/esp32_main/control/door {"action": "open"}
     ↓
 ESP32 subscribes → Activates servo
     ↓
-ESP32 publishes: home/status/door {"state": "open"}
+ESP32 publishes: devices/esp32_main/status/door {"state": "open"}
     ↓
 Next.js updates UI
 ```
@@ -163,25 +195,66 @@ POST /api/control
 
 ## MQTT Topics
 
-### ESP32 Publishes (Sensors → Cloud)
+### Topic Structure
+All topics follow the pattern: `devices/{deviceId}/{category}/{subcategory}`
+
+**Device ID**: `esp32_main` (single device for Phase 1, scalable to multiple devices)
+
+### ESP32 Publishes (Device → Cloud)
 ```
-home/temperature          # DHT11
-home/humidity            # DHT11
-home/motion              # PIR
-home/gas                 # Gas sensor
-home/steam               # Steam/moisture
-home/rfid                # RFID scans
-home/status/door         # Servo position
-home/status/window       # Servo position
-home/status/fan          # Fan state
+devices/esp32_main/data                # All sensor readings (DHT11, PIR, gas, steam)
+devices/esp32_main/rfid/check          # RFID UID for validation
+devices/esp32_main/status/door         # Door servo position
+devices/esp32_main/status/window       # Window servo position
+devices/esp32_main/status/fan          # Fan state (on/off)
+devices/esp32_main/status/led          # LED state
 ```
 
-### ESP32 Subscribes (Cloud → Outputs)
+**Payload Examples**:
+```json
+// devices/esp32_main/data
+{"sensor_type": "temperature", "value": 24.5, "unit": "C", "timestamp": "2025-10-14T10:30:00Z"}
+{"sensor_type": "humidity", "value": 65, "unit": "%", "timestamp": "2025-10-14T10:30:00Z"}
+{"sensor_type": "motion", "detected": true, "timestamp": "2025-10-14T10:30:05Z"}
+{"sensor_type": "gas", "detected": true, "value": 850, "timestamp": "2025-10-14T10:30:10Z"}
+
+// devices/esp32_main/rfid/check
+{"card_id": "abc123", "timestamp": "2025-10-14T10:30:15Z"}
+
+// devices/esp32_main/status/door
+{"state": "open", "timestamp": "2025-10-14T10:30:20Z"}
 ```
-home/control/door        # Open/close door
-home/control/window      # Open/close window
-home/control/fan         # Turn on/off fan
-home/control/led         # LED control
+
+### ESP32 Subscribes (Cloud → Device)
+```
+devices/esp32_main/control/door        # Open/close door
+devices/esp32_main/control/window      # Open/close window
+devices/esp32_main/control/fan         # Turn on/off fan
+devices/esp32_main/control/led         # LED control
+devices/esp32_main/rfid/response       # RFID validation result from C# middleware
+```
+
+**Payload Examples**:
+```json
+// devices/esp32_main/control/door
+{"action": "open"}
+{"action": "close"}
+
+// devices/esp32_main/rfid/response
+{"card_id": "abc123", "valid": true, "authorised_card_id": 5}
+{"card_id": "xyz789", "valid": false}
+```
+
+### C# Middleware Subscribes (Device → Middleware)
+```
+devices/+/data                         # All device sensor data (wildcard for multiple devices)
+devices/+/rfid/check                   # RFID validation requests
+devices/+/status/#                     # All device status updates
+```
+
+### C# Middleware Publishes (Middleware → Device)
+```
+devices/{deviceId}/rfid/response       # RFID validation results
 ```
 
 **Tech Stack**: See `planning/prd.md` for complete technology details
@@ -189,23 +262,34 @@ home/control/led         # LED control
 
 ## Key Decisions
 
-### ✅ ESP32 writes directly to Supabase (not through C# API)
-- **Why**: Simpler - ESP32 is the source of data, should own persistence
-- **How**: HTTP POST using MicroPython's `urequests` library
-- **Security**: Supabase anon key stored in ESP32 config (gitignored)
+### ✅ MQTT-Only Communication for ESP32 (NO HTTP/REST)
+- **Why**: MicroPython's `urequests` library has memory leaks—persistent MQTT connection is more stable
+- **How**: ESP32 maintains single MQTT connection, publishes all data to broker
+- **Security**: ESP32 has no Supabase credentials—all database access controlled by C# middleware
 
-### ✅ C# API only for reads (Next.js → C# → Supabase)
+### ✅ C# Middleware as Single Database Gateway
 - **Requirement**: "C# API must be used if API layer is created separately to Web App"
-- **Purpose**: Query historical data, apply filters, format responses
-- **Example**: `GET /api/sensors/temperature?hours=24`
+- **Purpose**:
+  - Subscribe to MQTT device messages
+  - Validate RFID cards against Supabase
+  - Write all sensor data to Supabase
+  - Provide REST endpoints for historical queries
+- **Benefits**: Centralized business logic, secure credential management, easy to add validation rules
 
-### ✅ MQTT for real-time updates only
-- **ESP32 publishes**: Sensor readings to MQTT topics
-- **Next.js subscribes**: Updates dashboard instantly
-- **No persistence in MQTT**: Messages are ephemeral (live updates only)
+### ✅ MQTT for Both Real-Time AND Persistence
+- **ESP32 publishes**: All sensor readings to `devices/{id}/data` topic
+- **C# Middleware subscribes**: Receives messages, writes to Supabase every 30 minutes (or on critical events)
+- **Next.js subscribes**: Updates dashboard instantly with same MQTT messages
+- **Result**: Single publish event serves dual purpose (real-time + persistence)
 
-### ✅ Web control via MQTT (not C# API)
-- **Pattern**: Next.js publishes directly to MQTT control topics
+### ✅ Request/Response Pattern for RFID Validation
+- **ESP32 publishes**: UID to `devices/{id}/rfid/check`
+- **C# Middleware**: Queries database, publishes result to `devices/{id}/rfid/response`
+- **ESP32 subscribes**: Waits for validation response, then acts (open door or deny)
+- **Why**: Keeps authorised card list in database only, no hardcoded UIDs on device
+
+### ✅ Web control via MQTT (direct to device)
+- **Pattern**: Next.js publishes directly to `devices/{id}/control/*` topics
 - **ESP32 subscribes**: Receives commands, activates outputs
 - **Why**: Lower latency, no backend needed for simple commands
 
@@ -232,11 +316,20 @@ IDLE (priority 0)
 ### Phase 2: C# API Layer
 1. Setup C# API project (ASP.NET Core 9.0)
 2. Configure Supabase client with dependency injection
-3. Create Models mapping to database tables
-4. Build Controllers with GET endpoints (query Supabase)
-5. Add CORS for Next.js frontend
-6. Enable Swagger for API documentation
-7. Test endpoints with Postman/Swagger UI
+3. **Implement MQTT Background Service** (MQTTnet library)
+   - Subscribe to `devices/+/data` for sensor readings
+   - Subscribe to `devices/+/rfid/check` for RFID validation
+   - Write sensor data to Supabase every 30 minutes
+4. **Implement RFID Validation Service**
+   - Query `authorised_cards` table
+   - Publish validation result to `devices/{id}/rfid/response`
+   - Log scan to `rfid_scans` table
+5. Create Models mapping to database tables
+6. Build Controllers with GET endpoints (query Supabase for historical data)
+7. Add CORS for Next.js frontend
+8. Enable Swagger for API documentation
+9. Test MQTT subscription and database writes
+10. Test REST endpoints with Postman/Swagger UI
 
 ### Phase 3: Web Dashboard
 1. Build Next.js dashboard with MQTT client

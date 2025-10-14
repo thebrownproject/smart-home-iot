@@ -47,11 +47,12 @@ Build an ESP32-based smart home automation system that demonstrates IoT integrat
 
 **As a homeowner, I want secure door access using RFID cards**
 
-- **FR5.1 (HOUSE)**: RFID reader scans cards
-- **FR5.2 (HOUSE)**: Unknown cards trigger red flashing RGB + buzzer
-- **FR5.3 (HOUSE)**: Valid cards open door (servo motor)
-- **FR5.4 (DATABASE)**: All scans logged: card ID, success/fail, timestamp
-- **FR5.5 (HOUSE)**: Display access status on LCD/OLED
+- **FR5.1 (HOUSE)**: RFID reader scans cards and publishes UID to MQTT
+- **FR5.2 (API)**: C# middleware validates card UID against Supabase and publishes validation result
+- **FR5.3 (HOUSE)**: Unknown cards trigger red flashing RGB + buzzer
+- **FR5.4 (HOUSE)**: Valid cards open door (servo motor)
+- **FR5.5 (DATABASE)**: All scans logged by C# middleware: card ID, success/fail, timestamp
+- **FR5.6 (HOUSE)**: Display access status on LCD/OLED
 
 #### US6: Environmental Monitoring
 
@@ -59,8 +60,8 @@ Build an ESP32-based smart home automation system that demonstrates IoT integrat
 
 - **FR6.1 (HOUSE)**: DHT11 sensor reads temperature (celsius) and humidity (%)
 - **FR6.2 (HOUSE)**: Display current values on OLED continuously
-- **FR6.3 (WEB)**: Data published via MQTT for web dashboard
-- **FR6.4 (DATABASE)**: Temperature/humidity logged every 30 minutes
+- **FR6.3 (HOUSE)**: Data published via MQTT for web dashboard
+- **FR6.4 (API)**: C# middleware subscribes to sensor MQTT topic and logs to database every 30 minutes
 
 #### US7: Asthma Alert System
 
@@ -118,8 +119,11 @@ Build an ESP32-based smart home automation system that demonstrates IoT integrat
 - **MQTT Broker**: HiveMQ Cloud (free tier, SSL/TLS support)
 - **Database**: Supabase PostgreSQL (cloud-hosted)
 - **Communication Pattern**:
-  - ESP32 → Supabase (direct HTTPS for data persistence)
-  - ESP32 → HiveMQ → Web App (MQTT for real-time updates)
+  - ESP32 → HiveMQ MQTT (publish sensor data and RFID UIDs)
+  - C# API → HiveMQ MQTT (subscribe to device messages)
+  - C# API → Supabase (all database writes via middleware)
+  - ESP32 ← HiveMQ MQTT (receive RFID validation responses)
+  - Web App → HiveMQ MQTT (subscribe for real-time updates)
   - Web App → C# API → Supabase (queries and historical data)
 
 ### Web Application (Phase 3)
@@ -147,9 +151,10 @@ Build an ESP32-based smart home automation system that demonstrates IoT integrat
 **ROBUST & EFFICIENT - This code runs 24/7 on constrained hardware**
 
 - **Non-blocking patterns**: Avoid `sleep()` in main loop; handle sensor failures gracefully with timeouts
-- **Memory-conscious**: ESP32 has ~100KB RAM—import only needed libraries, use efficient data structures
-- **Network resilience**: Retry logic for MQTT/WiFi; never assume network availability
+- **Memory-conscious**: ESP32 has ~100KB RAM—use MQTT-only communication (no HTTP requests to avoid memory leaks)
+- **Network resilience**: Maintain persistent MQTT connection with reconnect logic; never assume network availability
 - **Error handling**: Log failures to serial for debugging; return last good sensor values on read errors
+- **MQTT-Only Communication**: No direct HTTP/REST calls—all communication via MQTT publish/subscribe
 
 ### Web App Code (Next.js)
 
@@ -181,7 +186,7 @@ Build an ESP32-based smart home automation system that demonstrates IoT integrat
 ✅ All 10 web app requirements implemented (dashboard, controls, history)
 ✅ All 5 database requirements met (30min logs, PIR/gas/RFID logging)
 ✅ Real-time MQTT communication between ESP32 and web app
-✅ Direct Supabase integration for data persistence
+✅ C# middleware handles all database persistence via MQTT subscriptions
 
 ### Technical Requirements
 

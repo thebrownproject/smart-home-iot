@@ -15,15 +15,14 @@ This document covers environment variable configuration for all system layers.
 WIFI_SSID = "your_network"
 WIFI_PASSWORD = "your_password"
 
-# MQTT Broker (HiveMQ Cloud)
+# MQTT Broker (HiveMQ Cloud) - ONLY COMMUNICATION METHOD
 MQTT_BROKER = "broker.hivemq.cloud"
 MQTT_PORT = 8883  # SSL/TLS
 MQTT_USER = "your_username"
 MQTT_PASSWORD = "your_password"
+DEVICE_ID = "esp32_main"  # Used in MQTT topic structure: devices/{DEVICE_ID}/*
 
-# Supabase (Direct HTTP)
-SUPABASE_URL = "https://your-project.supabase.co"
-SUPABASE_ANON_KEY = "your_anon_key"
+# NO SUPABASE CREDENTIALS - All database access via C# middleware
 ```
 
 **How to get credentials**:
@@ -31,11 +30,12 @@ SUPABASE_ANON_KEY = "your_anon_key"
 1. **WiFi**: Your local network SSID and password
 2. **HiveMQ**: Create free account at [console.hivemq.cloud](https://console.hivemq.cloud)
    - Create cluster → Access Management → Add credentials
-3. **Supabase**: Project settings → API → Project URL and `anon` public key
 
 **Deployment**:
 - Upload `config.py` to ESP32 via MicroPico extension
 - File stays on device, not in git repository
+
+**⚠️ Architecture Note**: ESP32 no longer connects directly to Supabase. All database writes are handled by C# middleware via MQTT subscriptions. This eliminates memory leaks from HTTP requests and centralizes security.
 
 ---
 
@@ -56,6 +56,10 @@ SUPABASE_ANON_KEY = "your_anon_key"
   "AllowedHosts": "*",
   "SupabaseUrl": "https://placeholder.supabase.co",
   "SupabaseApiKey": "placeholder_key",
+  "MqttBroker": "broker.hivemq.cloud",
+  "MqttPort": 8883,
+  "MqttUser": "placeholder_user",
+  "MqttPassword": "placeholder_password",
   "UseSwagger": true,
   "Cors": {
     "AllowedOrigins": ["http://localhost:3000"]
@@ -75,11 +79,17 @@ SUPABASE_ANON_KEY = "your_anon_key"
     }
   },
   "SupabaseUrl": "https://your-project.supabase.co",
-  "SupabaseApiKey": "your_anon_key"
+  "SupabaseApiKey": "your_anon_key",
+  "MqttBroker": "broker.hivemq.cloud",
+  "MqttPort": 8883,
+  "MqttUser": "your_hivemq_username",
+  "MqttPassword": "your_hivemq_password"
 }
 ```
 
 **⚠️ Security**: Real credentials go in `appsettings.Development.json`, not the base file.
+
+**⚠️ Critical**: C# API is now the ONLY layer with Supabase credentials. MQTT credentials must match those used by ESP32 and Next.js for proper communication.
 
 **Alternative: User Secrets** (Recommended for production)
 
@@ -88,6 +98,10 @@ cd api/SmartHomeApi
 dotnet user-secrets init
 dotnet user-secrets set "SupabaseUrl" "https://your-project.supabase.co"
 dotnet user-secrets set "SupabaseApiKey" "your_anon_key"
+dotnet user-secrets set "MqttBroker" "broker.hivemq.cloud"
+dotnet user-secrets set "MqttPort" "8883"
+dotnet user-secrets set "MqttUser" "your_hivemq_username"
+dotnet user-secrets set "MqttPassword" "your_hivemq_password"
 ```
 
 **Accessing in code** (`Program.cs`):
@@ -95,6 +109,10 @@ dotnet user-secrets set "SupabaseApiKey" "your_anon_key"
 ```csharp
 var supabaseUrl = builder.Configuration["SupabaseUrl"];
 var supabaseKey = builder.Configuration["SupabaseApiKey"];
+var mqttBroker = builder.Configuration["MqttBroker"];
+var mqttPort = int.Parse(builder.Configuration["MqttPort"]);
+var mqttUser = builder.Configuration["MqttUser"];
+var mqttPassword = builder.Configuration["MqttPassword"];
 ```
 
 ---
@@ -148,14 +166,16 @@ const mqttBroker = process.env.NEXT_PUBLIC_MQTT_BROKER;
 - [ ] Create `esp32/config.py` locally
 - [ ] Add WiFi credentials
 - [ ] Add HiveMQ MQTT credentials
-- [ ] Add Supabase URL and anon key
+- [ ] Add DEVICE_ID (e.g., "esp32_main")
+- [ ] **NO Supabase credentials** - all database access via C# middleware
 - [ ] Upload to ESP32 (do not commit to git)
 
 ### C# API Setup
 - [ ] Create `api/SmartHomeApi/appsettings.Development.json`
-- [ ] Add Supabase URL and anon key
+- [ ] Add Supabase URL and anon key (ONLY layer with these credentials)
+- [ ] Add HiveMQ MQTT broker credentials (same as ESP32)
 - [ ] Verify `.gitignore` excludes `appsettings.Development.json`
-- [ ] Test with `dotnet run` (should connect to Supabase)
+- [ ] Test with `dotnet run` (should connect to Supabase AND MQTT broker)
 
 ### Next.js Setup
 - [ ] Create `web/.env.local`
@@ -221,7 +241,7 @@ const mqttBroker = process.env.NEXT_PUBLIC_MQTT_BROKER;
 **First-time setup** (run once):
 
 ```bash
-# 1. Create ESP32 config
+# 1. Create ESP32 config (NO Supabase credentials)
 cat > esp32/config.py << EOF
 WIFI_SSID = "your_network"
 WIFI_PASSWORD = "your_password"
@@ -229,15 +249,18 @@ MQTT_BROKER = "broker.hivemq.cloud"
 MQTT_PORT = 8883
 MQTT_USER = "your_username"
 MQTT_PASSWORD = "your_password"
-SUPABASE_URL = "https://your-project.supabase.co"
-SUPABASE_ANON_KEY = "your_anon_key"
+DEVICE_ID = "esp32_main"
 EOF
 
-# 2. Create C# API dev config
+# 2. Create C# API dev config (ONLY layer with Supabase + MQTT)
 cat > api/SmartHomeApi/appsettings.Development.json << EOF
 {
   "SupabaseUrl": "https://your-project.supabase.co",
-  "SupabaseApiKey": "your_anon_key"
+  "SupabaseApiKey": "your_anon_key",
+  "MqttBroker": "broker.hivemq.cloud",
+  "MqttPort": 8883,
+  "MqttUser": "your_username",
+  "MqttPassword": "your_password"
 }
 EOF
 

@@ -30,8 +30,7 @@ SmartHomeProject/
 │   │   └── oled.py            # OLED display (LCD1602)
 │   ├── comms/
 │   │   ├── wifi_manager.py    # WiFi connection with retry logic
-│   │   ├── mqtt_client.py     # MQTT pub/sub handler
-│   │   └── supabase.py        # Supabase HTTP client
+│   │   └── mqtt_client.py     # MQTT pub/sub handler (ONLY communication method)
 │   ├── utils/
 │   │   ├── time_sync.py       # NTP time synchronization
 │   │   └── rfid_database.py   # Authorised RFID cards list
@@ -59,15 +58,20 @@ SmartHomeProject/
 │   ├── SmartHomeApi.sln       # Solution file
 │   ├── SmartHomeApi/
 │   │   ├── SmartHomeApi.csproj    # Project file (.NET 9.0)
-│   │   ├── Program.cs             # API entry point, DI configuration
-│   │   ├── appsettings.json       # Supabase URL/key, MQTT config
+│   │   ├── Program.cs             # API entry point, DI configuration, MQTT service registration
+│   │   ├── appsettings.json       # Supabase URL/key, MQTT broker config
 │   │   ├── appsettings.Development.json  # Dev overrides
+│   │   ├── Services/              # **NEW - Core middleware services**
+│   │   │   ├── MqttBackgroundService.cs   # IHostedService - MQTT subscriber
+│   │   │   ├── SensorDataWriter.cs        # Parse MQTT messages, write to Supabase
+│   │   │   ├── RfidValidationService.cs   # Validate RFID UIDs, publish responses
+│   │   │   └── SupabaseService.cs         # Database access layer (read/write)
 │   │   ├── Controllers/
 │   │   │   ├── SensorsController.cs   # GET current/history readings
 │   │   │   ├── RfidController.cs      # GET scans with filtering
 │   │   │   ├── MotionController.cs    # GET events (last hour)
 │   │   │   ├── StatusController.cs    # GET door/window/fan status
-│   │   │   └── ControlController.cs   # POST output commands
+│   │   │   └── ControlController.cs   # POST output commands (optional)
 │   │   ├── Models/
 │   │   │   ├── DeviceModel.cs         # Maps to devices table
 │   │   │   ├── SensorReadingModel.cs  # Maps to sensor_logs table
@@ -75,10 +79,12 @@ SmartHomeProject/
 │   │   │   ├── MotionEventModel.cs    # Maps to motion_events table
 │   │   │   ├── GasAlertModel.cs       # Maps to gas_alerts table
 │   │   │   ├── UserModel.cs           # Maps to users table (Phase 4)
-│   │   │   └── AuthorisedCardModel.cs # Maps to authorised_cards table (Phase 4)
+│   │   │   └── AuthorisedCardModel.cs # Maps to authorised_cards table
 │   │   └── Contracts/
 │   │       ├── ControlRequest.cs      # {"device": "door", "action": "open"}
-│   │       └── FilterRequest.cs       # Query params for filtering
+│   │       ├── FilterRequest.cs       # Query params for filtering
+│   │       ├── RfidCheckMessage.cs    # MQTT message structure for RFID validation
+│   │       └── SensorDataMessage.cs   # MQTT message structure for sensor data
 │   └── SmartHomeApi.Tests/            # Unit tests (optional Phase 1)
 │
 ├── web/                        # Next.js web application (Phase 3)
@@ -171,20 +177,23 @@ SmartHomeProject/
 
 ### `/api` - C# ASP.NET Core Backend
 
-**Purpose**: REST API layer for querying historical data from Supabase
+**Purpose**: Middleware layer for MQTT subscriptions, database writes, and REST API queries
 
 **Key Files**:
 
-- `Program.cs` - Entry point, dependency injection, middleware
-- `appsettings.json` - Configuration (Supabase URL, CORS)
+- `Program.cs` - Entry point, dependency injection, MQTT background service registration
+- `appsettings.json` - Configuration (Supabase URL, MQTT broker, CORS)
 
 **Subdirectories**:
 
-- `Controllers/` - API endpoints (GET requests)
+- `Services/` - **Core middleware logic** (MQTT subscriber, RFID validation, sensor data writer)
+- `Controllers/` - REST API endpoints (GET requests for historical data)
 - `Models/` - Data models mapping to database tables
-- `Contracts/` - Request/response DTOs
+- `Contracts/` - Request/response DTOs and MQTT message structures
 
-**Pattern**: MVC architecture without Views (API-only)
+**Pattern**: Background services (MQTT subscribers) + REST API controllers
+
+**Critical Role**: This layer is the ONLY component with Supabase credentials and database write access
 
 ### `/web` - Next.js Frontend
 
