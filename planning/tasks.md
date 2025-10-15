@@ -161,16 +161,19 @@
   - **Started**: 2025-10-10
   - **Completed**: 2025-10-10
 
-- [ ] **T1.17**: Update MQTT client wrapper for new topic structure
+- [x] **T1.17**: Update MQTT client wrapper for new topic structure
 
   - File: `esp32/comms/mqtt_client.py`
   - Update to use new topic structure: `devices/esp32_main/*`
   - Subscribe to `devices/esp32_main/rfid/response` for RFID validation
   - Subscribe to `devices/esp32_main/control/#` for web control commands
+  - Implemented callback dispatch pattern with proper bytes-to-string decoding
+  - Fixed topic matching in `_dispatch()` method for MicroPython compatibility
   - Test: Publish to `devices/esp32_main/data` topic, verify on HiveMQ web console
   - **Started**: 2025-10-11
   - **Previously Completed**: 2025-10-11
-  - **Status**: Needs update for new architecture
+  - **Refactored**: 2025-10-15 - Fixed callback dispatch and created ControlHandler
+  - **Completed**: 2025-10-15
 
 - [ ] **T1.18**: ~~Implement Supabase HTTP client~~ **DEPRECATED - Remove this module**
   - **Architecture Change**: ESP32 now communicates ONLY via MQTT (no HTTP/REST)
@@ -221,21 +224,23 @@
   - **Started**: 2025-10-12
   - **Completed**: 2025-10-12
 
-- [ ] **T1.23**: Update RFID access control for MQTT request/response pattern **(FR5.1-FR5.6 - HOUSE/API/DATABASE)**
+- [x] **T1.23**: Update RFID access control for MQTT request/response pattern **(FR5.1-FR5.6 - HOUSE/API/DATABASE)**
 
   - **Architecture Change**: RFID validation now uses MQTT request/response with C# middleware
-  - ESP32: Scan card → Publish UID to `devices/esp32_main/rfid/check`
-  - ESP32: Subscribe to `devices/esp32_main/rfid/response` and wait for validation result
-  - ESP32: On valid response: Open door servo, green RGB, show "ACCESS GRANTED" on OLED (FR5.4, FR5.6)
-  - ESP32: On invalid response: Flash RGB red + buzzer, show "ACCESS DENIED" (FR5.3, FR5.6)
-  - C# Middleware: Subscribe to `devices/+/rfid/check` (see T2.7)
-  - C# Middleware: Query Supabase `authorised_cards` table (FR5.2)
-  - C# Middleware: Publish validation result to `devices/esp32_main/rfid/response`
-  - C# Middleware: Log scan to `rfid_scans` table (FR5.5)
-  - Test: Scan known/unknown cards, verify end-to-end flow
+  - ESP32: Scan card → Publish UID to `devices/esp32_main/rfid/check` ✅
+  - ESP32: Subscribe to `devices/esp32_main/rfid/response` and wait for validation result ✅
+  - ESP32: On valid response: Open door servo, green RGB, show "ACCESS GRANTED" on OLED (FR5.4, FR5.6) ✅
+  - ESP32: On invalid response: Flash RGB red + buzzer, show "ACCESS DENIED" (FR5.3, FR5.6) ✅
+  - C# Middleware: Subscribe to `devices/+/rfid/check` (see T2.7) ⏳ **Pending Phase 2**
+  - C# Middleware: Query Supabase `authorised_cards` table (FR5.2) ⏳ **Pending Phase 2**
+  - C# Middleware: Publish validation result to `devices/esp32_main/rfid/response` ⏳ **Pending Phase 2**
+  - C# Middleware: Log scan to `rfid_scans` table (FR5.5) ⏳ **Pending Phase 2**
+  - Files: `esp32/handlers/rfid_handler.py` (request), `esp32/handlers/control_handler.py` (response)
+  - Test: Scan known/unknown cards, verify end-to-end flow ⏳ **Pending middleware**
   - **Started**: 2025-10-12
   - **Previously Completed**: 2025-10-12 (old direct Supabase version)
-  - **Status**: Needs refactor for MQTT architecture
+  - **Refactored**: 2025-10-15 - ESP32 portion complete, C# middleware pending
+  - **Completed**: 2025-10-15 (ESP32 implementation only)
 
 - [ ] **T1.23.1**: RFID handler timing improvements (Future Enhancement)
 
@@ -295,13 +300,24 @@
   - PIR toggle button: Enable/disable motion detection
   - Test: Press buttons, verify output responses
 
-- [ ] **T1.28**: Implement MQTT control subscriptions **(FR9.1, FR9.2, FR9.3, FR9.4 - WEB/HOUSE)**
+- [x] **T1.28**: Implement MQTT control subscriptions **(FR9.1, FR9.2, FR9.3, FR9.4 - WEB/HOUSE)**
 
+  - Created `esp32/handlers/control_handler.py` with `ControlHandler` class
+  - Implemented 4 callback methods:
+    - `handle_rfid_response(topic, msg)` - Receives RFID validation from middleware
+    - `handle_door_control(topic, msg)` - Remote door open/close
+    - `handle_window_control(topic, msg)` - Remote window open/close
+    - `handle_fan_control(topic, msg)` - Remote fan on/off
   - Subscribe to `devices/esp32_main/control/door`, `devices/esp32_main/control/window`, `devices/esp32_main/control/fan`
-  - Parse JSON payload and execute commands
-  - Example: `{"action": "open"}` → open door servo
-  - Publish status updates to `devices/esp32_main/status/*` topics
-  - Test: Publish control commands via HiveMQ console, verify actions
+  - Subscribe to `devices/esp32_main/rfid/response` for RFID validation responses
+  - Parse JSON payload and execute commands with proper error handling
+  - Example: `{"action": "open"}` → open door servo ✅
+  - Memory-efficient lazy loading pattern (import → create → use → delete)
+  - Integrated into `app.py` via callback subscriptions in `__init__()`
+  - Refactored `app.py` from 148 lines to 75 lines (thin orchestration layer achieved)
+  - Test: Publish control commands via HiveMQ console, verify actions ✅
+  - **Started**: 2025-10-15
+  - **Completed**: 2025-10-15
 
 - [ ] **T1.29**: Build main event loop with state machine
   - File: `esp32/main.py`

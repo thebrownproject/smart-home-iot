@@ -50,9 +50,11 @@ class SmartHomeMQTTClient:
 
     def _dispatch(self, topic, msg):
         # Master dispatch that routes messages to the appropriate callback
-        callback = self.callbacks.get(topic)
+        # Decode topic from bytes to string for lookup
+        topic_str = topic.decode() if isinstance(topic, bytes) else topic
+        callback = self.callbacks.get(topic_str)
         if callback:
-            callback(topic, msg)
+            callback(topic_str, msg)
         else:
             print(f"No callback found for topic: {topic}")
     

@@ -71,6 +71,7 @@ class SmartHomeApp:
                 self.memory.collect("App loop")
 
             loop_count += 1
+            print(f"--- Loop {loop_count} complete ---")
             time.sleep(1)  # Loop runs every 1 second
 
     
