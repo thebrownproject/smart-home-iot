@@ -8,7 +8,7 @@ class MotionHandler:
         self.motion_count = 0
         
     def handle_motion_detection(self, mqtt):
-            """Check PIR and respond to motion (FR2.1, FR2.2, FR2.3)"""
+            # Check PIR and respond to motion (FR2.1, FR2.2, FR2.3)
             from sensors.pir import PIRSensor
             from outputs.rgb import RGB
             from config import TOPIC_SENSOR_DATA

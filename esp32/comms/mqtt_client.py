@@ -5,6 +5,7 @@ import time
 
 class SmartHomeMQTTClient:
     def __init__(self):
+        self.callbacks = {}
         self.client_id = "test-esp32-" + str(time.ticks_cpu() & 0xffff)
         self.client = MQTTClient(
             self.client_id,
@@ -16,6 +17,7 @@ class SmartHomeMQTTClient:
             ssl_params={"server_hostname": MQTT_BROKER}
         )
         self.client.sock = None  # Will be set on connect
+    
     
     def connect(self):
         try:
@@ -45,12 +47,21 @@ class SmartHomeMQTTClient:
         except Exception as e:
             print(f"Error publishing to MQTT broker ({topic}): {e}")
             return False
+
+    def _dispatch(self, topic, msg):
+        # Master dispatch that routes messages to the appropriate callback
+        callback = self.callbacks.get(topic)
+        if callback:
+            callback(topic, msg)
+        else:
+            print(f"No callback found for topic: {topic}")
     
     def subscribe(self, topic, callback):
         try:
-            self.client.set_callback(callback)
+            self.callbacks[topic] = callback
+            self.client.set_callback(self._dispatch)
             self.client.subscribe(topic)
-            return True
+            print(f"Subscribed to topic: {topic}")
         except Exception as e:
             print("Error subscribing to MQTT broker:", e)
             return False
