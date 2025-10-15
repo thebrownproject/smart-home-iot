@@ -1,79 +1,72 @@
--- Smart Home IoT Database Schema
--- Supabase PostgreSQL
+-- Drop child tables first (FK dependencies)
+DROP TABLE IF EXISTS rfid_scans;
+DROP TABLE IF EXISTS sensor_logs;
+DROP TABLE IF EXISTS gas_alerts;
+DROP TABLE IF EXISTS motion_events;
 
--- Core entity: Physical devices (ESP32 microcontrollers)
+-- Then parents/lookups
+DROP TABLE IF EXISTS authorised_cards;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS devices;
+
+-- enable UUID generation
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE TABLE devices (
-  id BIGSERIAL PRIMARY KEY,
-  device_type VARCHAR(50) NOT NULL,      -- 'esp32_main'
-  device_name VARCHAR(100) NOT NULL,     -- 'Living Room Controller'
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  device_code INT UNIQUE NOT NULL,
+  device_name VARCHAR(100) NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- User accounts for authentication (Phase 4 bonus)
+-- Optional (Phase 4): users, without role
 CREATE TABLE users (
-  id BIGSERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   username VARCHAR(100) NOT NULL UNIQUE,
   email VARCHAR(255) NOT NULL UNIQUE,
-  role VARCHAR(20) NOT NULL,             -- 'parent', 'child'
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Authorised RFID cards with user relationship (Phase 4 bonus)
 CREATE TABLE authorised_cards (
-  id BIGSERIAL PRIMARY KEY,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   card_id VARCHAR(100) NOT NULL UNIQUE,
-  user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Sensor readings (temperature, humidity, gas, steam)
 CREATE TABLE sensor_logs (
-  id BIGSERIAL PRIMARY KEY,
-  device_id BIGINT REFERENCES devices(id) ON DELETE CASCADE,
-  sensor_type VARCHAR(50) NOT NULL,      -- 'temperature', 'humidity', 'gas', 'steam'
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  device_id UUID REFERENCES devices(id) ON DELETE CASCADE,
+  sensor_type VARCHAR(50) NOT NULL,      -- 'temperature','humidity','gas','steam','motion'
   value DECIMAL(10,2),
-  unit VARCHAR(10),                      -- 'C', '%', etc.
-  timestamp TIMESTAMPTZ DEFAULT NOW()
+  timestamp TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT chk_sensor_type CHECK (sensor_type IN ('temperature','humidity','gas','steam','motion')),
+  CONSTRAINT chk_motion_value CHECK (sensor_type <> 'motion' OR value IN (0,1))
 );
 
 CREATE INDEX idx_sensor_type_timestamp ON sensor_logs(sensor_type, timestamp DESC);
 CREATE INDEX idx_sensor_device ON sensor_logs(device_id);
+CREATE INDEX idx_sensor_motion_ts ON sensor_logs(timestamp DESC) WHERE sensor_type = 'motion';
 
--- RFID access control scans
 CREATE TABLE rfid_scans (
-  id BIGSERIAL PRIMARY KEY,
-  device_id BIGINT REFERENCES devices(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  device_id UUID REFERENCES devices(id) ON DELETE CASCADE,
   card_id VARCHAR(100) NOT NULL,
-  authorised_card_id BIGINT REFERENCES authorised_cards(id) ON DELETE SET NULL,
-  access_result VARCHAR(20) NOT NULL,    -- 'granted', 'denied'
+  authorised_card_id UUID REFERENCES authorised_cards(id) ON DELETE SET NULL,
+  access_result VARCHAR(20) NOT NULL,
   timestamp TIMESTAMPTZ DEFAULT NOW()
 );
-
 CREATE INDEX idx_rfid_timestamp ON rfid_scans(timestamp DESC);
 CREATE INDEX idx_rfid_result ON rfid_scans(access_result);
 CREATE INDEX idx_rfid_card ON rfid_scans(authorised_card_id);
 
--- Motion detection events
-CREATE TABLE motion_events (
-  id BIGSERIAL PRIMARY KEY,
-  device_id BIGINT REFERENCES devices(id) ON DELETE CASCADE,
-  detected BOOLEAN NOT NULL,
-  timestamp TIMESTAMPTZ DEFAULT NOW()
-);
-
-CREATE INDEX idx_motion_timestamp ON motion_events(timestamp DESC);
-CREATE INDEX idx_motion_device ON motion_events(device_id);
-
--- Gas/flame alerts with duration tracking
 CREATE TABLE gas_alerts (
-  id BIGSERIAL PRIMARY KEY,
-  device_id BIGINT REFERENCES devices(id) ON DELETE CASCADE,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  device_id UUID REFERENCES devices(id) ON DELETE CASCADE,
   sensor_value INTEGER NOT NULL,
   alert_start TIMESTAMPTZ DEFAULT NOW(),
-  alert_end TIMESTAMPTZ,                 -- NULL while alert active
-  fan_activated BOOLEAN DEFAULT false
+  alert_end TIMESTAMPTZ
 );
-
 CREATE INDEX idx_gas_alert_start ON gas_alerts(alert_start DESC);
 CREATE INDEX idx_gas_device ON gas_alerts(device_id);

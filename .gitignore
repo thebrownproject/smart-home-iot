@@ -59,6 +59,12 @@ ENV/
 
 # ESP32 configuration (contains WiFi, MQTT, Supabase credentials)
 embedded/config.py
+esp32/config.py
+
+# C# API configuration (contains Supabase, MQTT credentials)
+api/appsettings.Development.json
+api/bin/
+api/obj/
 
 # MicroPython
 *.mpy
