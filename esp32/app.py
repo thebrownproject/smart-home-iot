@@ -30,6 +30,7 @@ class SmartHomeApp:
         from handlers.gas_handler import GasHandler
         from handlers.rfid_handler import RFIDHandler
         from handlers.enviroment_handler import EnvironmentHandler
+        from outputs.rgb import RGBManager
 
         motion = MotionHandler()
         lighting = LightingHandler()
@@ -37,10 +38,12 @@ class SmartHomeApp:
         gas = GasHandler()
         rfid = RFIDHandler()
         environment = EnvironmentHandler()
+        rgb_manager = RGBManager()
 
         print("App running...")
         loop_count = 0
         while True:
+            rgb_manager.update()
             self.mqtt.check_messages()
             # Check time-based lighting every 60 seconds (1 minute)
             if loop_count % 60 == 0:
@@ -48,15 +51,15 @@ class SmartHomeApp:
 
             # Check motion every 5 seconds
             if loop_count % 5 == 0:
-                motion.handle_motion_detection(self.mqtt)
+                motion.handle_motion_detection(self.mqtt, rgb_manager)
 
             # Check steam every 10 seconds
             if loop_count % 10 == 0:
-                steam.handle_steam_detection(self.mqtt)
+                steam.handle_steam_detection(self.mqtt, rgb_manager)
 
             # Check gas every 10 seconds
             if loop_count % 10 == 0:
-                gas.handle_gas_detection(self.mqtt)
+                gas.handle_gas_detection(self.mqtt, rgb_manager)
 
             # Check RFID every 2 seconds
             if loop_count % 1 == 0:
