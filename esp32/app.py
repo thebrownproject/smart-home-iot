@@ -45,11 +45,12 @@ class SmartHomeApp:
         environment = EnvironmentHandler()
 
         print("App running...")
-        loop_count = 0
+        loop_count = 1  # Start at 1 to avoid startup spike (0 % n == 0 for all n)
         while True:
             self.rgb_manager.update()
             self.oled_manager.update()
             self.mqtt.check_messages()
+
             # Check time-based lighting every 60 seconds (1 minute)
             if loop_count % 60 == 0:
                 lighting.handle_time_based_lighting()
@@ -58,24 +59,23 @@ class SmartHomeApp:
             if loop_count % 2 == 0:
                 motion.handle_motion_detection(self.mqtt, self.rgb_manager, self.oled_manager)
 
-            # Check steam every 10 seconds
+            # Check steam every 10 seconds (staggered at loop 10, 20, 30...)
             if loop_count % 10 == 0:
                 steam.handle_steam_detection(self.mqtt, self.rgb_manager, self.oled_manager)
 
-            # Check gas every 10 seconds
-            if loop_count % 10 == 0:
+            # Check gas every 10 seconds (staggered at loop 5, 15, 25... to avoid loop 10 collision)
+            if loop_count % 10 == 5:
                 gas.handle_gas_detection(self.mqtt, self.rgb_manager, self.oled_manager)
 
             # Check RFID every 3 seconds (offset from environment to reduce collisions)
             if loop_count % 3 == 0:
                 rfid.handle_rfid_detection(self.mqtt, self.oled_manager)
 
-            # Check environment (temp/humidity) every 2 seconds
-            if loop_count % 2 == 0:
-                environment.handle_environment_detection(self.mqtt, self.oled_manager)
+            # Check environment every loop (acts as fallback display - no flicker due to idle detection)
+            environment.handle_environment_detection(self.mqtt, self.oled_manager)
 
-            # Garbage collection every 10 seconds
-            if loop_count % 10 == 0:
+            # Garbage collection every 10 seconds (run AFTER handlers complete, at loop 1, 11, 21...)
+            if loop_count % 10 == 1:
                 self.memory.collect("App loop")
 
             loop_count += 1
