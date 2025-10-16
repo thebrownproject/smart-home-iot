@@ -12,8 +12,17 @@ class RFIDHandler:
         from utils.time_sync import TimeSync
 
         time_sync = TimeSync()
-        card_id = self.rfid.get_card_id()
-        
+
+        # First scan for a card, then get its ID if found
+        if self.rfid.scan_card():
+            card_id = self.rfid.get_card_id()
+            print(f"RFIDHandler - Card detected: {card_id}")
+        else:
+            # No card present, skip processing
+            del time_sync
+            self.memory.collect("After RFID detection")
+            return
+
         if card_id:
             payload = ujson.dumps({
                 "card_id": card_id,

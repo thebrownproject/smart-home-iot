@@ -59,7 +59,7 @@ class SmartHomeApp:
                 gas.handle_gas_detection(self.mqtt)
 
             # Check RFID every 2 seconds
-            if loop_count % 2 == 0:
+            if loop_count % 1 == 0:
                 rfid.handle_rfid_detection(self.mqtt)
 
             # Check environment (temp/humidity) every 2 seconds
@@ -73,11 +73,3 @@ class SmartHomeApp:
             loop_count += 1
             print(f"--- Loop {loop_count} complete ---")
             time.sleep(1)  # Loop runs every 1 second
-
-    
-    
-    
-
-    
-    
-                

@@ -175,7 +175,7 @@
   - **Refactored**: 2025-10-15 - Fixed callback dispatch and created ControlHandler
   - **Completed**: 2025-10-15
 
-- [ ] **T1.18**: ~~Implement Supabase HTTP client~~ **DEPRECATED - Remove this module**
+- [x] **T1.18**: ~~Implement Supabase HTTP client~~ **DEPRECATED - Remove this module**
   - **Architecture Change**: ESP32 now communicates ONLY via MQTT (no HTTP/REST)
   - **Action Required**: Remove `esp32/comms/supabase.py` and `esp32/comms/supabase/` directory
   - **Replacement**: All database writes handled by C# middleware (see T2.5, T2.6, T2.7)

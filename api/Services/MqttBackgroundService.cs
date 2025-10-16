@@ -195,10 +195,11 @@ public class MqttBackgroundService : IHostedService, IDisposable
         _logger.LogInformation($"🔐 Card {cardId} validation result: {isValid}");
 
         // Publish validation response back to ESP32
+        // Format matches ESP32 expectations: {"access": "granted"/"denied", "card_id": "...", "timestamp": "..."}
         var response = new
         {
+            access = isValid ? "granted" : "denied",
             card_id = cardId,
-            valid = isValid,
             timestamp = DateTimeOffset.UtcNow.ToString("O")
         };
 
