@@ -242,11 +242,13 @@
   - **Refactored**: 2025-10-15 - ESP32 portion complete, C# middleware pending
   - **Completed**: 2025-10-15 (ESP32 implementation only)
 
-- [ ] **T1.23.1**: RFID handler timing improvements (Future Enhancement)
+- [~] **T1.23.1**: RFID handler timing improvements (Future Enhancement)
 
-  - Add automatic RGB off after 3 seconds
-  - Add automatic door close after 5 seconds
-  - Requires `import time` and non-blocking delay pattern
+  - Add automatic RGB off after 3 seconds ✅ (Completed via RGBManager)
+  - Add automatic door close after 5 seconds ⏳ (Pending implementation)
+  - Requires non-blocking delay pattern ✅ (Countdown pattern implemented)
+  - **Started**: 2025-10-16
+  - **Note**: RGB auto-off implemented via RGBManager with priority system. Door auto-close still needs implementation in control_handler.
 
 - [x] **T1.23.2**: RFID test with hardware (Blocked - No RFID Available)
 

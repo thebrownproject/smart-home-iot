@@ -2770,3 +2770,96 @@ Motion - DB OK
 
 ---
 
+
+
+## Session 17 - 2025-10-16 - RGB Manager Implementation for Multi-Handler Coordination 
+
+**Phase**: Phase 1 - Embedded System Core  
+**Milestone**: 1.7 - Manual Controls & State Management (T1.23.1 partial)  
+**Branch**: phase-2-api-layer
+
+### Tasks In Progress
+
+- [~] **T1.23.1**: RFID handler timing improvements - Implemented RGB auto-off via RGBManager, door auto-close still pending
+
+### Architecture Decisions Made
+
+1. **RGBManager Pattern - Active Object Design**:
+   - Created centralized RGBManager class that owns RGB hardware and manages all timing/priority
+   - Uses countdown timers (not timestamps) to align with existing handler patterns and avoid time module
+   - Implements priority system: gas (3) > rfid (2) > steam (1) > motion (0)
+   - Manager called via `rgb_manager.update()` every loop iteration to decrement counters and auto-turn-off
+   - Handlers request colors via simple API: `rgb_manager.show('motion', (255,165,0), 3)`
+
+2. **Shared State Management via Dependency Injection**:
+   - Single RGBManager instance created in `SmartHomeApp.__init__()` (line 13)
+   - Passed to ControlHandler during initialization (line 21)
+   - Passed to other handlers (motion, steam, gas) as function parameter
+   - Prevents multiple RGB manager instances that would conflict
+
+3. **Non-Blocking Countdown Pattern**:
+   - Rejected timestamp approach (`time.time()`) to avoid importing time module
+   - Uses simple integer countdown decremented each loop iteration
+   - Aligns with existing patterns in SteamHandler.flash_count and MotionHandler.motion_count
+   - Trade-off: Depends on consistent 1-second loop timing
+
+4. **Handler-Specific Flash Logic**:
+   - Steam flashing managed by SteamHandler (lines 42-48 in steam_handler.py)
+   - Handler calls `rgb_manager.show()` with alternating colors each iteration
+   - Keeps flash logic in handler domain rather than overcomplicating manager
+   - Simpler than adding flash() method to RGBManager
+
+5. **Gas Refresh Pattern**:
+   - Gas handler runs every 10 seconds but needs continuous red LED
+   - Solution: Request red for 11 seconds on each call (longer than polling interval)
+   - Ensures no visual gaps while allowing auto-cleanup if handler stops
+
+### Issues Encountered
+
+1. **Initial Over-Engineering**:
+   - First implementation was 120+ lines with verbose docstrings, print statements, special flashing logic
+   - User feedback: "too verbose"
+   - Refactored to 27 lines focusing on core functionality only
+   - Learning: Apply YAGNI (You Aren't Gonna Need It) principle - only add features when explicitly needed
+
+2. **Singleton Anti-Pattern Risk**:
+   - User initially created new RGBManager() inside control_handler.handle_rfid_response()
+   - Would create multiple manager instances with separate state (no coordination)
+   - Fixed by storing shared manager reference in ControlHandler.__init__()
+   - Learning: When multiple consumers need shared state, pass ONE instance to all
+
+3. **Timestamp vs Countdown Debate**:
+   - Timestamps more accurate but require `import time`
+   - Countdown simpler and matches existing codebase patterns
+   - Decision: Use countdown since loop timing is consistent (1s) and simplicity preferred
+
+### Files Modified
+
+- `esp32/outputs/rgb.py`: Added RGBManager class (27 lines) with priority-based show() and update() methods
+- `esp32/app.py`: Created shared rgb_manager in __init__(), call update() in main loop, pass to handlers
+- `esp32/handlers/motion_handler.py`: Simplified to use `rgb_manager.show('motion', (255,165,0), 3)`
+- `esp32/handlers/steam_handler.py`: Flash loop now uses rgb_manager.show() with alternating colors
+- `esp32/handlers/gas_handler.py`: Refresh pattern - request red for 11s every 10s to maintain continuous display
+- `esp32/handlers/control_handler.py`: Store rgb_manager reference in __init__(), use in handle_rfid_response()
+- `planning/tasks.md`: Marked T1.23.1 as in-progress with partial completion note
+
+### Next Session
+
+- **Remaining work on T1.23.1**: Implement automatic door close after 5 seconds in control_handler
+  - Add door_close_countdown timer to ControlHandler
+  - Decrement in main loop (or add update_timers() method called from app.py)
+  - When countdown reaches 0, close door servo
+- Alternative approach: Extend RGBManager pattern to DoorManager for servo timing
+- Consider if other outputs (window, buzzer) need similar auto-off timers
+
+### Session Statistics
+
+**Duration**: ~2 hours  
+**Files Modified**: 7 files  
+**Lines Added**: ~100 lines (RGBManager + handler updates)  
+**Lines Removed**: ~50 lines (direct RGB hardware access removed from handlers)  
+**Design Pattern**: Active Object with Priority Queue  
+**Key Learning**: Start simple, iterate based on feedback - avoid premature abstraction
+
+---
+

@@ -7,14 +7,18 @@ class SmartHomeApp:
         self.memory = Memory()
         from config import TOPIC_RFID_RESPONSE, TOPIC_CONTROL_DOOR, TOPIC_CONTROL_WINDOW, TOPIC_CONTROL_FAN
         from handlers.control_handler import ControlHandler
+        from outputs.rgb import RGBManager
+
+        # Create RGB manager (shared across all handlers)
+        self.rgb_manager = RGBManager()
 
         # Create persistent MQTT connection (can't be deleted)
         from comms.mqtt_client import SmartHomeMQTTClient
         self.mqtt = SmartHomeMQTTClient()
         self.mqtt.connect()
 
-        # Create control handler for MQTT callbacks
-        self.control = ControlHandler()
+        # Create control handler with rgb_manager reference
+        self.control = ControlHandler(self.rgb_manager)
 
         # Subscribe to MQTT topics with control handler methods as callbacks
         self.mqtt.subscribe(TOPIC_RFID_RESPONSE, self.control.handle_rfid_response)
@@ -30,7 +34,6 @@ class SmartHomeApp:
         from handlers.gas_handler import GasHandler
         from handlers.rfid_handler import RFIDHandler
         from handlers.enviroment_handler import EnvironmentHandler
-        from outputs.rgb import RGBManager
 
         motion = MotionHandler()
         lighting = LightingHandler()
@@ -38,12 +41,11 @@ class SmartHomeApp:
         gas = GasHandler()
         rfid = RFIDHandler()
         environment = EnvironmentHandler()
-        rgb_manager = RGBManager()
 
         print("App running...")
         loop_count = 0
         while True:
-            rgb_manager.update()
+            self.rgb_manager.update()
             self.mqtt.check_messages()
             # Check time-based lighting every 60 seconds (1 minute)
             if loop_count % 60 == 0:
@@ -51,15 +53,15 @@ class SmartHomeApp:
 
             # Check motion every 5 seconds
             if loop_count % 5 == 0:
-                motion.handle_motion_detection(self.mqtt, rgb_manager)
+                motion.handle_motion_detection(self.mqtt, self.rgb_manager)
 
             # Check steam every 10 seconds
             if loop_count % 10 == 0:
-                steam.handle_steam_detection(self.mqtt, rgb_manager)
+                steam.handle_steam_detection(self.mqtt, self.rgb_manager)
 
             # Check gas every 10 seconds
             if loop_count % 10 == 0:
-                gas.handle_gas_detection(self.mqtt, rgb_manager)
+                gas.handle_gas_detection(self.mqtt, self.rgb_manager)
 
             # Check RFID every 2 seconds
             if loop_count % 1 == 0:

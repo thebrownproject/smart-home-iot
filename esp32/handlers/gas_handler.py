@@ -5,27 +5,25 @@ class GasHandler:
         self.memory = Memory()
         self.gas_alarm_active = False
 
-    def handle_gas_detection(self, mqtt):
+    def handle_gas_detection(self, mqtt, rgb_manager):
         # Check gas sensor and respond to gas detection (FR4.1)
         from sensors.gas import GasSensor
-        from outputs.rgb import RGB
         from outputs.fan import Fan
         from config import TOPIC_SENSOR_DATA, TOPIC_STATUS_FAN
         import ujson
         from utils.time_sync import TimeSync
 
         gas = GasSensor()
-        rgb = RGB()
         fan = Fan()
         time_sync = TimeSync()
 
         if not self.gas_alarm_active:
-            # Gas detected
+            # Gas detected - activate alarm
             if gas.is_gas_detected():
                 self.gas_alarm_active = True
-                self.memory.collect("GasHandler - Gas detected")
-                rgb.set_color(255, 0, 0)
                 fan.on()
+
+                # Publish gas detection (FR4.4)
                 payload = ujson.dumps({
                     "sensor_type": "gas",
                     "detected": True,
@@ -33,6 +31,8 @@ class GasHandler:
                 })
                 if not mqtt.publish(TOPIC_SENSOR_DATA, payload):
                     print(f"GasHandler - Error logging gas detection to database")
+
+                # Publish fan status
                 payload = ujson.dumps({
                     "state": "on",
                     "timestamp": time_sync.get_iso_timestamp()
@@ -40,12 +40,16 @@ class GasHandler:
                 if not mqtt.publish(TOPIC_STATUS_FAN, payload):
                     print(f"GasHandler - Error logging fan state to database")
 
-        else:
-            # Gas cleared
+        # Keep RGB red while alarm is active (FR4.3)
+        if self.gas_alarm_active:
+            rgb_manager.show('gas', (255, 0, 0), 11)  # Refresh red for 11 seconds
+
+            # Check if gas has cleared
             if not gas.is_gas_detected():
                 self.gas_alarm_active = False
-                rgb.off()
                 fan.off()
+
+                # Publish gas cleared
                 payload = ujson.dumps({
                     "sensor_type": "gas",
                     "detected": False,
@@ -53,6 +57,8 @@ class GasHandler:
                 })
                 if not mqtt.publish(TOPIC_SENSOR_DATA, payload):
                     print(f"GasHandler - Error logging gas clearing to database")
+
+                # Publish fan off
                 payload = ujson.dumps({
                     "state": "off",
                     "timestamp": time_sync.get_iso_timestamp()
@@ -60,5 +66,5 @@ class GasHandler:
                 if not mqtt.publish(TOPIC_STATUS_FAN, payload):
                     print(f"GasHandler - Error logging fan state to database")
 
-        del gas, rgb, fan, time_sync
+        del gas, fan, time_sync
         self.memory.collect("After gas handling")

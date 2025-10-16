@@ -5,16 +5,14 @@ class SteamHandler:
         self.memory = Memory()
         self.flash_count = 0  # Non-blocking flash counter
 
-    def handle_steam_detection(self, mqtt):
+    def handle_steam_detection(self, mqtt, rgb_manager):
         from sensors.steam import SteamSensor
-        from outputs.rgb import RGB
         from outputs.servo import Servo
         from config import TOPIC_SENSOR_DATA, TOPIC_STATUS_WINDOW
         import ujson
         from utils.time_sync import TimeSync
 
         steam = SteamSensor()
-        rgb = RGB()
         window_servo = Servo(pin=5)
         time_sync = TimeSync()
 
@@ -41,13 +39,13 @@ class SteamHandler:
                 if not mqtt.publish(TOPIC_STATUS_WINDOW, payload):
                     print("SteamHandler - Window status MQTT publish FAILED")
 
-        # Non-blocking flash logic (FR3.3 - RGB LED flashes blue)
+        # Non-blocking flash logic (FR3.3 - RGB flashes blue)
         if self.flash_count > 0:
             self.flash_count -= 1
             if self.flash_count % 2 == 0:
-                rgb.set_color(0, 0, 255)  # Blue on
+                rgb_manager.show('steam', (0, 0, 255), 1)  # Blue for 1 second
             else:
-                rgb.off()  # Off
+                rgb_manager.show('steam', (0, 0, 0), 1)  # Off for 1 second
 
-        del steam, rgb, window_servo, time_sync
+        del steam, window_servo, time_sync
         self.memory.collect("After steam handling")

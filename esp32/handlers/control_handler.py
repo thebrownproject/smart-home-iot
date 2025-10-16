@@ -1,31 +1,33 @@
 class ControlHandler:
+    def __init__(self, rgb_manager):
+        """Store reference to the shared RGBManager."""
+        self.rgb_manager = rgb_manager
+
     def handle_rfid_response(self, topic, msg):
         import ujson
-        from outputs.rgb import RGB
         from outputs.servo import Servo
         from display.oled import OLED
         from outputs.buzzer import Buzzer
 
         try:
             data = ujson.loads(msg.decode())
-            rgb = RGB()
             oled = OLED()
 
             if data['access'] == 'granted':
-                rgb.set_color(0, 255, 0)
+                self.rgb_manager.show('rfid', (0, 255, 0), 3)
                 oled.show_text("ACCESS GRANTED", "Welcome home")
                 door_servo = Servo(pin=13)
                 door_servo.open()
                 del door_servo
 
             elif data['access'] == 'denied':
-                rgb.set_color(255, 0, 0)
+                self.rgb_manager.show('rfid', (255, 0, 0), 3)
                 oled.show_text("ACCESS DENIED", "Access denied")
                 buzzer = Buzzer()
                 buzzer.start()
                 del buzzer
 
-            del rgb, oled
+            del oled
         except Exception as e:
             print(f"Error handling RFID response: {e}")
 
