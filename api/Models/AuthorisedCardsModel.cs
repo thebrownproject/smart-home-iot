@@ -20,7 +20,7 @@ public class AuthorisedCardsModel : BaseModel
     public Guid Id { get; set; }
 
     [Column("card_id")]
-    public string CardId { get; set; }
+    public string CardId { get; set; } = string.Empty;
 
     [Column("user_id")]
     public Guid? UserId { get; set; }

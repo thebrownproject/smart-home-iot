@@ -8,7 +8,7 @@ public class SensorLogRequest
     public Guid DeviceId { get; set; }
     [Required]
     [MaxLength(50)]
-    public string SensorType { get; set; }
+    public required string SensorType { get; set; }
     [Required]
     public decimal Value { get; set; }
 }
