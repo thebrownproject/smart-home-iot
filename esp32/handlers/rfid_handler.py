@@ -6,7 +6,7 @@ class RFIDHandler:
         self.memory = Memory()
         self.rfid = RFIDSensor()  # Initialize once, reuse across calls
 
-    def handle_rfid_detection(self, mqtt):
+    def handle_rfid_detection(self, mqtt, oled_manager):
         from config import TOPIC_RFID_REQUEST
         import ujson
         from utils.time_sync import TimeSync
@@ -32,6 +32,7 @@ class RFIDHandler:
                 print("RFIDHandler - RFID validation request sent")
             else:
                 print("RFIDHandler - Error sending RFID request")
+            oled_manager.show('rfid', "Card", 2, "detected")
             self.rfid.clear_card()
 
         del time_sync

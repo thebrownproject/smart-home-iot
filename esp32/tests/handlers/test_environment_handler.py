@@ -1,4 +1,4 @@
-from handlers.enviroment_handler import EnvironmentHandler
+from handlers.environment_handler import EnvironmentHandler
 from comms.mqtt_client import SmartHomeMQTTClient
 from comms.wifi_manager import WiFiManager
 import time

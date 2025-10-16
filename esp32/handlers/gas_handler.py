@@ -5,7 +5,7 @@ class GasHandler:
         self.memory = Memory()
         self.gas_alarm_active = False
 
-    def handle_gas_detection(self, mqtt, rgb_manager):
+    def handle_gas_detection(self, mqtt, rgb_manager, oled_manager):
         # Check gas sensor and respond to gas detection (FR4.1)
         from sensors.gas import GasSensor
         from outputs.fan import Fan
@@ -42,8 +42,8 @@ class GasHandler:
 
         # Keep RGB red while alarm is active (FR4.3)
         if self.gas_alarm_active:
-            rgb_manager.show('gas', (255, 0, 0), 11)  # Refresh red for 11 seconds
-
+            rgb_manager.show('gas', (255, 0, 0), 10)  # Refresh red for 10 seconds
+            oled_manager.show('gas', "Gas", 10, "detected")
             # Check if gas has cleared
             if not gas.is_gas_detected():
                 self.gas_alarm_active = False

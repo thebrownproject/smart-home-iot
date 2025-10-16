@@ -5,7 +5,7 @@ class SteamHandler:
         self.memory = Memory()
         self.flash_count = 0  # Non-blocking flash counter
 
-    def handle_steam_detection(self, mqtt, rgb_manager):
+    def handle_steam_detection(self, mqtt, rgb_manager, oled_manager):
         from sensors.steam import SteamSensor
         from outputs.servo import Servo
         from config import TOPIC_SENSOR_DATA, TOPIC_STATUS_WINDOW
@@ -41,6 +41,7 @@ class SteamHandler:
 
         # Non-blocking flash logic (FR3.3 - RGB flashes blue)
         if self.flash_count > 0:
+            oled_manager.show('steam', "Steam", 3, "detected")
             self.flash_count -= 1
             if self.flash_count % 2 == 0:
                 rgb_manager.show('steam', (0, 0, 255), 1)  # Blue for 1 second
