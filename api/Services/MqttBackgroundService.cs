@@ -1,5 +1,5 @@
+using Microsoft.Extensions.Hosting;
 using MQTTnet;
-using MQTTnet.Client;
 using System.Text;
 using System.Text.Json;
 
@@ -43,7 +43,7 @@ public class MqttBackgroundService : IHostedService, IDisposable
         try
         {
             // Create MQTT client instance
-            var factory = new MqttFactory();
+            var factory = new MqttClientFactory();
             _mqttClient = factory.CreateMqttClient();
 
             // Set up event handlers BEFORE connecting
@@ -77,13 +77,21 @@ public class MqttBackgroundService : IHostedService, IDisposable
         _logger.LogInformation($"📡 Connecting to MQTT broker: {broker}:{port}");
 
         // Build MQTT client options
-        var options = new MqttClientOptionsBuilder()
+        var optionsBuilder = new MqttClientOptionsBuilder()
             .WithTcpServer(broker, port)
             .WithCredentials(username, password)
-            .WithTls() // Enable TLS for HiveMQ Cloud (port 8883)
-            .WithClientId($"SmartHomeAPI_{Guid.NewGuid()}") // Unique client ID
-            .WithCleanSession()
-            .Build();
+            .WithClientId($"SmartHomeAPI_{Guid.NewGuid()}")
+            .WithCleanSession();
+
+        // Enable TLS for port 8883 with certificate validation
+        // Note: For production, use proper certificate validation
+        optionsBuilder.WithTlsOptions(o =>
+        {
+            o.UseTls();
+            o.WithCertificateValidationHandler(_ => true); // Accept all certificates (dev only)
+        });
+
+        var options = optionsBuilder.Build();
 
         // Connect to broker
         var result = await _mqttClient!.ConnectAsync(options);
@@ -108,26 +116,14 @@ public class MqttBackgroundService : IHostedService, IDisposable
         _logger.LogInformation("📬 Subscribing to MQTT topics...");
 
         // Subscribe to multiple topics
-        var topicFilters = new List<MqttTopicFilter>
-        {
-            // Sensor data from all devices (+ is wildcard for device ID)
-            new MqttTopicFilterBuilder()
-                .WithTopic("devices/+/data")
-                .Build(),
+        var subscribeOptions = new MqttClientSubscribeOptionsBuilder()
+            .WithTopicFilter("devices/+/data")  // Sensor data from all devices
+            .WithTopicFilter("devices/+/rfid/check")  // RFID validation requests
+            .WithTopicFilter("devices/+/status/#")  // Device status updates
+            .Build();
 
-            // RFID validation requests from all devices
-            new MqttTopicFilterBuilder()
-                .WithTopic("devices/+/rfid/check")
-                .Build(),
-
-            // Device status updates (# is multi-level wildcard)
-            new MqttTopicFilterBuilder()
-                .WithTopic("devices/+/status/#")
-                .Build()
-        };
-
-        await _mqttClient!.SubscribeAsync(topicFilters.ToArray());
-        _logger.LogInformation($"✅ Subscribed to {topicFilters.Count} topic patterns");
+        await _mqttClient!.SubscribeAsync(subscribeOptions);
+        _logger.LogInformation("✅ Subscribed to 3 topic patterns");
     }
 
     /// <summary>

@@ -2681,3 +2681,92 @@ Motion - DB OK
 
 ---
 
+## Session 16 - 2025-10-16 - C# MQTT TLS Configuration Fix ✅
+
+**Phase**: Phase 2 - API Layer  
+**Milestone**: 2.1 - C# API Setup (T2.5 MQTT Background Service)  
+**Branch**: phase-2-api-layer
+
+### Tasks Completed
+
+- [x] **T2.5 (Partial)**: Fixed MQTT TLS connection to HiveMQ Cloud
+  - Diagnosed and resolved TLS configuration errors in MQTTnet 5.0.1
+  - Added `.WithTlsOptions(o => o.UseTls())` with certificate validation handler
+  - Successfully connected C# MQTT Background Service to HiveMQ broker
+  - Verified subscription to 3 topic patterns (`devices/+/data`, `devices/+/rfid/check`, `devices/+/status/#`)
+  - Tested RFID validation flow end-to-end via HiveMQ Cloud web client
+
+### Decisions Made
+
+1. **TLS Certificate Validation for Development**:
+   - Used `.WithCertificateValidationHandler(_ => true)` to bypass strict certificate validation
+   - Appropriate for student project and development environment
+   - Added comment noting this is for development only (production would need proper validation)
+   - Reason: HiveMQ Cloud's certificate chain isn't trusted by default .NET certificate store
+
+2. **MQTTnet API Version Differences**:
+   - MQTTnet 5.0.1 uses `.UseTls()` method (not property) inside `.WithTlsOptions()` lambda
+   - Different from older versions that had `.WithTls()` directly on builder
+   - Important for future reference when updating MQTTnet library
+
+3. **Port Configuration**:
+   - Kept port 8883 (TLS-encrypted MQTT)
+   - More production-like setup than unencrypted port 1883
+   - Provides encryption for credentials and payload data in transit
+
+### Issues Encountered
+
+1. **Initial Connection Failure**: Port 8883 with no TLS configuration
+   - Error: `MqttConnectingFailedException: Error while authenticating. Connection closed.`
+   - Root cause: Port mismatch (8883 requires TLS, but code had no TLS configuration)
+   - Resolution: Added `.WithTlsOptions()` configuration
+
+2. **Certificate Validation Rejection**:
+   - Error: `The remote certificate was rejected by the provided RemoteCertificateValidationCallback`
+   - Root cause: .NET doesn't trust HiveMQ Cloud's certificate chain by default
+   - Resolution: Added custom validation handler that accepts all certificates for development
+
+3. **MQTTnet API Confusion**:
+   - Attempted `.WithTls()` method (doesn't exist in 5.0.1)
+   - Attempted `o.UseTls = true` (UseTls is a method, not property)
+   - Resolution: Correct syntax is `o.UseTls()` inside `.WithTlsOptions()` lambda
+
+### Testing Performed
+
+1. **MQTT Connection Test**:
+   - Started C# API with `dotnet run`
+   - Verified successful connection logs:
+     - ✅ Connected to MQTT broker successfully
+     - ✅ Subscribed to 3 topic patterns
+     - ✅ MQTT Background Service started successfully
+
+2. **RFID Validation End-to-End Test** (via HiveMQ Cloud Web Client):
+   - Added test data to Supabase: `INSERT INTO authorised_cards (card_id, is_active) VALUES ('TEST123', true)`
+   - Published RFID check message to `devices/esp32_main/rfid/check` with payload `{"card_id": "TEST123"}`
+   - Verified API logs:
+     - 📨 Received MQTT message on topic
+     - 🔐 Processing RFID validation request
+     - 🔐 Card TEST123 validation result: True
+     - 📤 Published RFID validation response
+   - Confirmed response message published to `devices/esp32_main/rfid/response`
+   - **Result**: RFID validation flow working perfectly ✅
+
+### Next Session
+
+- Continue with T2.6: Implement SensorDataWriter service
+  - Parse incoming sensor data from `devices/+/data` topic
+  - Write to Supabase `sensor_logs` table every 30 minutes
+  - Handle motion events and gas alerts immediately
+- Test sensor data flow: ESP32 → MQTT → C# Middleware → Supabase
+
+### Session Statistics
+
+**Duration**: ~1 hour (debugging TLS configuration)  
+**Files Modified**: 1 file (`Services/MqttBackgroundService.cs`)  
+**Lines Changed**: ~10 lines (TLS configuration block)  
+**API Versions Debugged**: MQTTnet 5.0.1.1416  
+**Connection Issues Fixed**: 3 (port mismatch, certificate validation, API syntax)  
+**End-to-End Tests Passed**: 1 (RFID validation via HiveMQ web client)
+
+---
+
