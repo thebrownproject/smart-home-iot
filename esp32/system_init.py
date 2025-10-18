@@ -21,7 +21,7 @@ class SystemInit:
         oled = OLED()
         oled.show_text("Welcome to", "Smart Home Lab")
         time.sleep(3)
-        oled.show_text("Please wait", "System starting...")
+        oled.show_text("Please wait", "System starting")
         time.sleep(2)
         del oled
         self.memory.collect("After welcome message")

@@ -20,6 +20,11 @@ public class MqttBackgroundService : IHostedService, IDisposable
     private readonly IServiceScopeFactory _scopeFactory;
     private IMqttClient? _mqttClient;
     private Timer? _reconnectTimer;
+    private Timer? _databaseWriteTimer;
+
+    // Store latest sensor readings for 30-minute database writes
+    private SensorDataMessage? _latestTemperature;
+    private SensorDataMessage? _latestHumidity;
 
     // Constructor - injected by ASP.NET Core DI
     public MqttBackgroundService(
@@ -53,6 +58,16 @@ public class MqttBackgroundService : IHostedService, IDisposable
 
             // Connect to HiveMQ broker
             await ConnectAsync();
+
+            // Start 30-minute database write timer
+            // TODO: Change back to 30 minutes for production (currently 1 min for testing)
+            _databaseWriteTimer = new Timer(
+                WriteSensorDataToDatabase,
+                null,
+                TimeSpan.FromMinutes(1),  // First write after 1 minute (TESTING)
+                TimeSpan.FromMinutes(1)   // Repeat every 1 minute (TESTING)
+            );
+            _logger.LogInformation("⏰ Database write timer started (1-minute interval - TESTING MODE)");
 
             _logger.LogInformation("✅ MQTT Background Service started successfully");
         }
@@ -215,13 +230,43 @@ public class MqttBackgroundService : IHostedService, IDisposable
     /// <summary>
     /// Handle sensor data from ESP32.
     /// Pattern: devices/{deviceId}/data
+    /// Stores latest temperature and humidity readings for 30-minute database writes.
     /// </summary>
     private Task HandleSensorDataAsync(string topic, string payload)
     {
-        _logger.LogInformation("📊 Processing sensor data");
+        try
+        {
+            _logger.LogInformation("📊 Processing sensor data");
 
-        // TODO: Parse sensor data and write to database (sensor_logs table)
-        // This will be implemented in T2.6 - SensorDataWriter service
+            // Parse JSON payload from ESP32
+            var data = JsonSerializer.Deserialize<SensorDataMessage>(payload);
+
+            if (data == null)
+            {
+                _logger.LogWarning("⚠️ Failed to parse sensor data payload");
+                return Task.CompletedTask;
+            }
+
+            // Store latest reading based on sensor type
+            if (data.sensor_type == "temperature")
+            {
+                _latestTemperature = data;
+                _logger.LogDebug($"📊 Stored temperature reading: {data.value}{data.unit}");
+            }
+            else if (data.sensor_type == "humidity")
+            {
+                _latestHumidity = data;
+                _logger.LogDebug($"📊 Stored humidity reading: {data.value}{data.unit}");
+            }
+            else
+            {
+                _logger.LogWarning($"⚠️ Unknown sensor type: {data.sensor_type}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error handling sensor data");
+        }
 
         return Task.CompletedTask;
     }
@@ -237,6 +282,75 @@ public class MqttBackgroundService : IHostedService, IDisposable
         // TODO: Log status changes if needed
 
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Timer callback - writes latest sensor readings to database every 30 minutes.
+    /// Called automatically by the database write timer.
+    /// </summary>
+    private async void WriteSensorDataToDatabase(object? state)
+    {
+        try
+        {
+            _logger.LogInformation("💾 Writing sensor data to database (30-minute interval)");
+
+            // Check if we have any data to write
+            if (_latestTemperature == null && _latestHumidity == null)
+            {
+                _logger.LogInformation("⚠️ No sensor data to write - skipping database write");
+                return;
+            }
+
+            // Create scope to get scoped services (Supabase client)
+            using var scope = _scopeFactory.CreateScope();
+            var supabase = scope.ServiceProvider.GetRequiredService<Supabase.Client>();
+
+            // Get device UUID from configuration
+            var deviceUuidString = _configuration.GetValue<string>("DeviceUuid");
+            if (string.IsNullOrEmpty(deviceUuidString) || !Guid.TryParse(deviceUuidString, out var deviceId))
+            {
+                _logger.LogError("❌ Invalid or missing DeviceUuid in configuration");
+                return;
+            }
+
+            // Write temperature reading if available
+            if (_latestTemperature != null)
+            {
+                var tempLog = new api.models.SensorLogModel
+                {
+                    Id = Guid.NewGuid(),
+                    DeviceId = deviceId,
+                    SensorType = "temperature",
+                    Value = (decimal)_latestTemperature.value,
+                    Timestamp = DateTimeOffset.Parse(_latestTemperature.timestamp)
+                };
+
+                await supabase.From<api.models.SensorLogModel>().Insert(tempLog);
+                _logger.LogInformation($"✅ Temperature logged: {_latestTemperature.value}°C");
+            }
+
+            // Write humidity reading if available
+            if (_latestHumidity != null)
+            {
+                var humidityLog = new api.models.SensorLogModel
+                {
+                    Id = Guid.NewGuid(),
+                    DeviceId = deviceId,
+                    SensorType = "humidity",
+                    Value = (decimal)_latestHumidity.value,
+                    Timestamp = DateTimeOffset.Parse(_latestHumidity.timestamp)
+                };
+
+                await supabase.From<api.models.SensorLogModel>().Insert(humidityLog);
+                _logger.LogInformation($"✅ Humidity logged: {_latestHumidity.value}%");
+            }
+
+            _logger.LogInformation("💾 Sensor data successfully written to database");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error writing sensor data to database");
+        }
     }
 
     /// <summary>
@@ -317,6 +431,18 @@ public class MqttBackgroundService : IHostedService, IDisposable
     public void Dispose()
     {
         _reconnectTimer?.Dispose();
+        _databaseWriteTimer?.Dispose();
         _mqttClient?.Dispose();
     }
+}
+
+/// <summary>
+/// Represents sensor data received from ESP32 via MQTT
+/// </summary>
+internal class SensorDataMessage
+{
+    public string sensor_type { get; set; } = string.Empty;
+    public double value { get; set; }
+    public string unit { get; set; } = string.Empty;
+    public string timestamp { get; set; } = string.Empty;
 }

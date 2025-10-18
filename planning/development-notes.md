@@ -3093,3 +3093,110 @@ This session focused on debugging and resolving critical performance issues disc
 
 ---
 
+
+## Session 20 - 2025-10-18 - C# Sensor Logging & BuzzerManager Implementation ✅
+
+**Phase**: Phase 2 - API Layer (with Phase 1 refinements)
+**Milestone**: 2.2 - MQTT Integration & Data Persistence
+**Branch**: phase-2-api-layer
+
+### Tasks Completed
+
+- [x] **T1.25 / T2.6**: Implement 30-minute sensor logging in C# middleware
+  - Verified ESP32 environment handler already publishes temp/humidity every 60 seconds
+  - Added timer-based database writer to `MqttBackgroundService.cs`
+  - Stores latest temperature/humidity readings in memory
+  - Writes to `sensor_logs` table every 30 minutes (1 min for testing)
+  - Integrated seamlessly with existing MQTT subscription infrastructure
+
+- [x] **BuzzerManager Implementation**: Created timer-based buzzer control (untracked task)
+  - Added `BuzzerManager` class to `esp32/outputs/buzzer.py`
+  - Integrated into app.py main loop with `buzzer_manager.update()` calls
+  - Used in `control_handler.py` for RFID denied alerts (5-second duration)
+  - Simplified design: removed unnecessary `__init__` duration parameter (YAGNI)
+
+### Decisions Made
+
+1. **Integrated Sensor Logging into MqttBackgroundService**:
+   - Could have created separate `SensorDataWriter.cs` service
+   - Chose to add timer logic to existing MQTT service (simpler, fewer moving parts)
+   - Pattern: Store latest readings → Timer callback → Scoped Supabase client → Insert
+   - Matches existing RFID validation pattern (lines 189-213)
+
+2. **Hardcoded Device UUID in Config**:
+   - Avoided creating `DeviceModel` and database lookup (YAGNI for single-device project)
+   - Added `DeviceUuid: "cbd2eeab-74e2-4e22-a47a-38b8d86e98c0"` to `appsettings.json`
+   - Simpler than dynamic device registration for student demo
+
+3. **BuzzerManager Simplification**:
+   - Initial implementation had complex ternary logic and unused `__init__` parameter
+   - Refactored to require `duration` parameter in `start()` method only
+   - Clearer code: explicit if/else instead of ternary expression
+
+4. **Motion/Gas Event Logging Deferred**:
+   - T2.6 spec included motion_events and gas_alerts tables
+   - Focused only on temperature/humidity (core requirement)
+   - Motion/gas will be separate tasks (better separation of concerns)
+
+### Issues Encountered
+
+1. **Undefined Variable Bug in BuzzerManager.start()**:
+   - **Problem**: `self.countdown = duration` referenced undefined `duration` variable
+   - **Cause**: `__init__` parameter not stored as instance variable
+   - **Solution**: Simplified to require `duration` parameter only in `start()` method
+   - **Learning**: Parameters in one method aren't accessible in another without `self.`
+
+2. **Overly Complex Code**:
+   - **Problem**: Ternary expression hard to read for optional parameters
+   - **Solution**: Replaced with explicit if/else block (4 lines vs 1, but clearer)
+   - **Learning**: Readability > cleverness (especially for student projects)
+
+3. **RFID Scan Delay Discussion** (not fully resolved):
+   - Identified issue: RFID checked every 3 seconds (`loop_count % 3 == 0`)
+   - Worst case delay: ~3 seconds, avg ~1.5 seconds
+   - PRD requirement: < 500ms response time
+   - **Potential solutions**: Check every loop (max 1s) or reduce loop sleep to 0.5s
+   - **Status**: Discussed but not implemented (Fraser to decide approach)
+
+### Files Modified
+
+- `api/Services/MqttBackgroundService.cs`: Added sensor data timer logic
+- `api/appsettings.json`: Added `DeviceUuid` configuration
+- `esp32/outputs/buzzer.py`: Created `BuzzerManager` class
+- `esp32/app.py`: Integrated `buzzer_manager`
+- `esp32/handlers/control_handler.py`: Uses buzzer for RFID denied alerts
+- `esp32/system_init.py`: Minor buzzer integration updates
+- `planning/tasks.md`: Marked T1.25 and T2.6 complete
+
+### Key Learnings
+
+1. **Background Service Timer Pattern**:
+   - Use `System.Threading.Timer` for periodic tasks in background services
+   - Always use `IServiceScopeFactory` to get scoped services in singleton contexts
+   - Pattern: `using var scope = _scopeFactory.CreateScope(); var client = scope.GetService<T>();`
+
+2. **YAGNI in Configuration**:
+   - Don't create models/services until you need full CRUD operations
+   - Hardcoded UUIDs acceptable for single-device demos
+   - Optional parameters in `__init__` often unnecessary
+
+3. **Simplicity Over Patterns**:
+   - Integrated sensor logging into existing service instead of creating new service
+   - Avoided premature abstraction for student project scope
+
+### Next Session
+
+- **Decision needed**: RFID scan delay fix approach (every loop vs 0.5s sleep)
+- Continue with **T1.26**: Asthma alert system (humidity > 50% AND temp > 27°C)
+- Or continue Phase 2: **T2.7** RFID Validation Service
+- **TODO**: Change timer from 1 minute to 30 minutes for production (line 67 in MqttBackgroundService.cs)
+
+### Session Statistics
+
+**Duration**: ~2 hours
+**Tasks Completed**: 2 official (T1.25, T2.6) + 1 refinement (BuzzerManager)
+**Files Modified**: 6 files
+**Lines Changed**: ~150 lines
+**Bugs Fixed**: 1 (undefined variable)
+
+---

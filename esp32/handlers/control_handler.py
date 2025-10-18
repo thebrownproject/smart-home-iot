@@ -1,13 +1,13 @@
 class ControlHandler:
-    def __init__(self, rgb_manager, oled_manager, door_servo_manager):
+    def __init__(self, rgb_manager, oled_manager, door_servo_manager, buzzer_manager):
         """Store references to shared managers."""
         self.rgb_manager = rgb_manager
         self.oled_manager = oled_manager
         self.door_servo_manager = door_servo_manager
+        self.buzzer_manager = buzzer_manager
 
     def handle_rfid_response(self, topic, msg):
         import ujson
-        from outputs.buzzer import Buzzer
 
         try:
             data = ujson.loads(msg.decode())
@@ -20,9 +20,7 @@ class ControlHandler:
             elif data['access'] == 'denied':
                 self.rgb_manager.show('rfid', (255, 0, 0), 3)
                 self.oled_manager.show('rfid', "ACCESS", 3, "DENIED")
-                buzzer = Buzzer()
-                buzzer.start()
-                del buzzer
+                self.buzzer_manager.start(duration=5)
 
         except Exception as e:
             print(f"Error handling RFID response: {e}")

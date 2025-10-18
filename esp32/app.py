@@ -10,12 +10,12 @@ class SmartHomeApp:
         from outputs.rgb import RGBManager
         from display.oled import OLEDManager
         from outputs.servo import DoorServoManager
-
+        from outputs.buzzer import BuzzerManager
         # Create RGB manager (shared across all handlers)
         self.rgb_manager = RGBManager()
         self.oled_manager = OLEDManager()
         self.door_servo_manager = DoorServoManager()
-
+        self.buzzer_manager = BuzzerManager()
         # Show MQTT connecting status
         from display.oled import OLED
         oled = OLED()
@@ -27,7 +27,7 @@ class SmartHomeApp:
         self.mqtt.connect()
 
         # Create control handler with manager references
-        self.control = ControlHandler(self.rgb_manager, self.oled_manager, self.door_servo_manager)
+        self.control = ControlHandler(self.rgb_manager, self.oled_manager, self.door_servo_manager, self.buzzer_manager)
         
         # Subscribe to MQTT topics with control handler methods as callbacks
         self.mqtt.subscribe(TOPIC_RFID_RESPONSE, self.control.handle_rfid_response)
@@ -63,6 +63,7 @@ class SmartHomeApp:
             self.rgb_manager.update()
             self.oled_manager.update()
             self.door_servo_manager.update()
+            self.buzzer_manager.update()
             self.mqtt.check_messages()
 
             # Check time-based lighting every 60 seconds (1 minute)
@@ -81,8 +82,8 @@ class SmartHomeApp:
             if loop_count % 10 == 5:
                 gas.handle_gas_detection(self.mqtt, self.rgb_manager, self.oled_manager)
 
-            # Check RFID every 3 seconds (offset from environment to reduce collisions)
-            if loop_count % 3 == 0:
+            # Check RFID every 1 second (offset from environment to reduce collisions)
+            if loop_count % 1 == 0:
                 rfid.handle_rfid_detection(self.mqtt, self.oled_manager)
 
             # Check environment every loop (acts as fallback display - no flicker due to idle detection)
