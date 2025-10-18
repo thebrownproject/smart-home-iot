@@ -1,12 +1,12 @@
 class ControlHandler:
-    def __init__(self, rgb_manager, oled_manager):
-        """Store reference to the shared RGBManager."""
+    def __init__(self, rgb_manager, oled_manager, door_servo_manager):
+        """Store references to shared managers."""
         self.rgb_manager = rgb_manager
         self.oled_manager = oled_manager
+        self.door_servo_manager = door_servo_manager
 
     def handle_rfid_response(self, topic, msg):
         import ujson
-        from outputs.servo import Servo
         from outputs.buzzer import Buzzer
 
         try:
@@ -15,9 +15,7 @@ class ControlHandler:
             if data['access'] == 'granted':
                 self.rgb_manager.show('rfid', (0, 255, 0), 3)
                 self.oled_manager.show('rfid', "ACCESS", 3, "GRANTED")
-                door_servo = Servo(pin=13)
-                door_servo.open()
-                del door_servo
+                self.door_servo_manager.open(duration=5)
 
             elif data['access'] == 'denied':
                 self.rgb_manager.show('rfid', (255, 0, 0), 3)
@@ -31,16 +29,13 @@ class ControlHandler:
 
     def handle_door_control(self, topic, msg):
         import ujson
-        from outputs.servo import Servo
 
         try:
             data = ujson.loads(msg.decode())
-            door = Servo(pin=13)
             if data['action'] == 'open':
-                door.open()
+                self.door_servo_manager.open(duration=5)
             elif data['action'] == 'close':
-                door.close()
-            del door
+                self.door_servo_manager.close()
         except Exception as e:
             print(f"Error handling door control: {e}")
 

@@ -242,13 +242,14 @@
   - **Refactored**: 2025-10-15 - ESP32 portion complete, C# middleware pending
   - **Completed**: 2025-10-15 (ESP32 implementation only)
 
-- [~] **T1.23.1**: RFID handler timing improvements (Future Enhancement)
+- [x] **T1.23.1**: RFID handler timing improvements (Future Enhancement)
 
   - Add automatic RGB off after 3 seconds ✅ (Completed via RGBManager)
-  - Add automatic door close after 5 seconds ⏳ (Pending implementation)
+  - Add automatic door close after 5 seconds ✅ (Completed via DoorServoManager)
   - Requires non-blocking delay pattern ✅ (Countdown pattern implemented)
   - **Started**: 2025-10-16
-  - **Note**: RGB auto-off implemented via RGBManager with priority system. Door auto-close still needs implementation in control_handler.
+  - **Completed**: 2025-10-18
+  - **Note**: Implemented DoorServoManager with auto-close countdown timer, integrated into app.py event loop and control_handler.py for both RFID and MQTT control.
 
 - [x] **T1.23.2**: RFID test with hardware (Blocked - No RFID Available)
 
@@ -258,7 +259,7 @@
   - **Started**: 2025-10-14
   - **Completed**: 2025-10-14
 
-- [ ] **T1.23.3**: Add test RFID cards to database (Database Setup)
+- [x] **T1.23.3**: Add test RFID cards to database (Database Setup)
   - Insert sample cards into `authorised_cards` table
   - Document card IDs for testing
   - SQL: `INSERT INTO authorised_cards (card_id, is_active) VALUES ('test_card_123', true);`

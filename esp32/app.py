@@ -9,25 +9,38 @@ class SmartHomeApp:
         from handlers.control_handler import ControlHandler
         from outputs.rgb import RGBManager
         from display.oled import OLEDManager
+        from outputs.servo import DoorServoManager
 
         # Create RGB manager (shared across all handlers)
         self.rgb_manager = RGBManager()
         self.oled_manager = OLEDManager()
+        self.door_servo_manager = DoorServoManager()
+
+        # Show MQTT connecting status
+        from display.oled import OLED
+        oled = OLED()
+        oled.show_text("MQTT Broker", "Connecting...")
+
         # Create persistent MQTT connection (can't be deleted)
         from comms.mqtt_client import SmartHomeMQTTClient
         self.mqtt = SmartHomeMQTTClient()
         self.mqtt.connect()
 
-        # Create control handler with rgb_manager reference
-        self.control = ControlHandler(self.rgb_manager, self.oled_manager)
+        # Create control handler with manager references
+        self.control = ControlHandler(self.rgb_manager, self.oled_manager, self.door_servo_manager)
         
-
         # Subscribe to MQTT topics with control handler methods as callbacks
         self.mqtt.subscribe(TOPIC_RFID_RESPONSE, self.control.handle_rfid_response)
         self.mqtt.subscribe(TOPIC_CONTROL_DOOR, self.control.handle_door_control)
         self.mqtt.subscribe(TOPIC_CONTROL_WINDOW, self.control.handle_window_control)
         self.mqtt.subscribe(TOPIC_CONTROL_FAN, self.control.handle_fan_control)
         self.memory.collect("After MQTT setup")
+
+        # Show connection success
+        oled.show_text("MQTT Broker", "Connected")
+        time.sleep(2)
+        oled.show_text("System Ready", "App Running")
+        del oled
 
     def run(self):
         from handlers.motion_handler import MotionHandler
@@ -49,6 +62,7 @@ class SmartHomeApp:
         while True:
             self.rgb_manager.update()
             self.oled_manager.update()
+            self.door_servo_manager.update()
             self.mqtt.check_messages()
 
             # Check time-based lighting every 60 seconds (1 minute)

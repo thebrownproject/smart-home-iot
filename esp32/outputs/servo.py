@@ -29,3 +29,26 @@ class Servo:
     def close(self):
         """Move servo to closed position (0°)."""
         self.servo.duty(self.angle_closed)
+
+class DoorServoManager:
+    """Manages door servo with open and close methods and a countdown timer."""
+    def __init__(self):
+        self.servo = Servo(pin=13)
+        self.countdown = 0
+        self.is_open = False
+    
+    def open(self, duration=5):
+        self.servo.open()
+        self.is_open = True
+        self.countdown = duration
+
+    def close(self):
+        self.servo.close()
+        self.is_open = False
+        self.countdown = 0
+
+    def update(self):
+        if self.countdown > 0:
+            self.countdown -= 1
+            if self.countdown == 0 and self.is_open:
+                self.close()

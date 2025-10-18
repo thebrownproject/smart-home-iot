@@ -13,17 +13,16 @@ class SystemInit:
         self._show_welcome_message()
         self._connect_to_wifi()
         self._sync_time()
-        self._connect_to_mqtt()
-        self._show_ready()
         self.memory.collect("After system init")
         print("=== System Ready ===")
     
     def _show_welcome_message(self):
         from display.oled import OLED
         oled = OLED()
-        oled.show_text("Welcome to", "Smart Home Lab!")
+        oled.show_text("Welcome to", "Smart Home Lab")
+        time.sleep(3)
+        oled.show_text("Please wait", "System starting...")
         time.sleep(2)
-        oled.clear()
         del oled
         self.memory.collect("After welcome message")
     
@@ -35,48 +34,49 @@ class SystemInit:
         oled = OLED()
 
         print("Connecting to WiFi...")
+        oled.show_text("WiFi", "Connecting...")
         if wifi_manager.connect():
             ip = wifi_manager.get_ip()
             print(f"WiFi connected to {WIFI_SSID} at ip: {ip}")
-            oled.clear()
             oled.show_text("WiFi Connected", WIFI_SSID)
-            time.sleep(3)
+            time.sleep(1.5)
         else:
             print("WiFi connection failed!")
-            oled.clear()
-            oled.show_text("WiFi Failed!", "Check config")
-            time.sleep(3)
+            oled.show_text("WiFi Error", "Check Config")
+            time.sleep(1.5)
 
         del wifi_manager, oled
         self.memory.collect("After WiFi connect")
 
     def _sync_time(self):
         from utils.time_sync import TimeSync
+        from display.oled import OLED
+
+        oled = OLED()
         time_sync = TimeSync()
 
+        oled.show_text("Time Sync", "Connecting...")
         if time_sync.sync_time():
             print("Time synchronized successfully")
-            return True
+            local_time = time_sync.get_local_time()  # Returns tuple (year, month, day, hour, min, sec, ...)
+            hour = local_time[3]
+            minute = local_time[4]
+
+            # Convert 24-hour to 12-hour with AM/PM
+            display_hour = hour % 12 or 12  # 0 becomes 12 (midnight/noon)
+            period = "AM" if hour < 12 else "PM"
+            time_str = "{:02d}:{:02d} {}".format(display_hour, minute, period)
+            oled.show_text("Time Synced", time_str)
+            time.sleep(2)
         else:
             print("Time sync failed - continuing anyway")
+            oled.show_text("Time Sync", "Failed")
+            time.sleep(2)
+
         print(time_sync.get_local_time())
         print(f"Is nighttime: {time_sync.is_nighttime()}")
 
-        del time_sync
+        del time_sync, oled
         self.memory.collect("After time sync")
-
-    def _connect_to_mqtt(self):
-        from comms.mqtt_client import SmartHomeMQTTClient
-        mqtt_client = SmartHomeMQTTClient()
-        mqtt_client.connect()
-        self.memory.collect("After MQTT connect")
-        del mqtt_client
-
-    def _show_ready(self):
-        from display.oled import OLED
-        oled = OLED()
-        oled.show_text("System Ready", "")
-        del oled
-        self.memory.collect("After show ready")
 
     

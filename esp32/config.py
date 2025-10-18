@@ -42,6 +42,6 @@ TOPIC_CONTROL_WINDOW = f"devices/{DEVICE_ID}/control/window"
 TOPIC_CONTROL_FAN = f"devices/{DEVICE_ID}/control/fan"
 
 # Time Configuration (NTP)
-TIMEZONE_OFFSET_HOURS = 10  # AEDT (Melbourne/Sydney) UTC+10
+TIMEZONE_OFFSET_HOURS = 11  # AEDT (Melbourne/Sydney) UTC+10
 NIGHT_START_HOUR = 20       # 8pm
-NIGHT_END_HOUR = 7          # 7ama
+NIGHT_END_HOUR = 7          # 7am

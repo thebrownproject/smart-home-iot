@@ -2987,9 +2987,109 @@ This session focused on debugging and resolving critical performance issues disc
 **Issues Debugged**: 7 critical performance/stability bugs  
 **Files Modified**: 11 files  
 **Lines Changed**: ~150 lines total  
-**MQTT Load Reduction**: 60x (from 120 msg/min to 2 msg/min)  
-**Memory Improvement**: Loop 10 peak reduced from 95KB→75KB used  
+**MQTT Load Reduction**: 60x (from 120 msg/min to 2 msg/min)
+**Memory Improvement**: Loop 10 peak reduced from 95KB→75KB used
 **Design Patterns Applied**: Change Detection, Idle Fallback, Temporal Load Balancing, Early Exit, Progressive Refinement
+
+---
+
+## Session 19 - 2025-10-18 - Door Auto-Close & Boot UX Improvements ✅
+
+**Phase**: Phase 1 - Embedded System Core
+**Milestone**: 1.7 - Manual Controls & State Management
+**Branch**: phase-2-api-layer
+
+### Tasks Completed
+
+- [x] **T1.23.1**: RFID handler timing improvements (Future Enhancement) - Implemented DoorServoManager with auto-close countdown timer pattern matching RGBManager/OLEDManager architecture
+- Boot UX improvements - Enhanced system_init.py and app.py with smooth status messages and better pacing
+
+### Decisions Made
+
+1. **DoorServoManager Pattern**:
+   - Created manager class following existing RGBManager/OLEDManager pattern
+   - Auto-close countdown timer (5 seconds default, configurable via parameter)
+   - State tracking (`is_open`) to prevent redundant servo commands
+   - Integrated via dependency injection into ControlHandler (not lazy-loaded temporary objects)
+   - Called `door_servo_manager.update()` in main event loop for countdown decrement
+
+2. **Removed Duplicate MQTT Initialization**:
+   - Deleted `_connect_to_mqtt()` from system_init.py (was creating temporary connection)
+   - MQTT now only initialized once in app.py (persistent connection)
+   - Faster boot time (~2-3s saved) and cleaner separation of concerns
+
+3. **Boot Sequence UX Overhaul**:
+   - All messages now use two-line format (Title / Description)
+   - Added "Connecting..." messages BEFORE operations (not just after)
+   - Increased all delays by +0.5s for readability (total boot ~10s)
+   - Added AM/PM to time display with 12-hour format
+   - Simplified 24→12 hour conversion from 15 lines to 3 using modulo arithmetic
+   - Added final "System Ready / App Running" closure signal
+
+4. **YAGNI Applied**:
+   - No WindowServoManager created (window doesn't need countdown timer)
+   - Basic Servo class sufficient for window control (fire-and-forget)
+
+### Issues Encountered
+
+1. **Object Lifecycle Bug in control_handler.py**:
+   - **Problem**: Created `DoorServoManager()` locally then immediately deleted it
+   - **Impact**: Countdown timer destroyed before `update()` could be called → door never auto-closed
+   - **Solution**: Pass shared `door_servo_manager` reference via dependency injection
+   - **Learning**: Stateful objects with timers must persist across loop iterations
+
+2. **TypeError: can't convert 'int' object to str**:
+   - **Problem**: Assumed `get_local_time()` returned string, actually returns tuple
+   - **Impact**: Tried to slice integer with `[:5]`, caused crash on boot
+   - **Solution**: Extract hour/minute from tuple indices `[3]` and `[4]`, format manually
+   - **Learning**: Never assume data types without checking function implementation
+
+3. **Timezone Offset Issue**:
+   - **Problem**: Clock showing 1 hour behind actual time
+   - **Cause**: Config set to UTC+10 (AEST) but currently in AEDT (UTC+11) daylight saving
+   - **Solution**: Updated config.py to `TIMEZONE_OFFSET_HOURS = 11`
+   - **Note**: Will need manual adjustment in April 2026 when DST ends
+
+### Files Modified
+
+- `esp32/outputs/servo.py`: Added `DoorServoManager` class with state tracking and configurable duration
+- `esp32/handlers/control_handler.py`: Refactored to use shared door_servo_manager via DI, removed temporary object creation
+- `esp32/app.py`: Added door_servo_manager.update() call, enhanced MQTT/app boot messages
+- `esp32/system_init.py`: Removed duplicate MQTT init, improved all boot messages (two-line format, AM/PM time, better pacing)
+- `esp32/config.py`: Updated TIMEZONE_OFFSET_HOURS from 10 to 11 (AEDT)
+- `planning/tasks.md`: Marked T1.23.1 and T1.23.3 as complete
+
+### Key Learnings
+
+1. **Dependency Injection vs Lazy Loading**:
+   - Lazy loading works for stateless/fire-and-forget objects (Buzzer, temporary Servo)
+   - Stateful objects with timers need DI to persist across function calls
+   - Rule: If it has `update()` method, it belongs in app.py as shared instance
+
+2. **UX Flow Design**:
+   - Boot sequence now has three clear phases: System Init → App Init → Operational
+   - "Connecting..." messages before operations feel more responsive than silent waits
+   - Closure signals ("App Running") help users understand state transitions
+
+3. **Code Simplification**:
+   - `hour % 12 or 12` idiom replaces 15-line if/elif chain
+   - Pythonic "truthy or default" pattern: `0 or 12` → 12, `7 or 12` → 7
+
+### Next Session
+
+- Continue with **T1.27**: Implement button controls (gas alarm disable, PIR toggle)
+- Or start **Phase 2 (T2.1)**: C# API setup since already on phase-2-api-layer branch
+- Phase 1 core functionality essentially complete
+
+### Session Statistics
+
+**Duration**: ~2 hours
+**Tasks Completed**: 1 official + 1 UX enhancement
+**Files Modified**: 6 files
+**Lines Changed**: ~100 lines total
+**Boot Time**: Increased from ~4s to ~10s (for better readability)
+**Bugs Fixed**: 2 critical (object lifecycle, type assumption)
+**Design Patterns Applied**: Dependency Injection, Manager Pattern, Two-Line Status Display
 
 ---
 
