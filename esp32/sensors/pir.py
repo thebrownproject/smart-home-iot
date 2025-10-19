@@ -6,9 +6,6 @@ class PIRSensor:
         self.pir = Pin(14, Pin.IN)
         self.last_trigger_time = 0
         self.debounce_time = 500
-    
-    def read(self):
-        return self.pir.value()
 
     def is_motion_detected(self):
         if self.pir.value() == 1:

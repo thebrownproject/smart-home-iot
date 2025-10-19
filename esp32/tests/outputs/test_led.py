@@ -18,12 +18,6 @@ for i in range(3):
     led.off()
     time.sleep(1)
 
-print("\nTesting toggle")
-for i in range(5):
-    print(f"  {i+1}. LED toggle")
-    led.toggle()
-    time.sleep(1)
-
 print("="*50)
 print("Testing completed")
 print("="*50)

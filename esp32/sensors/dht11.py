@@ -5,7 +5,6 @@ import dht
 from time import sleep_ms, ticks_ms 
 from machine import Pin 
 
-#Associate DHT11 with Pin(17).
 class DHT11Sensor:
     def __init__(self):
         self.dht = dht.DHT11(machine.Pin(17))
@@ -17,19 +16,3 @@ class DHT11Sensor:
         except OSError as e:
             print(f"DHT11 read error: {e}")
             return None, None
-    
-    def read_temperature(self):
-        try:
-            self.dht.measure()
-            return self.dht.temperature()
-        except OSError as e:
-            print(f"DHT11 read error: {e}")
-            return None
-
-    def read_humidity(self):
-        try:
-            self.dht.measure()
-            return self.dht.humidity()
-        except OSError as e:
-            print(f"DHT11 read error: {e}")
-            return None

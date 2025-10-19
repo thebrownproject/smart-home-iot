@@ -12,6 +12,3 @@ class Fan:
     def off(self):
         self.ina.duty(0)
         self.inb.duty(0)
-    
-    def is_running(self):
-        return self.ina.duty() != 0 or self.inb.duty() != 0

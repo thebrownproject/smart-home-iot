@@ -9,6 +9,3 @@ class LED:
     
     def off(self):
         self.led.value(0)
-    
-    def toggle(self):
-        self.led.value(not self.led.value())

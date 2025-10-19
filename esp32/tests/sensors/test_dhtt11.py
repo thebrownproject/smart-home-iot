@@ -16,26 +16,10 @@ for i in range(5):
         test_score += 1
     time.sleep(2)
 
-print("\nTesting read_temperature")
-for i in range(5):
-    result = sensor.read_temperature()
-    print(f"  {i+1}. {result}°C")
-    if result is not None:
-        test_score += 1
-    time.sleep(2)
-
-print("\nTesting read_humidity")
-for i in range(5):
-    result = sensor.read_humidity()
-    print(f"  {i+1}. {result}%")
-    if result is not None:
-        test_score += 1
-    time.sleep(2)
-
 print("\n" + "="*50)
-print(f"Test Score: {test_score}/15")
-if test_score == 15:
+print(f"Test Score: {test_score}/5")
+if test_score == 5:
     print("✓ Test PASSED")
 else:
-    print(f"✗ Test FAILED ({15-test_score} errors)")
+    print(f"✗ Test FAILED ({5-test_score} errors)")
 print("="*50)

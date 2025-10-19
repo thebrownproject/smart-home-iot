@@ -8,16 +8,18 @@ print("="*50)
 print("Testing Steam Sensor")
 print("="*50)
 
-print("\nTesting read")
+print("\nTesting is_moisture_detected")
 for i in range(5):
-    result = sensor.read()
-    print(f"  {i+1}. {result}")
+    result = sensor.is_moisture_detected()
+    print(f"  Result: {result}")
+    if result:
+        test_score += 1
     time.sleep(2)
 
-print("\nTesting is_moisture_detected")
-result = sensor.is_moisture_detected()
-print(f"  Result: {result}")
-
 print("="*50)
-print("Testing completed")
+print(f"Test Score: {test_score}/5")
+if test_score == 5:
+    print("✓ Test PASSED")
+else:
+    print(f"✗ Test FAILED ({5-test_score} errors)")
 print("="*50)
