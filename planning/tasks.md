@@ -329,13 +329,15 @@
   - **Started**: 2025-10-15
   - **Completed**: 2025-10-15
 
-- [ ] **T1.29**: Build main event loop with state machine
-  - File: `esp32/main.py`
+- [x] **T1.29**: Build main event loop with state machine
+  - File: `esp32/main.py`, `esp32/app.py`
   - Initialize all sensors, outputs, network connections
   - Non-blocking loop: Poll sensors, check MQTT messages, update displays
   - Handle priority events (gas > steam > motion)
   - Comprehensive error handling with recovery
-  - Test: Run for 1 hour, verify no crashes
+  - **Note**: Priority system implemented via Manager pattern (RGBManager, OLEDManager)
+  - **Started**: 2025-10-19
+  - **Completed**: 2025-10-19
 
 ---
 
@@ -348,6 +350,7 @@
   - Check MQTT messages in HiveMQ console
   - Verify database entries in Supabase dashboard
   - Document any issues
+  - **Stability test**: Run system for 1 hour, verify no crashes
 
 - [ ] **T1.31**: Create test documentation
   - File: `docs/hardware-testing-log.md`

@@ -18,7 +18,7 @@ class MotionHandler:
 
         if pir.is_motion_detected():
             rgb_manager.show('motion', (255, 165, 0), 3)
-            oled_manager.show('motion', "Motion", 3, "detected")
+            oled_manager.show('motion', "Motion Sensor", 3, "Detected")
             payload = ujson.dumps({
                 "sensor_type": "motion",
                 "detected": True,

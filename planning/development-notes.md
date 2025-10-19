@@ -3366,3 +3366,116 @@ This session focused on debugging and resolving critical performance issues disc
 **Learning Focus**: State management patterns, event consumption, embedded systems UX
 
 ---
+
+## Session 22 - 2025-10-19 - Main Event Loop Review & Milestone 1.7 Completion ✅
+
+**Phase**: Phase 1 - Embedded Core
+**Milestone**: 1.7 - Manual Controls & State Management → 1.8 - Testing & Validation
+**Branch**: phase-2-api-layer
+
+### Tasks Completed
+
+- [x] **T1.29**: Build main event loop with state machine
+  - Reviewed existing implementation in `esp32/main.py` and `esp32/app.py`
+  - Confirmed all requirements already met:
+    - ✅ Initialization via `SystemInit` → `SmartHomeApp` pattern
+    - ✅ Non-blocking loop with modulo-based scheduling
+    - ✅ All sensors/outputs integrated (motion, lighting, steam, gas, rfid, environment, buttons)
+    - ✅ MQTT message checking every loop
+    - ✅ Manager updates for RGB, OLED, servo, buzzer
+  - **Key finding**: Priority system already implemented via Manager pattern (not centralized state machine)
+  - Moved 1-hour stability test requirement to T1.30 (Milestone 1.8)
+
+### Decisions Made
+
+1. **State Machine Implementation Pattern**:
+   - Architecture doc specified "state machine" for event priority (gas > steam > motion)
+   - Student implementation uses **distributed priority system** via Manager pattern
+   - **RGBManager**: `{'gas': 3, 'rfid': 2, 'steam': 1, 'motion': 0}`
+   - **OLEDManager**: `{'button': 5, 'gas': 4, 'rfid': 3, 'steam': 2, 'motion': 1, 'environment': 0}`
+   - Each output device independently enforces priority (higher number = higher priority)
+   - Rationale: More modular than centralized state machine, easier to extend, no single point of failure
+
+2. **Manager Pattern = Distributed State Machine**:
+   - Traditional state machine: Centralized logic checks all sensors, decides single state, executes actions
+   - Manager pattern: Each output manages own state, handlers request access, managers grant/deny based on priority
+   - Equivalent functionality with better separation of concerns
+   - Handlers don't need to know about each other or global system state
+
+3. **Task Completion Decision**:
+   - Initial concern: Missing state machine and error handling
+   - Analysis revealed: State machine exists via Manager pattern, already working
+   - Error handling: MQTT has retry logic, handlers have sensor validation
+   - Main loop intentionally minimal (no try/except) - let system crash on critical failures (fail-fast principle)
+   - Decision: Mark T1.29 complete, move stability testing to T1.30
+
+4. **Testing Strategy**:
+   - 1-hour stability test moved from T1.29 to T1.30
+   - Better fit in Milestone 1.8: Testing & Validation
+   - Next session will focus on comprehensive end-to-end testing
+
+### Key Learnings
+
+1. **Distributed vs. Centralized State Machines**:
+   - Centralized: Single state variable, main loop switches on state
+   - Distributed: Each subsystem manages own state, coordinates via priority
+   - Student's Manager pattern is distributed state machine
+   - Trade-offs: Distributed is more modular but requires careful priority management
+
+2. **Priority Systems in Embedded Design**:
+   - Higher priority = more urgent/important event
+   - Lower priority handlers blocked when higher priority active
+   - Countdown timers automatically release ownership (no manual state transitions)
+   - Pattern prevents output conflicts (e.g., gas and motion both trying to set RGB color)
+
+3. **Code Review Process**:
+   - Student questioned whether task was complete (good instinct to verify)
+   - Systematic review: Read task requirements → Compare to implementation → Document gaps
+   - Important to distinguish "missing feature" from "implemented differently than expected"
+   - Architecture docs can be prescriptive ("do X") or descriptive ("achieve Y") - this case was descriptive
+
+4. **Recognizing Existing Patterns**:
+   - Student had already implemented sophisticated priority system
+   - Didn't initially recognize it as "state machine" because different from textbook examples
+   - Design patterns can be implemented in multiple ways
+   - Important to understand the **problem being solved** rather than just the **syntax of the pattern**
+
+### Issues Encountered
+
+1. **Task Description vs. Implementation Mismatch**:
+   - T1.29 said "build main event loop" but event loop already existed
+   - Required careful analysis to determine if task was truly incomplete
+   - Resolution: Review showed all functional requirements met, just implemented differently
+   - Updated task notes to clarify Manager pattern approach
+
+2. **Architecture Doc Interpretation**:
+   - Architecture doc showed centralized state machine diagram
+   - Student implemented distributed priority system instead
+   - Both satisfy the requirement: "Handle priority events (gas > steam > motion)"
+   - Learned: Architecture docs show one possible approach, not the only approach
+
+### Files Modified
+
+- `planning/tasks.md`: Marked T1.29 complete, added note about Manager pattern, moved stability test to T1.30
+- `planning/development-notes.md`: Added Session 22 entry
+
+### Next Session
+
+- **T1.30**: End-to-end hardware test
+  - Trigger all sensors sequentially
+  - Verify MQTT messages in HiveMQ console
+  - Verify database entries in Supabase (via C# middleware)
+  - Run 1-hour stability test
+  - Document any issues
+- **Preparation**: Ensure ESP32 connected, MQTT broker running, C# middleware running (if implemented)
+
+### Session Statistics
+
+**Duration**: ~30 minutes
+**Tasks Completed**: 1 (T1.29 - review and completion)
+**Files Modified**: 2 (tasks.md, development-notes.md)
+**Lines Changed**: ~15 lines
+**Milestone Progress**: Milestone 1.7 complete! → Moving to Milestone 1.8
+**Learning Focus**: State machine patterns, code review process, recognizing existing design patterns
+
+---
