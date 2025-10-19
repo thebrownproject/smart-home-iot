@@ -1,5 +1,4 @@
 from machine import Pin
-import time
 from mfrc522_i2c import mfrc522
 
 class RFIDSensor:

@@ -8,7 +8,7 @@ class SmartHomeApp:
         from config import TOPIC_RFID_RESPONSE, TOPIC_CONTROL_DOOR, TOPIC_CONTROL_WINDOW, TOPIC_CONTROL_FAN
         from handlers.control_handler import ControlHandler
         from outputs.rgb import RGBManager
-        from display.oled import OLEDManager
+        from outputs.oled import OLEDManager
         from outputs.servo import DoorServoManager
         from outputs.buzzer import BuzzerManager
         # Create RGB manager (shared across all handlers)
@@ -17,7 +17,7 @@ class SmartHomeApp:
         self.door_servo_manager = DoorServoManager()
         self.buzzer_manager = BuzzerManager()
         # Show MQTT connecting status
-        from display.oled import OLED
+        from outputs.oled import OLED
         oled = OLED()
         oled.show_text("MQTT Broker", "Connecting...")
 

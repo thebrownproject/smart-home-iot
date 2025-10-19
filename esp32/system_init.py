@@ -17,7 +17,7 @@ class SystemInit:
         print("=== System Ready ===")
     
     def _show_welcome_message(self):
-        from display.oled import OLED
+        from outputs.oled import OLED
         oled = OLED()
         oled.show_text("Welcome to", "Smart Home Lab")
         time.sleep(3)
@@ -28,7 +28,7 @@ class SystemInit:
     
     def _connect_to_wifi(self):
         from comms.wifi_manager import WiFiManager
-        from display.oled import OLED
+        from outputs.oled import OLED
 
         wifi_manager = WiFiManager()
         oled = OLED()
@@ -50,7 +50,7 @@ class SystemInit:
 
     def _sync_time(self):
         from utils.time_sync import TimeSync
-        from display.oled import OLED
+        from outputs.oled import OLED
 
         oled = OLED()
         time_sync = TimeSync()

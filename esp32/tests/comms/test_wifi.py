@@ -9,7 +9,6 @@ print("=" * 50)
 print("Connecting to WiFi...")
 wifi_manager.connect()
 
-print("Is connected:", wifi_manager.is_connected())
 print("IP address:", wifi_manager.get_ip())
 
 print("=" * 50)

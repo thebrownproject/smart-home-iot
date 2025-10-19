@@ -1,9 +1,6 @@
 # Import machine, time and dht modules. 
 import machine
-import time
 import dht
-from time import sleep_ms, ticks_ms 
-from machine import Pin 
 
 class DHT11Sensor:
     def __init__(self):

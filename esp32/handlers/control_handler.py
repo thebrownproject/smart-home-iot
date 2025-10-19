@@ -11,12 +11,10 @@ class ControlHandler:
 
         try:
             data = ujson.loads(msg.decode())
-
             if data['access'] == 'granted':
                 self.rgb_manager.show('rfid', (0, 255, 0), 3)
                 self.oled_manager.show('rfid', "ACCESS", 3, "GRANTED")
                 self.door_servo_manager.open(duration=5)
-
             elif data['access'] == 'denied':
                 self.rgb_manager.show('rfid', (255, 0, 0), 3)
                 self.oled_manager.show('rfid', "ACCESS", 3, "DENIED")

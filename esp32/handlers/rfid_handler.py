@@ -23,6 +23,7 @@ class RFIDHandler:
             self.memory.collect("After RFID detection")
             return
 
+        # Publish the card ID to the MQTT broker
         if card_id:
             payload = ujson.dumps({
                 "card_id": card_id,

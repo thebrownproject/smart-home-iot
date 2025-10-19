@@ -2,7 +2,6 @@ import network
 import time
 from config import WIFI_SSID, WIFI_PASSWORD
 
-
 class WiFiManager:
     def __init__(self):
         self.wlan = network.WLAN(network.STA_IF)
@@ -19,10 +18,10 @@ class WiFiManager:
         try:
             self.wlan.disconnect()
         except:
-            pass  # Ignore errors if not connected
+            pass
 
         self.wlan.active(False)
-        time.sleep(0.5)  # Brief delay for interface reset
+        time.sleep(0.5)
         self.wlan.active(True)
 
         # Start connection attempt
@@ -45,9 +44,7 @@ class WiFiManager:
         print("System will continue but network features won't work")
         return False
 
-    def is_connected(self):
-        return self.wlan.isconnected()
-
     def get_ip(self):
         if self.wlan.isconnected():
             return self.wlan.ifconfig()[0]
+        return None

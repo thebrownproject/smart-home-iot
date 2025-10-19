@@ -2,7 +2,6 @@ from umqtt.simple import MQTTClient
 from config import MQTT_BROKER, MQTT_PORT, MQTT_USER, MQTT_PASSWORD
 import time
 
-
 class SmartHomeMQTTClient:
     def __init__(self):
         self.callbacks = {}
@@ -16,8 +15,6 @@ class SmartHomeMQTTClient:
             ssl=True,
             ssl_params={"server_hostname": MQTT_BROKER}
         )
-        self.client.sock = None  # Will be set on connect
-    
     
     def connect(self):
         try:
@@ -26,14 +23,6 @@ class SmartHomeMQTTClient:
             return True
         except Exception as e:
             print("Error connecting to MQTT broker:", e)
-            return False
-    
-    def disconnect(self):
-        try:
-            self.client.disconnect()
-            return True
-        except Exception as e:
-            print("Error disconnecting from MQTT broker:", e)
             return False
     
     def publish(self, topic, payload):

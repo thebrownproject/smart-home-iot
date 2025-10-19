@@ -17,14 +17,6 @@ class OLED:
     def clear(self):
         self.lcd.clear()
 
-    def show_temp_humidity(self, temp, humidity):
-        self.lcd.clear()
-        self.lcd.move_to(0, 0)
-        self.lcd.putstr(f"Temp: {temp}C"[:16])
-        self.lcd.move_to(0, 1)
-        self.lcd.putstr(f"Humid: {humidity}%"[:16])
-
-
 class OLEDManager:
     def __init__(self):
         self.oled = OLED()
@@ -52,7 +44,6 @@ class OLEDManager:
         return True
     
     def update(self):
-        """ Call every loop iteration - counts down and turns off when timer expires."""
         if self.countdown > 0:
             self.countdown -= 1
             if self.countdown == 0:

@@ -1,5 +1,4 @@
 from machine import Pin, ADC
-import time
 
 class SteamSensor:
     def __init__(self):

@@ -1,5 +1,4 @@
 from machine import Pin
-import time
 
 class GasSensor:
     def __init__(self):

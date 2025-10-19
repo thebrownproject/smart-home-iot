@@ -19,7 +19,6 @@ class BuzzerManager:
         self.is_running = False
 
     def start(self, duration):
-        """Start buzzer for specified duration (in seconds)"""
         self.buzzer.start()
         self.is_running = True
         self.countdown = duration
