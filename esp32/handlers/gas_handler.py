@@ -5,7 +5,7 @@ class GasHandler:
         self.memory = Memory()
         self.gas_alarm_active = False
 
-    def handle_gas_detection(self, mqtt, rgb_manager, oled_manager):
+    def handle_gas_detection(self, mqtt, rgb_manager, oled_manager, buzzer_manager, button_handler):
         from sensors.gas import GasSensor
         from outputs.fan import Fan
         from config import TOPIC_SENSOR_DATA, TOPIC_STATUS_FAN
@@ -16,10 +16,20 @@ class GasHandler:
         fan = Fan()
         time_sync = TimeSync()
 
+        if not button_handler.gas_alarm_enabled:
+            if self.gas_alarm_active:
+                self.gas_alarm_active = False
+                fan.off()
+                buzzer_manager.stop()
+            del gas, fan, time_sync
+            self.memory.collect("After gas handling (disabled)")
+            return
+
         if not self.gas_alarm_active:
             if gas.is_gas_detected():
                 self.gas_alarm_active = True
                 fan.on()
+                buzzer_manager.start(duration=10)
 
                 payload = ujson.dumps({
                     "sensor_type": "gas",

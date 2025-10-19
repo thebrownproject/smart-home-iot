@@ -3200,3 +3200,169 @@ This session focused on debugging and resolving critical performance issues disc
 **Bugs Fixed**: 1 (undefined variable)
 
 ---
+
+## Session 21 - 2025-10-19 - Button Controls Implementation ✅
+
+**Phase**: Phase 1 - Embedded Core (with Phase 2 integration)
+**Milestone**: 1.7 - Manual Controls & State Management
+**Branch**: phase-2-api-layer
+
+### Tasks Completed
+
+- [x] **T1.26**: Implement asthma alert system
+  - Integrated asthma logic into existing `EnvironmentHandler.handle_environment_detection()`
+  - Added condition check: temperature > 27°C AND humidity > 50%
+  - Displays "ASTHMA ALERT" on OLED when conditions met
+  - Publishes to MQTT topic `devices/{id}/asthma_alert`
+  - Single sensor read per cycle (efficient resource usage)
+  - Student implemented initial version, refined for efficiency
+
+- [x] **T1.27**: Implement button controls
+  - Created `Button` class in `esp32/outputs/button.py` with pin constants
+  - Created `ButtonHandler` class in `esp32/handlers/button_handler.py`
+  - Implemented persistent flag pattern to capture button presses (event consumption)
+  - Gas alarm button (pin 16): Toggle gas alarm monitoring on/off
+  - PIR button (pin 27): Toggle motion detection on/off
+  - OLED feedback with highest priority ('button': 5) for user confirmation
+  - Modified `gas_handler` to respect `gas_alarm_enabled` flag
+  - Modified `motion_handler` to respect `pir_enabled` flag
+  - Both buttons work as consistent toggles (enable/disable)
+
+### Decisions Made
+
+1. **Asthma Alert Integration Pattern**:
+   - Initially student created separate `handle_asthma_alert()` method
+   - Refactored to integrate into existing `handle_environment_detection()`
+   - Rationale: Avoid duplicate DHT11 sensor reads (efficiency)
+   - Pattern: Read sensor once, use data for both temp/humidity display AND asthma detection
+
+2. **Button Handler Architecture**:
+   - Initially student attempted direct hardware control in button handler
+   - Refactored to state management pattern: ButtonHandler sets flags, other handlers read flags
+   - Gas handler: Checks `button_handler.gas_alarm_enabled`, skips detection if disabled
+   - Motion handler: Early return if `button_handler.pir_enabled` is False
+   - This separates concerns: button input vs. alarm logic
+
+3. **Persistent Flag Pattern for Button Detection**:
+   - Problem: Button presses missed if occurring between 1-second loop checks
+   - Solution: Edge detection sets persistent flag, flag consumed when processed
+   - Flow: Detect press → Set flag → Process flag → Clear flag
+   - Prevents: Missing quick presses, prevents repeated action on held button
+
+4. **Gas Alarm Button: One-Time vs Toggle**:
+   - Initially: One-time disable (couldn't re-enable without restart)
+   - Changed to: Toggle (consistent with PIR button behavior)
+   - Better UX: Both buttons work the same way
+
+5. **OLED Priority for Button Feedback**:
+   - Added 'button' owner with priority 5 (highest)
+   - Prevents environment handler from immediately overwriting button feedback
+   - User sees confirmation for 3 seconds before display reverts
+
+6. **Button Pin Constants**:
+   - Defined in `button.py` instead of `config.py`
+   - Keeps button hardware definitions with Button class
+   - Alternative discussed: centralized in config.py (both valid approaches)
+
+7. **Gas Handler Buzzer Integration**:
+   - Added `buzzer_manager` parameter to `gas_handler.handle_gas_detection()`
+   - Buzzer starts when gas detected (10 second duration)
+   - Button can stop both fan and buzzer when toggling alarm off
+   - Requirement: "Turn off fan and buzzer when pressed"
+
+### Issues Encountered
+
+1. **String Interpolation Bug**:
+   - Student used `"Humid: {humidity}%"` instead of f-string
+   - Fixed: `f"Humid: {humidity}%"`
+   - Learning: Python string interpolation requires f prefix
+
+2. **MQTT Topic Confusion**:
+   - Task said `home/asthma_alert`, but architecture uses device-specific topics
+   - Used: `devices/{id}/asthma_alert` (consistent with other sensor topics)
+   - Better for multi-device systems
+
+3. **Architecture Misunderstanding - Direct Hardware Control**:
+   - Student initially had button handler call `fan.off()` and `buzzer.stop()` directly
+   - Problem: ButtonHandler shouldn't know about gas alarm implementation details
+   - Fixed: State management pattern (handler sets flags, other handlers read)
+
+4. **OLED Not Showing Button Feedback**:
+   - Button handler used 'gas' and 'motion' owners (low priority)
+   - Environment handler (runs every loop) immediately overwrote display
+   - Fixed: Added 'button' owner with priority 5 (highest)
+
+5. **Button Presses Missed**:
+   - Button checks only once per second (1-second loop)
+   - Quick presses between checks were missed
+   - Fixed: Persistent flag pattern - press sets flag, flag persists until processed
+
+6. **OLED Upload Issue**:
+   - KeyError: 'button' when running on ESP32
+   - Cause: `oled.py` with updated priority dict not uploaded
+   - Fixed: Re-uploaded entire project to ensure sync
+
+7. **Code Style Comments**:
+   - Initial implementation had detailed comments
+   - Student prefers minimal comments (matches existing handlers)
+   - Removed all comments except where truly necessary
+
+### Key Learnings
+
+1. **Event Consumption Pattern**:
+   - Set flag on event → Check flag → Process → Clear flag
+   - Prevents event loss and prevents repeated processing
+   - Common in embedded systems and game loops
+
+2. **State Management in Event-Driven Systems**:
+   - ButtonHandler owns button state (`pir_enabled`, `gas_alarm_enabled`)
+   - Other handlers READ state, don't WRITE it
+   - Clear separation of concerns
+
+3. **OLED Priority System**:
+   - Higher number = higher priority
+   - Button feedback needs highest priority for good UX
+   - System prevents lower priority displays from interrupting higher priority
+
+4. **Lazy Loading in MicroPython**:
+   - Import inside methods, not at top of file
+   - Delete objects after use + garbage collection
+   - Critical for ESP32's limited RAM (~100KB)
+
+5. **Collaborative Learning Session**:
+   - Student asked design questions ("Should I use one class or two?", "Where should logic go?")
+   - Student implemented initial code, instructor refined architecture
+   - Student caught style issues ("No time.time(), not my codebase style")
+   - Real-world development: asking for help is a skill, not a weakness
+
+### Files Modified
+
+- `esp32/config.example.py`: Added `TOPIC_ASTHMA_ALERT`
+- `esp32/config.py`: Added `TOPIC_ASTHMA_ALERT`
+- `esp32/handlers/environment_handler.py`: Integrated asthma alert detection
+- `esp32/handlers/button_handler.py`: Created button input handler with persistent flags
+- `esp32/handlers/gas_handler.py`: Added `buzzer_manager` parameter, respects `gas_alarm_enabled` flag
+- `esp32/handlers/motion_handler.py`: Respects `pir_enabled` flag
+- `esp32/outputs/button.py`: Created Button class with pin constants
+- `esp32/outputs/oled.py`: Added 'button' priority (5)
+- `esp32/app.py`: Integrated button handler into main loop
+- `planning/tasks.md`: Marked T1.26 and T1.27 complete
+
+### Next Session
+
+- Continue with **T1.29**: End-to-end system testing
+- Or **T1.30**: Performance optimization and refinement
+- **TODO**: Review Milestone 1.7 - all manual controls now complete
+- Consider moving to **Milestone 1.8** or comprehensive Phase 1 testing
+
+### Session Statistics
+
+**Duration**: ~3 hours
+**Tasks Completed**: 2 (T1.26, T1.27)
+**Files Created**: 2 (button.py, button_handler.py)
+**Files Modified**: 7 files
+**Lines Added**: ~100 lines
+**Bugs Fixed**: 6 (f-string, OLED priority, button timing, architecture, upload sync, comments)
+**Learning Focus**: State management patterns, event consumption, embedded systems UX
+
+---

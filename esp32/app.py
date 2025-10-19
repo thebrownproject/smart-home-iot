@@ -58,6 +58,7 @@ class SmartHomeApp:
         from handlers.gas_handler import GasHandler
         from handlers.rfid_handler import RFIDHandler
         from handlers.environment_handler import EnvironmentHandler
+        from handlers.button_handler import ButtonHandler
 
         motion = MotionHandler()
         lighting = LightingHandler()
@@ -65,6 +66,7 @@ class SmartHomeApp:
         gas = GasHandler()
         rfid = RFIDHandler()
         environment = EnvironmentHandler()
+        button = ButtonHandler()
 
         print("App running...")
         loop_count = 1  # Start at 1 to avoid startup spike (0 % n == 0 for all n)
@@ -75,29 +77,24 @@ class SmartHomeApp:
             self.buzzer_manager.update()
             self.mqtt.check_messages()
 
-            # Check time-based lighting every 60 seconds (1 minute)
+            button.handle_buttons(self.oled_manager)
+
             if loop_count % 60 == 0:
                 lighting.handle_time_based_lighting()
 
-            # Check motion every 2 seconds (responsive to quick movements)
             if loop_count % 2 == 0:
-                motion.handle_motion_detection(self.mqtt, self.rgb_manager, self.oled_manager)
+                motion.handle_motion_detection(self.mqtt, self.rgb_manager, self.oled_manager, button)
 
-            # Check steam every 10 seconds (staggered at loop 10, 20, 30...)
             if loop_count % 10 == 0:
                 steam.handle_steam_detection(self.mqtt, self.rgb_manager, self.oled_manager)
 
-            # Check gas every 10 seconds (staggered at loop 5, 15, 25... to avoid loop 10 collision)
             if loop_count % 10 == 5:
-                gas.handle_gas_detection(self.mqtt, self.rgb_manager, self.oled_manager)
+                gas.handle_gas_detection(self.mqtt, self.rgb_manager, self.oled_manager, self.buzzer_manager, button)
 
-            # Check RFID every 1 second (offset from environment to reduce collisions)
             rfid.handle_rfid_detection(self.mqtt, self.oled_manager)
 
-            # Check environment every loop (acts as fallback display - no flicker due to idle detection)
             environment.handle_environment_detection(self.mqtt, self.oled_manager)
 
-            # Garbage collection every 10 seconds (run AFTER handlers complete, at loop 1, 11, 21...)
             if loop_count % 10 == 1:
                 self.memory.collect("App loop")
 

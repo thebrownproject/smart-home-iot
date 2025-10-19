@@ -4,11 +4,14 @@ class MotionHandler:
     def __init__(self):
         self.memory = Memory()
         
-    def handle_motion_detection(self, mqtt, rgb_manager, oled_manager):
+    def handle_motion_detection(self, mqtt, rgb_manager, oled_manager, button_handler):
         from sensors.pir import PIRSensor
         from config import TOPIC_SENSOR_DATA
         from utils.time_sync import TimeSync
         import ujson
+
+        if not button_handler.pir_enabled:
+            return
 
         pir = PIRSensor()
         time_sync = TimeSync()

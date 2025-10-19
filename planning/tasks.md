@@ -300,11 +300,15 @@
 
 ### Milestone 1.7: Manual Controls & State Management
 
-- [ ] **T1.27**: Implement button controls
+- [x] **T1.27**: Implement button controls
 
-  - Gas alarm disable button: Turn off fan and buzzer when pressed
+  - Gas alarm toggle button: Enable/disable gas alarm monitoring
   - PIR toggle button: Enable/disable motion detection
+  - OLED feedback on button press (2-3 seconds)
+  - Persistent flag pattern to capture button presses
   - Test: Press buttons, verify output responses
+  - **Started**: 2025-10-19
+  - **Completed**: 2025-10-19
 
 - [x] **T1.28**: Implement MQTT control subscriptions **(FR9.1, FR9.2, FR9.3, FR9.4 - WEB/HOUSE)**
 

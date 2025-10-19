@@ -22,7 +22,7 @@ class OLEDManager:
         self.oled = OLED()
         self.owner = None
         self.countdown = 0
-        self.priority = {'gas': 4, 'rfid': 3, 'steam': 2, 'motion': 1, 'environment': 0}
+        self.priority = {'button': 5, 'gas': 4, 'rfid': 3, 'steam': 2, 'motion': 1, 'environment': 0}
 
     def show(self, owner, line1, duration, line2=""):
         """Show text for duration seconds (if priority allows).
