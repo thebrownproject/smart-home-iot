@@ -25,6 +25,7 @@ MQTT_PASSWORD = "your_password"
 # MQTT Topics Outgoing
 # Sensor Data
 TOPIC_SENSOR_DATA = f"devices/{DEVICE_ID}/data"
+TOPIC_ASTHMA_ALERT = f"devices/{DEVICE_ID}/asthma_alert"
 # RFID Request
 TOPIC_RFID_REQUEST = f"devices/{DEVICE_ID}/rfid/check"
 # Status Updates (for web dashboard display - FR8.4, FR8.5)

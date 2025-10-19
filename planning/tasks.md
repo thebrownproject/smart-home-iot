@@ -288,11 +288,13 @@
   - **Started**: 2025-10-18
   - **Completed**: 2025-10-18
 
-- [ ] **T1.26**: Implement asthma alert system **(FR7.1, FR7.2, FR7.3 - HOUSE/WEB)**
+- [x] **T1.26**: Implement asthma alert system **(FR7.1, FR7.2, FR7.3 - HOUSE/WEB)**
   - Check conditions: humidity > 50% AND temperature > 27°C
   - If true: Display "ASTHMA ALERT" on OLED
-  - Publish alert to MQTT topic `home/asthma_alert`
+  - Publish alert to MQTT topic `devices/{id}/asthma_alert`
   - Test: Set conditions manually, verify alert
+  - **Started**: 2025-10-19
+  - **Completed**: 2025-10-19
 
 ---
 

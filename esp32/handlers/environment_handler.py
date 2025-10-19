@@ -18,7 +18,7 @@ class EnvironmentHandler:
         
         import ujson
         from utils.time_sync import TimeSync
-        from config import TOPIC_SENSOR_DATA
+        from config import TOPIC_SENSOR_DATA, TOPIC_ASTHMA_ALERT
         from sensors.dht11 import DHT11Sensor
 
         time_sync = TimeSync()
@@ -61,6 +61,19 @@ class EnvironmentHandler:
                 print("[EnvironmentHandler] MQTT publish failed - humidity")
         except Exception as e:
             print(f"[EnvironmentHandler] Unexpected error: {e}")
+        
+        if temperature > 27 and humidity > 50:
+            oled_manager.show('environment', "ASTHMA ALERT", 10, f"Humid: {humidity}%")
 
+            try:
+                payload = ujson.dumps({
+                    "sensor_type": "asthma_alert",
+                    "value": True,
+                    "timestamp": time_sync.get_iso_timestamp()
+                })
+                if not mqtt.publish(TOPIC_ASTHMA_ALERT, payload):
+                    print("[EnvironmentHandler] MQTT publish failed - asthma alert")
+            except Exception as e:
+                print(f"[EnvironmentHandler] Unexpected error: {e}")
         del dht11, time_sync
         self.memory.collect("After environment handling")
