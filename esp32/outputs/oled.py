@@ -37,7 +37,6 @@ class OLEDManager:
         if self.owner and self.priority[owner] < self.priority[self.owner]:
             return False
 
-        # Grant control
         self.owner = owner
         self.countdown = duration
         self.oled.show_text(line1, line2)

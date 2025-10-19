@@ -1,4 +1,3 @@
-# Import machine, time and dht modules. 
 import machine
 import dht
 

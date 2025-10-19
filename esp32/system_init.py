@@ -4,7 +4,6 @@ from config import WIFI_SSID
 
 class SystemInit:
     def __init__(self):
-        # Only load essentials
         self.memory = Memory()
 
     def init(self):
@@ -20,9 +19,9 @@ class SystemInit:
         from outputs.oled import OLED
         oled = OLED()
         oled.show_text("Welcome to", "Smart Home Lab")
-        time.sleep(3)
+        time.sleep(1.5)
         oled.show_text("Please wait", "System starting")
-        time.sleep(2)
+        time.sleep(1)
         del oled
         self.memory.collect("After welcome message")
     
@@ -39,11 +38,11 @@ class SystemInit:
             ip = wifi_manager.get_ip()
             print(f"WiFi connected to {WIFI_SSID} at ip: {ip}")
             oled.show_text("WiFi Connected", WIFI_SSID)
-            time.sleep(1.5)
+            time.sleep(1)
         else:
             print("WiFi connection failed!")
             oled.show_text("WiFi Error", "Check Config")
-            time.sleep(1.5)
+            time.sleep(2)
 
         del wifi_manager, oled
         self.memory.collect("After WiFi connect")
@@ -67,11 +66,11 @@ class SystemInit:
             period = "AM" if hour < 12 else "PM"
             time_str = "{:02d}:{:02d} {}".format(display_hour, minute, period)
             oled.show_text("Time Synced", time_str)
-            time.sleep(2)
+            time.sleep(1)
         else:
             print("Time sync failed - continuing anyway")
             oled.show_text("Time Sync", "Failed")
-            time.sleep(2)
+            time.sleep(1.5)
 
         print(time_sync.get_local_time())
         print(f"Is nighttime: {time_sync.is_nighttime()}")

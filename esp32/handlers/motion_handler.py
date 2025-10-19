@@ -16,13 +16,13 @@ class MotionHandler:
         if pir.is_motion_detected():
             rgb_manager.show('motion', (255, 165, 0), 3)
             oled_manager.show('motion', "Motion", 3, "detected")
-                payload = ujson.dumps({
-                    "sensor_type": "motion",
-                    "detected": True,
-                    "timestamp": time_sync.get_iso_timestamp()
-                })
-                if not mqtt.publish(TOPIC_SENSOR_DATA, payload):
-                    print("MotionHandler - Error logging motion detection to database")
+            payload = ujson.dumps({
+                "sensor_type": "motion",
+                "detected": True,
+                "timestamp": time_sync.get_iso_timestamp()
+            })
+            if not mqtt.publish(TOPIC_SENSOR_DATA, payload):
+                print("[MotionHandler] MQTT publish failed - motion detection")
 
-            del pir, time_sync
-            self.memory.collect("After motion handling")
+        del pir, time_sync
+        self.memory.collect("After motion handling")

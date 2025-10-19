@@ -3,7 +3,6 @@ from utils.memory import Memory
 
 class SmartHomeApp:
     def __init__(self):
-        # Store Memory reference
         self.memory = Memory()
         from config import TOPIC_RFID_RESPONSE, TOPIC_CONTROL_DOOR, TOPIC_CONTROL_WINDOW, TOPIC_CONTROL_FAN
         from handlers.control_handler import ControlHandler
@@ -11,12 +10,12 @@ class SmartHomeApp:
         from outputs.oled import OLEDManager
         from outputs.servo import DoorServoManager
         from outputs.buzzer import BuzzerManager
-        # Create RGB manager (shared across all handlers)
+
         self.rgb_manager = RGBManager()
         self.oled_manager = OLEDManager()
         self.door_servo_manager = DoorServoManager()
         self.buzzer_manager = BuzzerManager()
-        # Show MQTT connecting status
+
         from outputs.oled import OLED
         oled = OLED()
         oled.show_text("MQTT Broker", "Connecting...")
@@ -24,21 +23,31 @@ class SmartHomeApp:
         # Create persistent MQTT connection (can't be deleted)
         from comms.mqtt_client import SmartHomeMQTTClient
         self.mqtt = SmartHomeMQTTClient()
-        self.mqtt.connect()
 
-        # Create control handler with manager references
+        max_retries = 3
+        for attempt in range(max_retries):
+            if self.mqtt.connect():
+                oled.show_text("MQTT Broker", "Connected")
+                time.sleep(1)
+                break
+            else:
+                print(f"MQTT connection attempt {attempt + 1}/{max_retries} failed")
+                if attempt < max_retries - 1:
+                    oled.show_text("MQTT Retry", f"Attempt {attempt + 2}/{max_retries}")
+                    time.sleep(2)
+                else:
+                    oled.show_text("MQTT FAILED", "System halted")
+                    time.sleep(3)
+                    raise RuntimeError("MQTT connection failed after all retries - system cannot operate without broker")
+
         self.control = ControlHandler(self.rgb_manager, self.oled_manager, self.door_servo_manager, self.buzzer_manager)
-        
+
         # Subscribe to MQTT topics with control handler methods as callbacks
         self.mqtt.subscribe(TOPIC_RFID_RESPONSE, self.control.handle_rfid_response)
         self.mqtt.subscribe(TOPIC_CONTROL_DOOR, self.control.handle_door_control)
         self.mqtt.subscribe(TOPIC_CONTROL_WINDOW, self.control.handle_window_control)
         self.mqtt.subscribe(TOPIC_CONTROL_FAN, self.control.handle_fan_control)
         self.memory.collect("After MQTT setup")
-
-        # Show connection success
-        oled.show_text("MQTT Broker", "Connected")
-        time.sleep(2)
         oled.show_text("System Ready", "App Running")
         del oled
 
@@ -83,8 +92,7 @@ class SmartHomeApp:
                 gas.handle_gas_detection(self.mqtt, self.rgb_manager, self.oled_manager)
 
             # Check RFID every 1 second (offset from environment to reduce collisions)
-            if loop_count % 1 == 0:
-                rfid.handle_rfid_detection(self.mqtt, self.oled_manager)
+            rfid.handle_rfid_detection(self.mqtt, self.oled_manager)
 
             # Check environment every loop (acts as fallback display - no flicker due to idle detection)
             environment.handle_environment_detection(self.mqtt, self.oled_manager)

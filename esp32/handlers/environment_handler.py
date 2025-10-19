@@ -13,7 +13,7 @@ class EnvironmentHandler:
             if oled_manager.owner is None and self.last_temp is not None:
                 oled_manager.show('environment', f"Temp: {self.last_temp}C", 10, f"Humid: {self.last_humidity}%")
             return
-        
+
         self.loop_counter = 0
         
         import ujson
@@ -26,16 +26,16 @@ class EnvironmentHandler:
         temperature, humidity = dht11.read_data()
 
         if temperature is None or humidity is None:
-            print("EnvironmentHandler - Sensor read failed, skipping update")
+            print("[EnvironmentHandler] Sensor read failed - skipping update")
             del dht11
             self.memory.collect("After environment handling (error)")
             return
-        
+
         if not (-20 <= temperature <= 60 and 0 <= humidity <= 100):
-              print(f"EnvironmentHandler - Invalid reading: {temperature}°C, {humidity}%")
-              del dht11, time_sync
-              self.memory.collect("After environment handling (invalid)")
-              return
+            print(f"[EnvironmentHandler] Invalid reading - {temperature}°C, {humidity}%")
+            del dht11, time_sync
+            self.memory.collect("After environment handling (invalid)")
+            return
 
         self.last_temp = temperature
         self.last_humidity = humidity
@@ -50,7 +50,7 @@ class EnvironmentHandler:
                 "timestamp": time_sync.get_iso_timestamp()
             })
             if not mqtt.publish(TOPIC_SENSOR_DATA, payload):
-                print("EnvironmentHandler - Temperature publish FAILED")
+                print("[EnvironmentHandler] MQTT publish failed - temperature")
             payload = ujson.dumps({
                 "sensor_type": "humidity",
                 "value": humidity,
@@ -58,9 +58,9 @@ class EnvironmentHandler:
                 "timestamp": time_sync.get_iso_timestamp()
             })
             if not mqtt.publish(TOPIC_SENSOR_DATA, payload):
-                print("EnvironmentHandler - Humidity publish FAILED")
+                print("[EnvironmentHandler] MQTT publish failed - humidity")
         except Exception as e:
-            print(f"EnvironmentHandler - Unexpected error: {e}")
+            print(f"[EnvironmentHandler] Unexpected error: {e}")
 
         del dht11, time_sync
         self.memory.collect("After environment handling")

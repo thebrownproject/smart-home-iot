@@ -14,13 +14,12 @@ class RFIDSensor:
         return False
 
     def get_card_id(self):
-        # Check if UID exists (was card scanned?)
         if self.rfid.uid.size > 0:
             uid = ""
             for byte in self.rfid.uid.uidByte[0:self.rfid.uid.size]:
                 uid += str(byte)
             return uid
-        return None  # No card was scanned
+        return None
     
     def clear_card(self):
         """Reset the stored card UID to allow re-scanning"""

@@ -24,10 +24,9 @@ class RGBManager:
         self.priority = {'gas': 3, 'rfid': 2, 'steam': 1, 'motion': 0}
 
     def show(self, owner, color, duration):
-        # Check priority - deny if lower/equal priority is already active
         if self.owner and self.priority[owner] <= self.priority[self.owner]:
             return False
-        # Grant control
+
         self.owner = owner
         self.countdown = duration
         self.rgb.set_color(*color)
