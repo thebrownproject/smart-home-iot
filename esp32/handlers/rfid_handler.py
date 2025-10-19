@@ -28,11 +28,14 @@ class RFIDHandler:
                 "card_id": card_id,
                 "timestamp": time_sync.get_iso_timestamp()
             })
+            print(f"[RFIDHandler] Publishing RFID request: {payload}")
             if mqtt.publish(TOPIC_RFID_REQUEST, payload):
-                print("[RFIDHandler] RFID validation request sent")
+                print(f"[RFIDHandler] RFID validation request sent to {TOPIC_RFID_REQUEST}")
             else:
                 print("[RFIDHandler] MQTT publish failed - RFID request (card cleared to prevent re-scan)")
             oled_manager.show('rfid', "Card", 2, "detected")
+        else:
+            print(f"[RFIDHandler] Card scan succeeded but card_id is None/empty")
 
         del time_sync
         self.memory.collect("After RFID detection")

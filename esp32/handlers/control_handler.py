@@ -8,18 +8,24 @@ class ControlHandler:
     def handle_rfid_response(self, topic, msg):
         import ujson
 
+        print(f"[ControlHandler] RFID response received on {topic}: {msg}")
         try:
             data = ujson.loads(msg.decode())
+            print(f"[ControlHandler] Parsed RFID data: {data}")
             if data.get('access') == 'granted':
+                print("[ControlHandler] ACCESS GRANTED - opening door")
                 self.rgb_manager.show('rfid', (0, 255, 0), 3)
                 self.oled_manager.show('rfid', "ACCESS", 3, "GRANTED")
                 self.door_servo_manager.open(duration=5)
             elif data.get('access') == 'denied':
+                print("[ControlHandler] ACCESS DENIED - activating buzzer")
                 self.rgb_manager.show('rfid', (255, 0, 0), 3)
                 self.oled_manager.show('rfid', "ACCESS", 3, "DENIED")
                 self.buzzer_manager.start(duration=5)
+            else:
+                print(f"[ControlHandler] Unknown access value: {data.get('access')}")
         except (ValueError, AttributeError) as e:
-            print(f"Error parsing RFID response: {e}")
+            print(f"[ControlHandler] Error parsing RFID response: {e}")
 
     def handle_door_control(self, topic, msg):
         import ujson
