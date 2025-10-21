@@ -3479,3 +3479,168 @@ This session focused on debugging and resolving critical performance issues disc
 **Learning Focus**: State machine patterns, code review process, recognizing existing design patterns
 
 ---
+## Session 28 - 2025-10-22 - C# API Refactoring: Handler Pattern Architecture ✅
+
+**Phase**: Phase 2 - C# API Layer
+**Milestone**: 2.1 - C# API Setup  
+**Branch**: phase-2-api-layer
+
+### Tasks Completed
+
+- [x] **T2.1**: Create C# ASP.NET Core 9.0 Web API project - Verified existing project working
+- [x] **T2.2**: Implement Supabase data access layer - Refactored to modern DI pattern with specialized services
+- [x] **T2.5**: Implement MQTT Background Service - Refactored from 449-line monolith to 120-line handler-based architecture
+- [x] **T2.6**: Implement Sensor Data Writer Service - Extracted to separate `SensorDataWriter.cs` background service
+- [x] **T2.7**: Implement RFID Validation Service - Implemented as `RfidValidationHandler.cs` with complete request/response flow
+
+### Architecture Refactoring
+
+**Problem Identified**: Original `MqttBackgroundService.cs` was 449 lines with multiple responsibilities (connection, RFID validation, sensor storage, status updates, database writes). Code review identified:
+- Thread safety bugs (sensor data fields accessed without locks)
+- Timer disposal race conditions
+- Missing RFID scan logging (TODO not implemented)
+- Violation of Single Responsibility Principle
+- Difficult to test and maintain
+
+**Solution Implemented**: Handler Pattern with dependency injection
+- Created `IMqttMessageHandler` interface (contract for all message handlers)
+- Split into 7 focused files (73% code reduction in main service):
+  - `MqttBackgroundService.cs` - Connection & routing only (120 lines)
+  - `RfidValidationHandler.cs` - RFID validation logic (68 lines)
+  - `SensorDataHandler.cs` - Sensor data storage with thread-safe locks (54 lines)
+  - `StatusUpdateHandler.cs` - Status update placeholder (20 lines)
+  - `MqttPublisher.cs` - Publishing helper (52 lines)
+  - `SensorDataWriter.cs` - Database timer service (99 lines)
+  - `IMqttMessageHandler.cs` - Interface definition (10 lines)
+
+**Key Improvements**:
+- ✅ Thread safety: Added `lock` statements for concurrent access to sensor data fields
+- ✅ RFID logging: Fully implemented with database inserts to `rfid_scans` table
+- ✅ Separation of concerns: Each handler has single responsibility
+- ✅ Open/Closed Principle: Add new message types without modifying existing code
+- ✅ Testability: Handlers can be mocked and tested independently
+- ✅ Memory efficiency: Removed unnecessary ILogger dependencies where not critical
+
+### Decisions Made
+
+1. **Minimal Code for Learning**: Removed verbose logging and input validation from handlers to reduce complexity for student understanding. Focus on core logic only.
+
+2. **Handler Registration**: Used ASP.NET Core DI to auto-inject all `IMqttMessageHandler` implementations:
+   ```csharp
+   builder.Services.AddSingleton<SensorDataHandler>();
+   builder.Services.AddScoped<IMqttMessageHandler, RfidValidationHandler>();
+   builder.Services.AddScoped<IMqttMessageHandler, StatusUpdateHandler>();
+   ```
+
+3. **SensorDataHandler as Singleton**: Must be singleton (not scoped) because `SensorDataWriter` depends on it to retrieve latest readings across scopes.
+
+4. **Clear-After-Read Pattern**: Considered but deferred for simplicity. Current implementation keeps latest readings in memory without clearing.
+
+5. **AccessResult String Format**: Changed from `bool` to `"granted"/"denied"` string to match database schema.
+
+### Issues Encountered
+
+1. **Build Errors - Missing using statements**: 
+   - `using MQTTnet.Client` doesn't exist in MQTTnet library version
+   - **Solution**: Removed unnecessary using statement
+
+2. **SensorDataMessage visibility**: 
+   - `internal class` couldn't be returned from `public method`
+   - **Solution**: Changed to `public class`
+
+3. **AccessResult type mismatch**: 
+   - Database expects `string`, code was passing `bool`
+   - **Solution**: Use ternary operator `isValid ? "granted" : "denied"`
+
+4. **Async warning in SensorDataHandler**:
+   - Method marked `async` but no `await` operations
+   - **Solution**: Changed to return `Task.CompletedTask` directly without `async` keyword
+
+5. **Student overwhelm with C# complexity**:
+   - Student expressed feeling overwhelmed juggling 3 languages (Python, JavaScript, C#)
+   - **Solution**: Simplified code, removed defensive programming patterns, focused on core logic
+   - **Learning moment**: Discussed when to use verbose production code vs simple learning code
+
+### Student Learning Highlights
+
+**C# Concepts Explained**:
+- Namespaces vs using statements (like Python imports)
+- Interfaces as contracts (vs Python duck typing)
+- Dependency Injection (framework creates objects automatically)
+- `var` type inference
+- `async`/`await` for asynchronous operations
+- Null-conditional operator `?` (safe navigation)
+- Null-forgiving operator `!` (assert not null)
+- Ternary operator `? :`
+- String interpolation `$"..."`
+- Anonymous objects `new { ... }`
+- Using statements for resource cleanup
+- Lock-based thread safety
+- Tuple returns `(type1, type2)`
+
+**Student Contribution**: Successfully implemented `SensorDataHandler.cs` with guidance, demonstrating understanding of:
+- Interface implementation
+- Thread-safe field access with locks
+- JSON deserialization
+- Returning tuples for multiple values
+
+### Files Created/Modified
+
+**Created**:
+- `api/Services/Mqtt/IMqttMessageHandler.cs`
+- `api/Services/Mqtt/MqttBackgroundService.cs` (new refactored version)
+- `api/Services/Mqtt/MqttPublisher.cs`
+- `api/Services/Mqtt/RfidValidationHandler.cs`
+- `api/Services/Mqtt/SensorDataHandler.cs`
+- `api/Services/Mqtt/StatusUpdateHandler.cs`
+- `api/Services/SensorDataWriter.cs`
+
+**Modified**:
+- `api/Program.cs` - Updated service registrations for new handler pattern
+- `planning/tasks.md` - Marked T2.1, T2.2, T2.5, T2.6, T2.7 as complete
+- `planning/development-notes.md` - This session entry
+
+**Backed Up**:
+- `api/Services/MqttBackgroundService.cs.backup` - Original monolithic version preserved
+
+### Next Session
+
+**Continue with T2.3**: Create REST API endpoints (GET only for historical data)
+
+**What's needed**:
+- `GET /api/sensors/temperature?hours=24` - Historical temperature readings
+- `GET /api/sensors/humidity?hours=24` - Historical humidity readings
+- `GET /api/sensors/motion?hours=1` - Motion event history
+- `GET /api/sensors/gas` - Gas alert history
+
+**Continue with T2.4**: Create RFID controller
+- `GET /api/rfid/scans?filter=all|success|failed` - RFID scan history with filtering
+
+**Status of Phase 2**:
+- ✅ T2.1 - Project setup complete
+- ✅ T2.2 - Data access layer complete (modern DI pattern)
+- ✅ T2.5 - MQTT background service complete (handler pattern)
+- ✅ T2.6 - Sensor data writer complete
+- ✅ T2.7 - RFID validation complete
+- ❌ T2.3 - REST endpoints for historical queries (NOT STARTED - Next session)
+- ❌ T2.4 - RFID controller for scan history (NOT STARTED - Next session)
+
+**Note**: Controllers exist (`SensorLogController`, `GasAlertController`, `AuthorisedCardController`) but only have POST endpoints. Need to add GET endpoints for historical data retrieval by the Next.js dashboard.
+
+**Preparation**: 
+- Review existing controller patterns in `api/Controllers/`
+- Understand Supabase query filtering (WHERE clauses, date ranges)
+- Consider pagination for large result sets
+
+### Session Statistics
+
+**Duration**: ~3 hours (code review → planning → refactoring → debugging → learning)
+**Tasks Completed**: 5 (T2.1, T2.2, T2.5, T2.6, T2.7)
+**Files Created**: 7 new files
+**Files Modified**: 3 files
+**Lines of Code**: ~450 lines added (across 7 files), ~449 lines removed (monolith refactored)
+**Build Status**: ✅ Successfully compiles with 0 errors, 0 warnings
+**Milestone Progress**: Milestone 2.1 - 70% complete (5 of 7 tasks done)
+**Learning Focus**: SOLID principles, Handler Pattern, Dependency Injection, Thread Safety, C# fundamentals
+
+---

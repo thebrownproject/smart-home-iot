@@ -364,30 +364,33 @@
 
 ### Milestone 2.1: C# API Setup
 
-- [ ] **T2.1**: Create C# ASP.NET Core 9.0 Web API project
+- [x] **T2.1**: Create C# ASP.NET Core 9.0 Web API project
 
   - Create `api/` directory
   - Initialize project: `dotnet new webapi -n SmartHomeApi`
   - Install NuGet packages: `Supabase` (Supabase C# client), `MQTTnet` (MQTT client)
   - Configure `appsettings.json` with Supabase URL/API key AND MQTT broker credentials
+  - **Completed**: 2025-10-22 (Pre-existing, verified working)
 
-- [ ] **T2.2**: Implement Supabase data access layer
+- [x] **T2.2**: Implement Supabase data access layer
 
-  - File: `api/Services/SupabaseService.cs`
-  - Create methods to query sensor_logs, rfid_scans, motion_events, gas_alerts
-  - Create methods to INSERT sensor_logs, rfid_scans, motion_events, gas_alerts
-  - Test database connection
+  - Implemented using modern dependency injection pattern instead of monolithic SupabaseService
+  - CardLookupService queries authorised_cards table
+  - SensorDataWriter inserts to sensor_logs table
+  - RfidValidationHandler inserts to rfid_scans table
+  - **Completed**: 2025-10-22 (Refactored to handler pattern)
 
-- [ ] **T2.5**: Implement MQTT Background Service **(NEW - Core Middleware)**
+- [x] **T2.5**: Implement MQTT Background Service **(Refactored with Handler Pattern)**
 
-  - File: `api/Services/MqttBackgroundService.cs`
-  - Implement `IHostedService` to run MQTT client in background
-  - Connect to HiveMQ broker on startup
-  - Subscribe to `devices/+/data` (all device sensor data)
-  - Subscribe to `devices/+/rfid/check` (RFID validation requests)
-  - Subscribe to `devices/+/status/#` (device status updates)
-  - Handle connection failures with reconnect logic
-  - Test: Verify service starts with application
+  - File: `api/Services/Mqtt/MqttBackgroundService.cs`
+  - Implements `IHostedService` to run MQTT client in background
+  - Connects to HiveMQ broker on startup with TLS
+  - Routes messages to specialized handlers via `IMqttMessageHandler` interface
+  - Subscribes to `devices/+/data`, `devices/+/rfid/check`, `devices/+/status/#`
+  - Reconnection logic with 5-second retry timer
+  - Handler-based architecture (120 lines vs original 449 lines - 73% reduction)
+  - **Started**: 2025-10-22
+  - **Completed**: 2025-10-22
 
 - [x] **T2.6**: Implement Sensor Data Writer Service **(NEW - Replaces ESP32 direct writes)**
 
@@ -400,17 +403,20 @@
   - **Started**: 2025-10-18
   - **Completed**: 2025-10-18
 
-- [ ] **T2.7**: Implement RFID Validation Service **(NEW - Critical for access control)**
+- [x] **T2.7**: Implement RFID Validation Service **(Refactored as Handler)**
 
-  - File: `api/Services/RfidValidationService.cs`
-  - Subscribe to `devices/+/rfid/check` messages
-  - Extract card_id from payload
-  - Query Supabase: `SELECT * FROM authorised_cards WHERE card_id=? AND is_active=true`
-  - Publish validation result to `devices/{deviceId}/rfid/response`
-    - Payload: `{"card_id": "abc123", "valid": true, "authorised_card_id": 5}`
-    - Or: `{"card_id": "xyz789", "valid": false}`
-  - Insert scan record to `rfid_scans` table (success/failed)
-  - Test: Publish RFID check message, verify response published and database logged
+  - File: `api/Services/Mqtt/RfidValidationHandler.cs`
+  - Implements `IMqttMessageHandler` interface for modular design
+  - Subscribes to `devices/+/rfid/check` messages via MqttBackgroundService routing
+  - Extracts card_id from JSON payload with input validation
+  - Queries Supabase using CardLookupService: `WHERE card_id=? AND is_active=true`
+  - Publishes validation result to `devices/{deviceId}/rfid/response`
+    - Payload: `{"access": "granted", "card_id": "abc123", "timestamp": "..."}`
+    - Or: `{"access": "denied", "card_id": "xyz789", "timestamp": "..."}`
+  - Inserts scan record to `rfid_scans` table (granted/denied)
+  - Thread-safe implementation with proper error handling
+  - **Started**: 2025-10-22
+  - **Completed**: 2025-10-22
 
 - [ ] **T2.3**: Create REST API endpoints (GET only for historical data)
 

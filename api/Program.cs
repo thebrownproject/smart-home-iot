@@ -41,12 +41,19 @@ internal static class Program
         ConfigureSupabase(builder.Services, builder.Configuration);
 
         // Register service layer (business logic)
-        // Why Scoped? Services are created once per HTTP request (or MQTT message handling)
         builder.Services.AddScoped<api.services.CardLookupService>();
 
-        // Register MQTT background service
-        // Why HostedService? Runs in background when app starts, independent of HTTP requests
-        builder.Services.AddHostedService<api.services.MqttBackgroundService>();
+        // Register MQTT message handlers
+        builder.Services.AddSingleton<api.services.mqtt.SensorDataHandler>();
+        builder.Services.AddScoped<api.services.mqtt.IMqttMessageHandler, api.services.mqtt.RfidValidationHandler>();
+        builder.Services.AddScoped<api.services.mqtt.IMqttMessageHandler, api.services.mqtt.StatusUpdateHandler>();
+
+        // Register MQTT publisher (shared by handlers)
+        builder.Services.AddSingleton<api.services.mqtt.MqttPublisher>();
+
+        // Register background services
+        builder.Services.AddHostedService<api.services.mqtt.MqttBackgroundService>();
+        builder.Services.AddHostedService<api.services.SensorDataWriter>();
 
         // Configures the Swagger UI
         if (useSwagger)
