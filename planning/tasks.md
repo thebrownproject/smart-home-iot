@@ -430,10 +430,12 @@
   - **Started**: 2025-12-04
   - **Completed**: 2025-12-04
 
-- [ ] **T2.4**: Create RFID controller
-  - File: `api/Controllers/RfidController.cs`
-  - `GET /api/rfid/scans?filter=all|success|failed` - RFID history with filtering
+- [x] **T2.4**: Create RFID controller
+  - File: `api/Controllers/RfidScansController.cs` (renamed from RfidScansRequest.cs)
+  - `GET /api/RfidScans?filter=all|success|failed` - RFID history with filtering
   - Test filtering logic
+  - **Started**: 2025-12-04
+  - **Completed**: 2025-12-04
 
 ---
 
