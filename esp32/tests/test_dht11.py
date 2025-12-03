@@ -7,6 +7,7 @@ class testDHT11Sensor(PicoTestBase):
         self.dht11_sensor = DHT11Sensor()
     
     def test_read_data(self):
+        print("TestDHT11Sensor: read_data")
         result = self.dht11_sensor.read_data()
         assert isinstance(result, tuple), "Result is not a tuple"
         assert len(result) == 2, "Result is not a tuple of length 2"

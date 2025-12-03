@@ -7,6 +7,7 @@ class testSteamSensor(PicoTestBase):
         self.steam_sensor = SteamSensor()
     
     def test_is_moisture_detected(self):
+        print("TestSteamSensor: is_moisture_detected")
         result = self.steam_sensor.is_moisture_detected()
         assert isinstance(result, bool), "Result is not a boolean"
         time.sleep(1)

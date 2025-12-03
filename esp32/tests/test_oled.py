@@ -8,13 +8,15 @@ class testOLED(PicoTestBase):
         self.oled = OLED()
     
     def test_show_text(self):
-        self.oled.show_text("Hello", "World!")
-        assert self.oled.show_text("Hello", "World!") == True, "OLED is not showing text"
+        print("TestOLED: show_text")
+        result = self.oled.show_text("Hello", "World!")
+        assert result == True, "OLED is not showing text"
         time.sleep(1)
 
     def test_clear(self):
-        self.oled.clear()
-        assert self.oled.clear() == True, "OLED is not clearing"
+        print("TestOLED: clear")
+        result = self.oled.clear()
+        assert result == True, "OLED is not clearing"
         time.sleep(1)
 
 class testOLEDManager(PicoTestBase):
@@ -22,10 +24,12 @@ class testOLEDManager(PicoTestBase):
         self.oled_manager = OLEDManager()
     
     def test_show(self):
+        print("TestOLEDManager: show")
         assert self.oled_manager.show('gas', "Hello", 1) == True, "Manager is not showing text"
         time.sleep(1)
     
     def test_update(self):
+        print("TestOLEDManager: update")
         self.oled_manager.show('gas', "Hello", 3)
         self.oled_manager.update()
         assert self.oled_manager.countdown == 2, "Countdown is not 2"
