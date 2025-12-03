@@ -52,7 +52,6 @@ public class MqttBackgroundService : IHostedService, IDisposable
             .WithTlsOptions(o =>
             {
                 o.UseTls();
-                o.WithCertificateValidationHandler(_ => true);
             })
             .Build();
 
