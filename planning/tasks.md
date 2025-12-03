@@ -343,7 +343,7 @@
 
 ### Milestone 1.8: Testing & Validation
 
-- [ ] **T1.30**: End-to-end hardware test
+- [x] **T1.30**: End-to-end hardware test
 
   - Trigger all sensors sequentially
   - Verify correct output responses
@@ -351,12 +351,14 @@
   - Verify database entries in Supabase dashboard
   - Document any issues
   - **Stability test**: Run system for 1 hour, verify no crashes
+  - **Completed**: 2025-12-03
 
-- [ ] **T1.31**: Create test documentation
+- [~] **T1.31**: Create test documentation for handlers - awaiting teacher confirmation on additional tests
   - File: `docs/hardware-testing-log.md`
   - Document test scenarios and results
-  - Include screenshots of MQTT/Supabase data
   - List any hardware bugs or workarounds
+  - **Status**: Partially complete - awaiting teacher clarification on additional test requirements
+  - **Started**: 2025-12-03
 
 ---
 

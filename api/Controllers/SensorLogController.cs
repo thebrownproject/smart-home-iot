@@ -20,5 +20,4 @@ public class SensorLogController : ControllerBase
         SensorLogModel newSensorLog = response.Models.First();
         return Ok(newSensorLog);
     }
-
 }
