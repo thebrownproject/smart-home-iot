@@ -420,13 +420,15 @@
   - **Started**: 2025-10-22
   - **Completed**: 2025-10-22
 
-- [ ] **T2.3**: Create REST API endpoints (GET only for historical data)
+- [x] **T2.3**: Create REST API endpoints (GET only for historical data)
 
   - File: `api/Controllers/SensorsController.cs`
   - `GET /api/sensors/motion?hours=1` - Motion event history (FR8.1: Display PIR detections in last hour)
   - `GET /api/sensors/gas?hours=24` - Gas alert history (FR8.2: Historical gas alerts)
   - **Note**: Temperature/humidity use real-time MQTT only (FR6.3) - no historical endpoints needed for Phase 2
   - Test with Postman or curl
+  - **Started**: 2025-12-04
+  - **Completed**: 2025-12-04
 
 - [ ] **T2.4**: Create RFID controller
   - File: `api/Controllers/RfidController.cs`
