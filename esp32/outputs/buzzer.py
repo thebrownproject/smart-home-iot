@@ -4,13 +4,16 @@ class Buzzer:
     def __init__(self):
         self.buzzer = PWM(Pin(25))
         self.buzzer.duty(0)     # Ensure buzzer starts silent
+        self.is_running = False
 
     def start(self):
         self.buzzer.freq(1000)
         self.buzzer.duty(10)  # ~10% duty cycle (quieter)
+        self.is_running = True
 
     def stop(self):
         self.buzzer.duty(0)
+        self.is_running = False
 
 class BuzzerManager:
     def __init__(self):

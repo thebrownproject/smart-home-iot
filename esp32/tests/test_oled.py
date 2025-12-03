@@ -27,6 +27,7 @@ class testOLEDManager(PicoTestBase):
     
     def test_update(self):
         self.oled_manager.show('gas', "Hello", 3)
+        self.oled_manager.update()
         assert self.oled_manager.countdown == 2, "Countdown is not 2"
         time.sleep(1)
         self.oled_manager.update()
