@@ -15,19 +15,22 @@ class Servo:
         self.servo.freq(50)  # Standard servo frequency (50Hz)
         self.angle_closed = 25   # 0° duty cycle
         self.angle_open = 128    # 180° duty cycle
+        self.is_open = None 
 
     def open(self):
         self.servo.duty(self.angle_open)
+        self.is_open = True
 
     def close(self):
         self.servo.duty(self.angle_closed)
+        self.is_open = False
 
 class DoorServoManager:
     """Manages door servo with open and close methods and a countdown timer."""
     def __init__(self):
         self.servo = Servo(pin=13)
         self.countdown = 0
-        self.is_open = False
+        self.is_open = None
     
     def open(self, duration=5):
         self.servo.open()

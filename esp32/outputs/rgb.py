@@ -5,13 +5,16 @@ class RGB:
     def __init__(self):
         self.pin = Pin(26, Pin.OUT)
         self.np = neopixel.NeoPixel(self.pin, 4)
+        self.color = (0, 0, 0)
     
     def set_color(self, r, g, b):
-        self.np.fill((r, g, b))
+        self.color = (r, g, b)
+        self.np.fill(self.color)
         self.np.write()
 
     def off(self):
-        self.np.fill((0, 0, 0))
+        self.color = (0, 0, 0)
+        self.np.fill((self.color))
         self.np.write()
 
 class RGBManager:
@@ -38,3 +41,4 @@ class RGBManager:
             if self.countdown == 0:
                 self.rgb.off()
                 self.owner = None
+            return True

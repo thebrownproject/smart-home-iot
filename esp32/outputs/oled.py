@@ -13,9 +13,11 @@ class OLED:
         if line2:
             self.lcd.move_to(0, 1)
             self.lcd.putstr(line2[:16])
+        return True
 
     def clear(self):
         self.lcd.clear()
+        return True
 
 class OLEDManager:
     def __init__(self):
