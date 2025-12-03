@@ -21,11 +21,11 @@ A comprehensive IoT smart home automation system built for Cert IV capstone proj
 
 ## Tech Stack
 
-**Embedded System:** ESP32 · MicroPython · KS5009 Smart Home Kit
-**Sensors:** DHT11 (temperature/humidity) · PIR (motion) · Gas/Flame · Steam/Moisture · RFID (RC522)
-**Outputs:** RGB LED (SK6812) · Servo Motors · Fan · Buzzer · OLED Display (SSD1306)
-**Backend:** ASP.NET Core 9.0 · C# 12 · RESTful API · Swagger/OpenAPI
-**Frontend:** Next.js 15 · TypeScript · TailwindCSS (planned)
+**Embedded System:** ESP32 · MicroPython · KS5009 Smart Home Kit <br>
+**Sensors:** DHT11 (temperature/humidity) · PIR (motion) · Gas/Flame · Steam/Moisture · RFID (RC522) <br>
+**Outputs:** RGB LED (SK6812) · Servo Motors · Fan · Buzzer · OLED Display (SSD1306) <br>
+**Backend:** ASP.NET Core 9.0 · C# 12 · RESTful API · Swagger/OpenAPI <br>
+**Frontend:** Next.js 15 · TypeScript · TailwindCSS (planned) <br>
 **Infrastructure:** MQTT (HiveMQ) · Supabase (PostgreSQL) · WiFi
 
 ---
@@ -48,7 +48,7 @@ A comprehensive IoT smart home automation system built for Cert IV capstone proj
 
 ## Architecture & Tech Decisions
 
-Built using distributed IoT architecture with three-tier communication pattern: ESP32 publishes sensor data to HiveMQ MQTT broker, C# middleware subscribes to device messages for validation and database persistence, and Next.js web app subscribes for real-time updates while querying C# API for historical data. Chose MQTT-only communication for ESP32 to avoid memory leaks from MicroPython's urequests library, maintaining persistent connection with reconnect logic. Implemented C# middleware as single database gateway to centralize Supabase credentials and business logic, providing RESTful endpoints for queries while handling all database writes via MQTT subscriptions. RFID validation uses request/response pattern where ESP32 publishes card UID, C# queries authorized cards table, and publishes validation result back to device. Object-oriented MicroPython structure with handler classes for environmental monitoring, security, and outputs enables clean separation of concerns and testability. Event priority state machine ensures critical alerts (gas detection) override lower-priority events (motion detection).
+Built using distributed IoT architecture with three-tier communication pattern: ESP32 publishes sensor data to HiveMQ MQTT broker, C# middleware subscribes to device messages for validation and database persistence, and Next.js web app subscribes for real-time updates while querying C# API for historical data. Chose MQTT-only communication for ESP32 to avoid memory leaks from MicroPython's urequests library, maintaining persistent connection with reconnect logic. Implemented C# middleware as single database gateway to centralise Supabase credentials and business logic, providing RESTful endpoints for queries while handling all database writes via MQTT subscriptions. RFID validation uses request/response pattern where ESP32 publishes card UID, C# queries authorized cards table, and publishes validation result back to device. Object-oriented MicroPython structure with handler classes for environmental monitoring, security, and outputs enables clean separation of concerns and testability. Event priority state machine ensures critical alerts (gas detection) override lower-priority events (motion detection).
 
 ---
 
@@ -69,7 +69,7 @@ Built using distributed IoT architecture with three-tier communication pattern: 
 - Defined REST API endpoints for Sensors, RFID, Motion, Gas, and Status controllers
 
 **Database Schema:**
-- Modeled 7 PostgreSQL tables (sensor_logs, rfid_scans, motion_events, gas_alerts, device_status, authorized_cards, users)
+- Modelled 7 PostgreSQL tables (sensor_logs, rfid_scans, motion_events, gas_alerts, device_status, authorized_cards, users)
 - Designed relationships and constraints for data integrity
 - Planned indexes for timestamp-based queries
 
