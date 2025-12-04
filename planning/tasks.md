@@ -175,7 +175,7 @@
   - **Refactored**: 2025-10-15 - Fixed callback dispatch and created ControlHandler
   - **Completed**: 2025-10-15
 
-- [ ] **T1.18**: ~~Implement Supabase HTTP client~~ **DEPRECATED - Remove this module**
+- [x] **T1.18**: ~~Implement Supabase HTTP client~~ **DEPRECATED - Remove this module**
   - **Architecture Change**: ESP32 now communicates ONLY via MQTT (no HTTP/REST)
   - **Action Required**: Remove `esp32/comms/supabase.py` and `esp32/comms/supabase/` directory
   - **Replacement**: All database writes handled by C# middleware (see T2.5, T2.6, T2.7)
@@ -242,11 +242,14 @@
   - **Refactored**: 2025-10-15 - ESP32 portion complete, C# middleware pending
   - **Completed**: 2025-10-15 (ESP32 implementation only)
 
-- [ ] **T1.23.1**: RFID handler timing improvements (Future Enhancement)
+- [x] **T1.23.1**: RFID handler timing improvements (Future Enhancement)
 
-  - Add automatic RGB off after 3 seconds
-  - Add automatic door close after 5 seconds
-  - Requires `import time` and non-blocking delay pattern
+  - Add automatic RGB off after 3 seconds ✅ (Completed via RGBManager)
+  - Add automatic door close after 5 seconds ✅ (Completed via DoorServoManager)
+  - Requires non-blocking delay pattern ✅ (Countdown pattern implemented)
+  - **Started**: 2025-10-16
+  - **Completed**: 2025-10-18
+  - **Note**: Implemented DoorServoManager with auto-close countdown timer, integrated into app.py event loop and control_handler.py for both RFID and MQTT control.
 
 - [x] **T1.23.2**: RFID test with hardware (Blocked - No RFID Available)
 
@@ -256,7 +259,7 @@
   - **Started**: 2025-10-14
   - **Completed**: 2025-10-14
 
-- [ ] **T1.23.3**: Add test RFID cards to database (Database Setup)
+- [x] **T1.23.3**: Add test RFID cards to database (Database Setup)
   - Insert sample cards into `authorised_cards` table
   - Document card IDs for testing
   - SQL: `INSERT INTO authorised_cards (card_id, is_active) VALUES ('test_card_123', true);`
@@ -276,29 +279,36 @@
   - **Started**: 2025-10-12
   - **Completed**: 2025-10-12
 
-- [ ] **T1.25**: ~~Implement 30-minute sensor logging~~ **MOVED TO C# MIDDLEWARE**
+- [x] **T1.25**: ~~Implement 30-minute sensor logging~~ **MOVED TO C# MIDDLEWARE**
 
   - **Architecture Change**: Database logging now handled by C# middleware, not ESP32
-  - ESP32 only publishes sensor data to MQTT every 2 seconds
-  - C# middleware subscribes and writes to database every 30 minutes (see T2.6)
-  - **Action Required**: Update environment handler to publish ALL readings to MQTT
-  - Test: Verify MQTT messages published correctly
+  - ESP32 already publishes sensor data to MQTT every 60 seconds (verified working)
+  - C# middleware implemented in T2.6 (subscribes and writes to database every 30 minutes)
+  - **Status**: ESP32 side complete, C# implementation complete
+  - **Started**: 2025-10-18
+  - **Completed**: 2025-10-18
 
-- [ ] **T1.26**: Implement asthma alert system **(FR7.1, FR7.2, FR7.3 - HOUSE/WEB)**
+- [x] **T1.26**: Implement asthma alert system **(FR7.1, FR7.2, FR7.3 - HOUSE/WEB)**
   - Check conditions: humidity > 50% AND temperature > 27°C
   - If true: Display "ASTHMA ALERT" on OLED
-  - Publish alert to MQTT topic `home/asthma_alert`
+  - Publish alert to MQTT topic `devices/{id}/asthma_alert`
   - Test: Set conditions manually, verify alert
+  - **Started**: 2025-10-19
+  - **Completed**: 2025-10-19
 
 ---
 
 ### Milestone 1.7: Manual Controls & State Management
 
-- [ ] **T1.27**: Implement button controls
+- [x] **T1.27**: Implement button controls
 
-  - Gas alarm disable button: Turn off fan and buzzer when pressed
+  - Gas alarm toggle button: Enable/disable gas alarm monitoring
   - PIR toggle button: Enable/disable motion detection
+  - OLED feedback on button press (2-3 seconds)
+  - Persistent flag pattern to capture button presses
   - Test: Press buttons, verify output responses
+  - **Started**: 2025-10-19
+  - **Completed**: 2025-10-19
 
 - [x] **T1.28**: Implement MQTT control subscriptions **(FR9.1, FR9.2, FR9.3, FR9.4 - WEB/HOUSE)**
 
@@ -319,31 +329,36 @@
   - **Started**: 2025-10-15
   - **Completed**: 2025-10-15
 
-- [ ] **T1.29**: Build main event loop with state machine
-  - File: `esp32/main.py`
+- [x] **T1.29**: Build main event loop with state machine
+  - File: `esp32/main.py`, `esp32/app.py`
   - Initialize all sensors, outputs, network connections
   - Non-blocking loop: Poll sensors, check MQTT messages, update displays
   - Handle priority events (gas > steam > motion)
   - Comprehensive error handling with recovery
-  - Test: Run for 1 hour, verify no crashes
+  - **Note**: Priority system implemented via Manager pattern (RGBManager, OLEDManager)
+  - **Started**: 2025-10-19
+  - **Completed**: 2025-10-19
 
 ---
 
 ### Milestone 1.8: Testing & Validation
 
-- [ ] **T1.30**: End-to-end hardware test
+- [x] **T1.30**: End-to-end hardware test
 
   - Trigger all sensors sequentially
   - Verify correct output responses
   - Check MQTT messages in HiveMQ console
   - Verify database entries in Supabase dashboard
   - Document any issues
+  - **Stability test**: Run system for 1 hour, verify no crashes
+  - **Completed**: 2025-12-03
 
-- [ ] **T1.31**: Create test documentation
+- [~] **T1.31**: Create test documentation for handlers - awaiting teacher confirmation on additional tests
   - File: `docs/hardware-testing-log.md`
   - Document test scenarios and results
-  - Include screenshots of MQTT/Supabase data
   - List any hardware bugs or workarounds
+  - **Status**: Partially complete - awaiting teacher clarification on additional test requirements
+  - **Started**: 2025-12-03
 
 ---
 
@@ -351,66 +366,76 @@
 
 ### Milestone 2.1: C# API Setup
 
-- [ ] **T2.1**: Create C# ASP.NET Core 9.0 Web API project
+- [x] **T2.1**: Create C# ASP.NET Core 9.0 Web API project
 
   - Create `api/` directory
   - Initialize project: `dotnet new webapi -n SmartHomeApi`
   - Install NuGet packages: `Supabase` (Supabase C# client), `MQTTnet` (MQTT client)
   - Configure `appsettings.json` with Supabase URL/API key AND MQTT broker credentials
+  - **Completed**: 2025-10-22 (Pre-existing, verified working)
 
-- [ ] **T2.2**: Implement Supabase data access layer
+- [x] **T2.2**: Implement Supabase data access layer
 
-  - File: `api/Services/SupabaseService.cs`
-  - Create methods to query sensor_logs, rfid_scans, motion_events, gas_alerts
-  - Create methods to INSERT sensor_logs, rfid_scans, motion_events, gas_alerts
-  - Test database connection
+  - Implemented using modern dependency injection pattern instead of monolithic SupabaseService
+  - CardLookupService queries authorised_cards table
+  - SensorDataWriter inserts to sensor_logs table
+  - RfidValidationHandler inserts to rfid_scans table
+  - **Completed**: 2025-10-22 (Refactored to handler pattern)
 
-- [ ] **T2.5**: Implement MQTT Background Service **(NEW - Core Middleware)**
+- [x] **T2.5**: Implement MQTT Background Service **(Refactored with Handler Pattern)**
 
-  - File: `api/Services/MqttBackgroundService.cs`
-  - Implement `IHostedService` to run MQTT client in background
-  - Connect to HiveMQ broker on startup
-  - Subscribe to `devices/+/data` (all device sensor data)
-  - Subscribe to `devices/+/rfid/check` (RFID validation requests)
-  - Subscribe to `devices/+/status/#` (device status updates)
-  - Handle connection failures with reconnect logic
-  - Test: Verify service starts with application
+  - File: `api/Services/Mqtt/MqttBackgroundService.cs`
+  - Implements `IHostedService` to run MQTT client in background
+  - Connects to HiveMQ broker on startup with TLS
+  - Routes messages to specialized handlers via `IMqttMessageHandler` interface
+  - Subscribes to `devices/+/data`, `devices/+/rfid/check`, `devices/+/status/#`
+  - Reconnection logic with 5-second retry timer
+  - Handler-based architecture (120 lines vs original 449 lines - 73% reduction)
+  - **Started**: 2025-10-22
+  - **Completed**: 2025-10-22
 
-- [ ] **T2.6**: Implement Sensor Data Writer Service **(NEW - Replaces ESP32 direct writes)**
+- [x] **T2.6**: Implement Sensor Data Writer Service **(NEW - Replaces ESP32 direct writes)**
 
-  - File: `api/Services/SensorDataWriter.cs`
+  - Implemented in `api/Services/MqttBackgroundService.cs` (integrated with existing service)
+  - Added timer-based write: stores latest temp/humidity, writes to DB every 30 minutes
   - Parse incoming MQTT messages from `devices/+/data` topic
-  - Validate sensor data (range checks, data types)
-  - Write to Supabase `sensor_logs` table every 30 minutes (FR6.4)
-  - Write motion events to `motion_events` table immediately
-  - Write gas alerts to `gas_alerts` table immediately
-  - Test: Publish MQTT message, verify database insert
+  - Writes to Supabase `sensor_logs` table with device_id, sensor_type, value, timestamp
+  - Timer set to 1 minute for testing (TODO: change back to 30 minutes for production)
+  - **Note**: Motion/gas event logging deferred to separate tasks (T2.8, T2.9)
+  - **Started**: 2025-10-18
+  - **Completed**: 2025-10-18
 
-- [ ] **T2.7**: Implement RFID Validation Service **(NEW - Critical for access control)**
+- [x] **T2.7**: Implement RFID Validation Service **(Refactored as Handler)**
 
-  - File: `api/Services/RfidValidationService.cs`
-  - Subscribe to `devices/+/rfid/check` messages
-  - Extract card_id from payload
-  - Query Supabase: `SELECT * FROM authorised_cards WHERE card_id=? AND is_active=true`
-  - Publish validation result to `devices/{deviceId}/rfid/response`
-    - Payload: `{"card_id": "abc123", "valid": true, "authorised_card_id": 5}`
-    - Or: `{"card_id": "xyz789", "valid": false}`
-  - Insert scan record to `rfid_scans` table (success/failed)
-  - Test: Publish RFID check message, verify response published and database logged
+  - File: `api/Services/Mqtt/RfidValidationHandler.cs`
+  - Implements `IMqttMessageHandler` interface for modular design
+  - Subscribes to `devices/+/rfid/check` messages via MqttBackgroundService routing
+  - Extracts card_id from JSON payload with input validation
+  - Queries Supabase using CardLookupService: `WHERE card_id=? AND is_active=true`
+  - Publishes validation result to `devices/{deviceId}/rfid/response`
+    - Payload: `{"access": "granted", "card_id": "abc123", "timestamp": "..."}`
+    - Or: `{"access": "denied", "card_id": "xyz789", "timestamp": "..."}`
+  - Inserts scan record to `rfid_scans` table (granted/denied)
+  - Thread-safe implementation with proper error handling
+  - **Started**: 2025-10-22
+  - **Completed**: 2025-10-22
 
-- [ ] **T2.3**: Create REST API endpoints (GET only for historical data)
+- [x] **T2.3**: Create REST API endpoints (GET only for historical data)
 
   - File: `api/Controllers/SensorsController.cs`
-  - `GET /api/sensors/temperature?hours=24` - Historical temperature
-  - `GET /api/sensors/humidity?hours=24` - Historical humidity
-  - `GET /api/sensors/motion?hours=1` - Motion events
-  - `GET /api/sensors/gas` - Gas alerts
+  - `GET /api/sensors/motion?hours=1` - Motion event history (FR8.1: Display PIR detections in last hour)
+  - `GET /api/sensors/gas?hours=24` - Gas alert history (FR8.2: Historical gas alerts)
+  - **Note**: Temperature/humidity use real-time MQTT only (FR6.3) - no historical endpoints needed for Phase 2
   - Test with Postman or curl
+  - **Started**: 2025-12-04
+  - **Completed**: 2025-12-04
 
-- [ ] **T2.4**: Create RFID controller
-  - File: `api/Controllers/RfidController.cs`
-  - `GET /api/rfid/scans?filter=all|success|failed` - RFID history with filtering
+- [x] **T2.4**: Create RFID controller
+  - File: `api/Controllers/RfidScansController.cs` (renamed from RfidScansRequest.cs)
+  - `GET /api/RfidScans?filter=all|success|failed` - RFID history with filtering
   - Test filtering logic
+  - **Started**: 2025-12-04
+  - **Completed**: 2025-12-04
 
 ---
 

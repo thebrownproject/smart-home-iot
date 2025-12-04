@@ -10,7 +10,6 @@ class Memory:
         print(f"[MEMORY] GC after {reason}: {free} bytes free.")
         return free
 
-
     def mem_free(self):
         free = gc.mem_free()
         print(f"[MEMORY] Free memory: {free} bytes.")

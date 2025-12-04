@@ -3,18 +3,44 @@ from utils.memory import Memory
 
 class SmartHomeApp:
     def __init__(self):
-        # Store Memory reference
         self.memory = Memory()
         from config import TOPIC_RFID_RESPONSE, TOPIC_CONTROL_DOOR, TOPIC_CONTROL_WINDOW, TOPIC_CONTROL_FAN
         from handlers.control_handler import ControlHandler
+        from outputs.rgb import RGBManager
+        from outputs.oled import OLEDManager
+        from outputs.servo import DoorServoManager
+        from outputs.buzzer import BuzzerManager
+
+        self.rgb_manager = RGBManager()
+        self.oled_manager = OLEDManager()
+        self.door_servo_manager = DoorServoManager()
+        self.buzzer_manager = BuzzerManager()
+
+        from outputs.oled import OLED
+        oled = OLED()
+        oled.show_text("MQTT Broker", "Connecting...")
 
         # Create persistent MQTT connection (can't be deleted)
         from comms.mqtt_client import SmartHomeMQTTClient
         self.mqtt = SmartHomeMQTTClient()
-        self.mqtt.connect()
 
-        # Create control handler for MQTT callbacks
-        self.control = ControlHandler()
+        max_retries = 3
+        for attempt in range(max_retries):
+            if self.mqtt.connect():
+                oled.show_text("MQTT Broker", "Connected")
+                time.sleep(1)
+                break
+            else:
+                print(f"MQTT connection attempt {attempt + 1}/{max_retries} failed")
+                if attempt < max_retries - 1:
+                    oled.show_text("MQTT Retry", f"Attempt {attempt + 2}/{max_retries}")
+                    time.sleep(2)
+                else:
+                    oled.show_text("MQTT FAILED", "System halted")
+                    time.sleep(3)
+                    raise RuntimeError("MQTT connection failed after all retries - system cannot operate without broker")
+
+        self.control = ControlHandler(self.rgb_manager, self.oled_manager, self.door_servo_manager, self.buzzer_manager)
 
         # Subscribe to MQTT topics with control handler methods as callbacks
         self.mqtt.subscribe(TOPIC_RFID_RESPONSE, self.control.handle_rfid_response)
@@ -22,6 +48,8 @@ class SmartHomeApp:
         self.mqtt.subscribe(TOPIC_CONTROL_WINDOW, self.control.handle_window_control)
         self.mqtt.subscribe(TOPIC_CONTROL_FAN, self.control.handle_fan_control)
         self.memory.collect("After MQTT setup")
+        oled.show_text("System Ready", "App Running")
+        del oled
 
     def run(self):
         from handlers.motion_handler import MotionHandler
@@ -29,7 +57,8 @@ class SmartHomeApp:
         from handlers.steam_handler import SteamHandler
         from handlers.gas_handler import GasHandler
         from handlers.rfid_handler import RFIDHandler
-        from handlers.enviroment_handler import EnvironmentHandler
+        from handlers.environment_handler import EnvironmentHandler
+        from handlers.button_handler import ButtonHandler
 
         motion = MotionHandler()
         lighting = LightingHandler()
@@ -37,47 +66,38 @@ class SmartHomeApp:
         gas = GasHandler()
         rfid = RFIDHandler()
         environment = EnvironmentHandler()
+        button = ButtonHandler()
 
         print("App running...")
-        loop_count = 0
+        loop_count = 1  # Start at 1 to avoid startup spike (0 % n == 0 for all n)
         while True:
+            self.rgb_manager.update()
+            self.oled_manager.update()
+            self.door_servo_manager.update()
+            self.buzzer_manager.update()
             self.mqtt.check_messages()
-            # Check time-based lighting every 60 seconds (1 minute)
+
+            button.handle_buttons(self.oled_manager)
+
             if loop_count % 60 == 0:
                 lighting.handle_time_based_lighting()
 
-            # Check motion every 5 seconds
-            if loop_count % 5 == 0:
-                motion.handle_motion_detection(self.mqtt)
-
-            # Check steam every 10 seconds
-            if loop_count % 10 == 0:
-                steam.handle_steam_detection(self.mqtt)
-
-            # Check gas every 10 seconds
-            if loop_count % 10 == 0:
-                gas.handle_gas_detection(self.mqtt)
-
-            # Check RFID every 2 seconds
             if loop_count % 2 == 0:
-                rfid.handle_rfid_detection(self.mqtt)
+                motion.handle_motion_detection(self.mqtt, self.rgb_manager, self.oled_manager, button)
 
-            # Check environment (temp/humidity) every 2 seconds
-            if loop_count % 2 == 0:
-                environment.handle_environment_detection(self.mqtt)
-
-            # Garbage collection every 10 seconds
             if loop_count % 10 == 0:
+                steam.handle_steam_detection(self.mqtt, self.rgb_manager, self.oled_manager)
+
+            if loop_count % 10 == 5:
+                gas.handle_gas_detection(self.mqtt, self.rgb_manager, self.oled_manager, self.buzzer_manager, button)
+
+            rfid.handle_rfid_detection(self.mqtt, self.oled_manager)
+
+            environment.handle_environment_detection(self.mqtt, self.oled_manager)
+
+            if loop_count % 10 == 1:
                 self.memory.collect("App loop")
 
             loop_count += 1
             print(f"--- Loop {loop_count} complete ---")
             time.sleep(1)  # Loop runs every 1 second
-
-    
-    
-    
-
-    
-    
-                

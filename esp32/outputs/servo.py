@@ -11,21 +11,39 @@ The duty cycle corresponding to the angle
 
 class Servo:
     def __init__(self, pin):
-        """
-        Initialize servo on specified pin.
-
-        Args:
-            pin (int): GPIO pin number for servo control
-        """
         self.servo = PWM(Pin(pin))
         self.servo.freq(50)  # Standard servo frequency (50Hz)
         self.angle_closed = 25   # 0° duty cycle
         self.angle_open = 128    # 180° duty cycle
+        self.is_open = None 
 
     def open(self):
-        """Move servo to open position (180°)."""
         self.servo.duty(self.angle_open)
+        self.is_open = True
 
     def close(self):
-        """Move servo to closed position (0°)."""
         self.servo.duty(self.angle_closed)
+        self.is_open = False
+
+class DoorServoManager:
+    """Manages door servo with open and close methods and a countdown timer."""
+    def __init__(self):
+        self.servo = Servo(pin=13)
+        self.countdown = 0
+        self.is_open = None
+    
+    def open(self, duration=5):
+        self.servo.open()
+        self.is_open = True
+        self.countdown = duration
+
+    def close(self):
+        self.servo.close()
+        self.is_open = False
+        self.countdown = 0
+
+    def update(self):
+        if self.countdown > 0:
+            self.countdown -= 1
+            if self.countdown == 0 and self.is_open:
+                self.close()

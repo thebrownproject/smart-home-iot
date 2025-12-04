@@ -2,16 +2,19 @@ from machine import Pin, PWM
 
 class Fan:
     def __init__(self):
-        self.ina = PWM(Pin(19, Pin.OUT), 10000)
-        self.inb = PWM(Pin(18, Pin.OUT), 10000)
+        self._ina = PWM(Pin(19, Pin.OUT), 10000)
+        self._inb = PWM(Pin(18, Pin.OUT), 10000)
+        self._is_on = None
 
     def on(self):
-        self.ina.duty(0)
-        self.inb.duty(700)
-    
+        self._ina.duty(0)
+        self._inb.duty(700)
+        self._is_on = True
+
     def off(self):
-        self.ina.duty(0)
-        self.inb.duty(0)
-    
-    def is_running(self):
-        return self.ina.duty() != 0 or self.inb.duty() != 0
+        self._ina.duty(0)
+        self._inb.duty(0)
+        self._is_on = False
+
+    def is_on(self):
+        return self._is_on

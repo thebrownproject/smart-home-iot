@@ -2,7 +2,6 @@ from umqtt.simple import MQTTClient
 from config import MQTT_BROKER, MQTT_PORT, MQTT_USER, MQTT_PASSWORD
 import time
 
-
 class SmartHomeMQTTClient:
     def __init__(self):
         self.callbacks = {}
@@ -16,8 +15,6 @@ class SmartHomeMQTTClient:
             ssl=True,
             ssl_params={"server_hostname": MQTT_BROKER}
         )
-        self.client.sock = None  # Will be set on connect
-    
     
     def connect(self):
         try:
@@ -28,20 +25,11 @@ class SmartHomeMQTTClient:
             print("Error connecting to MQTT broker:", e)
             return False
     
-    def disconnect(self):
-        try:
-            self.client.disconnect()
-            return True
-        except Exception as e:
-            print("Error disconnecting from MQTT broker:", e)
-            return False
-    
     def publish(self, topic, payload):
         try:
             self.client.publish(topic, payload)
             return True
         except OSError as e:
-            # Socket timeout or connection error
             print(f"MQTT publish timeout/error for {topic}: {e}")
             return False
         except Exception as e:
@@ -49,16 +37,36 @@ class SmartHomeMQTTClient:
             return False
 
     def _dispatch(self, topic, msg):
-        # Master dispatch that routes messages to the appropriate callback
-        # Decode topic from bytes to string for lookup
+        """
+        Route incoming MQTT messages to the correct handler.
+
+        Flow:
+        1. MQTT broker sends message → umqtt library receives it
+        2. umqtt calls THIS function (registered via set_callback)
+        3. We look up which handler to call based on topic
+        4. Call the handler with (topic, msg)
+
+        Example:
+        - Message arrives on "devices/esp32_main/rfid/response"
+        - _dispatch looks up self.callbacks["devices/esp32_main/rfid/response"]
+        - Finds control.handle_rfid_response
+        - Calls control.handle_rfid_response(topic, msg)
+        """
         topic_str = topic.decode() if isinstance(topic, bytes) else topic
         callback = self.callbacks.get(topic_str)
         if callback:
             callback(topic_str, msg)
         else:
             print(f"No callback found for topic: {topic}")
-    
+
     def subscribe(self, topic, callback):
+        """
+        Subscribe to MQTT topic and register handler.
+
+        Note: set_callback is called EVERY time subscribe() is called,
+        but umqtt only keeps ONE global callback (_dispatch), which
+        then routes to multiple topic-specific handlers via self.callbacks dict.
+        """
         try:
             self.callbacks[topic] = callback
             self.client.set_callback(self._dispatch)

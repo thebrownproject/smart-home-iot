@@ -27,6 +27,7 @@ MQTT_PASSWORD = "StrongPassword123!"
 # MQTT Topics Outgoing
 # Sensor Data
 TOPIC_SENSOR_DATA = f"devices/{DEVICE_ID}/data"
+TOPIC_ASTHMA_ALERT = f"devices/{DEVICE_ID}/asthma_alert"
 # RFID Request
 TOPIC_RFID_REQUEST = f"devices/{DEVICE_ID}/rfid/check"
 # Status Updates (for web dashboard display - FR8.4, FR8.5)
@@ -42,6 +43,6 @@ TOPIC_CONTROL_WINDOW = f"devices/{DEVICE_ID}/control/window"
 TOPIC_CONTROL_FAN = f"devices/{DEVICE_ID}/control/fan"
 
 # Time Configuration (NTP)
-TIMEZONE_OFFSET_HOURS = 10  # AEDT (Melbourne/Sydney) UTC+10
+TIMEZONE_OFFSET_HOURS = 11  # AEDT (Melbourne/Sydney) UTC+10
 NIGHT_START_HOUR = 20       # 8pm
-NIGHT_END_HOUR = 7          # 7ama
+NIGHT_END_HOUR = 7          # 7am

@@ -1,48 +1,43 @@
 class ControlHandler:
+    def __init__(self, rgb_manager, oled_manager, door_servo_manager, buzzer_manager):
+        self.rgb_manager = rgb_manager
+        self.oled_manager = oled_manager
+        self.door_servo_manager = door_servo_manager
+        self.buzzer_manager = buzzer_manager
+
     def handle_rfid_response(self, topic, msg):
         import ujson
-        from outputs.rgb import RGB
-        from outputs.servo import Servo
-        from display.oled import OLED
-        from outputs.buzzer import Buzzer
 
+        print(f"[ControlHandler] RFID response received on {topic}: {msg}")
         try:
             data = ujson.loads(msg.decode())
-            rgb = RGB()
-            oled = OLED()
-
-            if data['access'] == 'granted':
-                rgb.set_color(0, 255, 0)
-                oled.show_text("ACCESS GRANTED", "Welcome home")
-                door_servo = Servo(pin=13)
-                door_servo.open()
-                del door_servo
-
-            elif data['access'] == 'denied':
-                rgb.set_color(255, 0, 0)
-                oled.show_text("ACCESS DENIED", "Access denied")
-                buzzer = Buzzer()
-                buzzer.start()
-                del buzzer
-
-            del rgb, oled
-        except Exception as e:
-            print(f"Error handling RFID response: {e}")
+            print(f"[ControlHandler] Parsed RFID data: {data}")
+            if data.get('access') == 'granted':
+                print("[ControlHandler] ACCESS GRANTED - opening door")
+                self.rgb_manager.show('rfid', (0, 255, 0), 3)
+                self.oled_manager.show('rfid', "ACCESS", 3, "GRANTED")
+                self.door_servo_manager.open(duration=5)
+            elif data.get('access') == 'denied':
+                print("[ControlHandler] ACCESS DENIED - activating buzzer")
+                self.rgb_manager.show('rfid', (255, 0, 0), 3)
+                self.oled_manager.show('rfid', "ACCESS", 3, "DENIED")
+                self.buzzer_manager.start(duration=5)
+            else:
+                print(f"[ControlHandler] Unknown access value: {data.get('access')}")
+        except (ValueError, AttributeError) as e:
+            print(f"[ControlHandler] Error parsing RFID response: {e}")
 
     def handle_door_control(self, topic, msg):
         import ujson
-        from outputs.servo import Servo
 
         try:
             data = ujson.loads(msg.decode())
-            door = Servo(pin=13)
-            if data['action'] == 'open':
-                door.open()
-            elif data['action'] == 'close':
-                door.close()
-            del door
-        except Exception as e:
-            print(f"Error handling door control: {e}")
+            if data.get('action') == 'open':
+                self.door_servo_manager.open(duration=5)
+            elif data.get('action') == 'close':
+                self.door_servo_manager.close()
+        except (ValueError, AttributeError) as e:
+            print(f"Error parsing door control: {e}")
 
     def handle_window_control(self, topic, msg):
         import ujson
@@ -50,14 +45,17 @@ class ControlHandler:
 
         try:
             data = ujson.loads(msg.decode())
-            window = Servo(pin=5)
-            if data['action'] == 'open':
-                window.open()
-            elif data['action'] == 'close':
-                window.close()
-            del window
-        except Exception as e:
-            print(f"Error handling window control: {e}")
+            action = data.get('action')
+
+            if action in ('open', 'close'):
+                window = Servo(pin=5)
+                if action == 'open':
+                    window.open()
+                elif action == 'close':
+                    window.close()
+                del window
+        except (ValueError, AttributeError) as e:
+            print(f"Error parsing window control: {e}")
 
     def handle_fan_control(self, topic, msg):
         import ujson
@@ -65,13 +63,15 @@ class ControlHandler:
 
         try:
             data = ujson.loads(msg.decode())
-            fan = Fan()
-            if data['action'] == 'on':
-                fan.on()
-            elif data['action'] == 'off':
-                fan.off()
-            del fan
-        except Exception as e:
-            print(f"Error handling fan control: {e}")
+            action = data.get('action')
+            if action in ('on', 'off'):
+                fan = Fan()
+                if action == 'on':
+                    fan.on()
+                elif action == 'off':
+                    fan.off()
+                del fan
+        except (ValueError, AttributeError) as e:
+            print(f"Error parsing fan control: {e}")
         
         

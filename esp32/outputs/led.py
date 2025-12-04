@@ -2,13 +2,16 @@ from machine import Pin
 
 class LED:
     def __init__(self):
-        self.led = Pin(12, Pin.OUT)
+        self._led = Pin(12, Pin.OUT)
+        self._is_on = None
     
     def on(self):
-        self.led.value(1)
+        self._led.value(1)
+        self._is_on = True
     
     def off(self):
-        self.led.value(0)
-    
-    def toggle(self):
-        self.led.value(not self.led.value())
+        self._led.value(0)
+        self._is_on = False
+
+    def is_on(self):
+        return self._is_on
