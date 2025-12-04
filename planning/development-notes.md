@@ -3864,3 +3864,100 @@ None - all changes compiled successfully on first attempt.
 **Files Modified**: 7
 **Lines Changed**: +190 / -28
 **Build Status**: ✅ 0 errors, 0 warnings
+
+## Session 33 - 2025-12-04 - Phase 3 API Client Setup ✅
+
+**Phase**: 3 - Web Dashboard  
+**Milestone**: 3.1 - MQTT & API Client Setup  
+**Branch**: main
+
+### Tasks Completed
+
+- [x] **T3.2**: Set up C# API client - Created axios-based wrapper with type-safe endpoints for all C# API routes
+
+### Changes Made
+
+**1. API Client Implementation** (`web/lib/api.ts`)
+- Created TypeScript types matching C# API models:
+  - `SensorLogEntry` (motion data)
+  - `GasAlertEntry` (gas detection events)
+  - `RfidScanEntry` (access logs)
+  - `getAuthorisedCardEntry` (authorized cards)
+- Implemented 4 API functions:
+  - `getMotionData(hours)` → GET `/api/sensors/motion`
+  - `getGasData(hours)` → GET `/api/sensors/gas`
+  - `getRfidScans(filter)` → GET `/api/RfidScans`
+  - `getAuthorisedCards(id)` → GET `/api/AuthorisedCard/{id}`
+- Used snake_case for type properties to match C# JSON serialization
+
+**2. CORS Configuration** (`api/Program.cs:33-42, 144`)
+- Added CORS policy `AllowNextJs` to allow requests from `http://localhost:3000`
+- Configured to allow all headers and methods for development
+- Critical fix: Without CORS, browser blocked all API requests with network errors
+
+**3. Test Component** (`web/components/ApiTests.tsx`)
+- Created client-side component with `useEffect` to test all 4 endpoints
+- Displays JSON responses for manual verification
+- Used `'use client'` directive for browser-based API calls
+
+**4. Environment Configuration** (`web/.env.local`, `web/.env.example`)
+- Set `NEXT_PUBLIC_API_URL=http://localhost:5223`
+- Created `.env.example` for repository reference
+
+**5. Dependencies**
+- Installed `axios@1.13.2` for HTTP client
+
+### Decisions Made
+
+1. **Types vs Interfaces**: Used `type` instead of `interface` for API response shapes
+   - Cleaner syntax for unions (`"granted" | "denied"`)
+   - Prevents accidental declaration merging
+   - Appropriate for data contracts
+   
+2. **snake_case Properties**: Kept API type properties in snake_case (`device_id`, `sensor_type`) to match C# JSON output
+   - C# uses snake_case column attributes for Supabase compatibility
+   - Could transform to camelCase in future, but snake_case works for now
+
+3. **Error Handling**: Simple try-catch with console.error
+   - Errors thrown to calling components for handling
+   - Sufficient for development; can add retry logic/toasts later
+
+4. **Testing Approach**: Browser-based component testing instead of Node.js scripts
+   - Matches Next.js environment (browser APIs available)
+   - Simpler than configuring ts-node/tsx
+   - useEffect automatically calls endpoints on mount
+
+5. **Temporarily Disabled MQTT Background Services** (`api/Program.cs:56-57`)
+   - Commented out `MqttBackgroundService` and `SensorDataWriter`
+   - Reason: MQTT TLS certificate validation issue crashes API on startup
+   - REST endpoints work without background services
+   - TODO: Re-enable after resolving certificate issue (from Phase 2 audit notes)
+
+### Issues Encountered
+
+1. **Network Errors (CORS)**: All 4 API calls initially failed with "Network Error"
+   - Root cause: C# API had no CORS configuration
+   - Fix: Added `AddCors()` and `UseCors("AllowNextJs")` to Program.cs
+   - Learning: CORS errors appear as generic "Network Error" in axios, not specific CORS messages
+
+2. **Missing `/api/` prefix**: `getAuthorisedCards` initially called `/AuthorisedCard/{id}` instead of `/api/AuthorisedCard/{id}`
+   - Fixed by adding `/api/` prefix to match controller route structure
+
+3. **Port Conflicts**: Multiple attempts to restart API hit "address already in use" errors
+   - Resolved by killing process on port 5223 with `lsof -ti:5223 | xargs kill -9`
+
+### Next Session
+
+- Begin **T3.3**: Set up MQTT client provider
+  - Create `web/lib/mqtt.ts` and `web/components/MQTTProvider.tsx`
+  - Connect to HiveMQ WebSocket (`wss://broker.hivemq.com:8884/mqtt`)
+  - Subscribe to device data and status topics
+  - Consider re-enabling C# MQTT background services if TLS issue resolved
+
+### Session Statistics
+
+**Duration**: ~90 minutes  
+**Files Created**: 4 (`web/lib/api.ts`, `web/components/ApiTests.tsx`, `web/.env.local`, `web/.env.example`)  
+**Files Modified**: 2 (`api/Program.cs`, `web/app/page.tsx`)  
+**Lines Added**: ~150  
+**Build Status**: ✅ Next.js builds, all API endpoints tested and working

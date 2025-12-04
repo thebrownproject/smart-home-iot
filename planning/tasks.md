@@ -449,13 +449,16 @@
   - Run `npx create-next-app@latest` with TypeScript, Tailwind, App Router
   - Install dependencies: `mqtt`
   - Configure environment variables in `.env.local`
+  - **Started**: 2025-12-04
   - **Completed**: 2025-12-04
 
-- [ ] **T3.2**: Set up C# API client
+- [x] **T3.2**: Set up C# API client
 
   - File: `web/lib/api.ts`
   - Create fetch wrapper for C# API endpoints
   - Test: Fetch sensor data from C# API
+  - **Started**: 2025-12-04
+  - **Completed**: 2025-12-04
 
 - [ ] **T3.3**: Set up MQTT client provider
   - File: `web/lib/mqtt.ts` and `web/components/MQTTProvider.tsx`

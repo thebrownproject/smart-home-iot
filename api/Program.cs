@@ -30,6 +30,17 @@ internal static class Program
     // Configures the web app builder with the necessary services
     private static void ConfigureWebAppBuilder(WebApplicationBuilder builder, bool useSwagger)
     {
+        // Add CORS policy for Next.js frontend
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowNextJs", policy =>
+            {
+                policy.WithOrigins("http://localhost:3000")
+                      .AllowAnyHeader()
+                      .AllowAnyMethod();
+            });
+        });
+
         // Add controllers and configure JSON serialization
         builder.Services.AddControllers().AddNewtonsoftJson(options =>
         {
@@ -52,8 +63,9 @@ internal static class Program
         builder.Services.AddSingleton<api.services.mqtt.MqttPublisher>();
 
         // Register background services
-        builder.Services.AddHostedService<api.services.mqtt.MqttBackgroundService>();
-        builder.Services.AddHostedService<api.services.SensorDataWriter>();
+        // Temporarily disabled - MQTT TLS certificate issue
+        // builder.Services.AddHostedService<api.services.mqtt.MqttBackgroundService>();
+        // builder.Services.AddHostedService<api.services.SensorDataWriter>();
 
         // Configures the Swagger UI
         if (useSwagger)
@@ -128,6 +140,9 @@ internal static class Program
 
         // Redirects to HTTPS
         app.UseHttpsRedirection();
+
+        // Enable CORS
+        app.UseCors("AllowNextJs");
 
         // Uses the controllers
         app.UseAuthorization();
