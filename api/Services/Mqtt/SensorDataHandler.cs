@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace api.services.mqtt;
 
@@ -11,8 +12,20 @@ namespace api.services.mqtt;
 public class SensorDataHandler : IMqttMessageHandler
 {
     private readonly object _lockObject = new object();
+    private readonly ILogger<SensorDataHandler> _logger;
     private SensorDataMessage? _latestTemperature;
     private SensorDataMessage? _latestHumidity;
+
+    // DHT11 sensor valid ranges
+    private const double MinTemperature = -20.0;
+    private const double MaxTemperature = 60.0;
+    private const double MinHumidity = 0.0;
+    private const double MaxHumidity = 100.0;
+
+    public SensorDataHandler(ILogger<SensorDataHandler> logger)
+    {
+        _logger = logger;
+    }
 
     public bool CanHandle(string topic)
     {
@@ -21,8 +34,45 @@ public class SensorDataHandler : IMqttMessageHandler
 
     public Task HandleAsync(string topic, string payload)
     {
-        var data = JsonSerializer.Deserialize<SensorDataMessage>(payload);
-        if (data == null) return Task.CompletedTask;
+        // Parse JSON with error handling
+        SensorDataMessage? data;
+        try
+        {
+            data = JsonSerializer.Deserialize<SensorDataMessage>(payload);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogWarning(ex, "Failed to parse sensor data payload: {Payload}", payload);
+            return Task.CompletedTask;
+        }
+
+        if (data == null)
+        {
+            _logger.LogWarning("Sensor data deserialized to null: {Payload}", payload);
+            return Task.CompletedTask;
+        }
+
+        // Validate sensor_type
+        if (string.IsNullOrWhiteSpace(data.sensor_type))
+        {
+            _logger.LogWarning("Sensor data missing sensor_type: {Payload}", payload);
+            return Task.CompletedTask;
+        }
+
+        // Validate sensor value is within DHT11 operating ranges
+        if (data.sensor_type == "temperature" && (data.value < MinTemperature || data.value > MaxTemperature))
+        {
+            _logger.LogWarning("Temperature value {Value} out of range [{Min}-{Max}]",
+                data.value, MinTemperature, MaxTemperature);
+            return Task.CompletedTask;
+        }
+
+        if (data.sensor_type == "humidity" && (data.value < MinHumidity || data.value > MaxHumidity))
+        {
+            _logger.LogWarning("Humidity value {Value} out of range [{Min}-{Max}]",
+                data.value, MinHumidity, MaxHumidity);
+            return Task.CompletedTask;
+        }
 
         lock (_lockObject)
         {

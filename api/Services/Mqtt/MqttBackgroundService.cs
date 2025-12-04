@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using MQTTnet;
 using System.Text;
 
@@ -13,17 +14,20 @@ public class MqttBackgroundService : IHostedService, IDisposable
     private readonly IConfiguration _configuration;
     private readonly IEnumerable<IMqttMessageHandler> _handlers;
     private readonly MqttPublisher _mqttPublisher;
+    private readonly ILogger<MqttBackgroundService> _logger;
     private IMqttClient? _mqttClient;
     private Timer? _reconnectTimer;
 
     public MqttBackgroundService(
         IConfiguration configuration,
         IEnumerable<IMqttMessageHandler> handlers,
-        MqttPublisher mqttPublisher)
+        MqttPublisher mqttPublisher,
+        ILogger<MqttBackgroundService> logger)
     {
         _configuration = configuration;
         _handlers = handlers;
         _mqttPublisher = mqttPublisher;
+        _logger = logger;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -86,7 +90,7 @@ public class MqttBackgroundService : IHostedService, IDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error processing MQTT message: {ex.Message}");
+            _logger.LogError(ex, "Error processing MQTT message on topic {Topic}", e.ApplicationMessage.Topic);
         }
     }
 
@@ -101,7 +105,7 @@ public class MqttBackgroundService : IHostedService, IDisposable
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Reconnection failed: {ex.Message}");
+                _logger.LogWarning(ex, "MQTT reconnection attempt failed, will retry in 5 seconds");
             }
         }, null, TimeSpan.FromSeconds(5), Timeout.InfiniteTimeSpan);
 

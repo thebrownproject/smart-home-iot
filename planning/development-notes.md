@@ -3771,3 +3771,96 @@ All endpoints return properly formatted JSON arrays with correct field names (ca
 **Learning Focus**: REST API design, query filtering patterns, Supabase C# client, Swagger documentation, DI lifetime management
 
 ---
+
+## Session 32 - 2025-12-04 - Phase 2 Audit Remediation ✅
+
+**Phase**: 2 - API Layer
+**Milestone**: 2.1 - C# API Setup (Code Quality)
+**Branch**: phase-2-api-layer
+
+### Tasks Completed
+
+- [x] **Code Review Remediation**: Addressed critical and high-priority findings from GLM 4.6 code audit
+
+### Changes Made
+
+**1. Re-enabled Background Services** (`Program.cs:54-56`)
+- Uncommented `MqttBackgroundService` and `SensorDataWriter` registrations
+- MQTT functionality now operational
+
+**2. Input Validation - MQTT Handlers**
+
+*RfidValidationHandler.cs*:
+- Added topic format validation (must have 4+ segments)
+- Added JSON parsing try-catch with `JsonException` handling
+- Changed `data?["card_id"]` → `TryGetValue()` pattern (avoids `KeyNotFoundException`)
+- Removed null-forgiving operators (`cardId!` → proper null checks)
+- Added `ILogger<RfidValidationHandler>` with warning/info logs
+
+*SensorDataHandler.cs*:
+- Added JSON parsing try-catch
+- Added null check after deserialization
+- Added `sensor_type` validation (not null/empty)
+- Added DHT11 range validation: temperature -20°C to 60°C, humidity 0-100%
+- Added `ILogger<SensorDataHandler>` with warning logs
+
+**3. Input Validation - Controllers**
+
+*SensorLogController.cs*:
+- Added null request check → 400 Bad Request
+- Added `DeviceId == Guid.Empty` check → 400
+- Added `SensorType` whitelist validation (temperature, humidity, gas, motion)
+- Added response validation (check `response.Models.Any()`)
+- Added `ILogger<SensorLogController>`
+
+*GasAlertController.cs*:
+- **Bug fix**: Changed `new GasAlertsModel()` → `new GasAlertsModel(request)` (was ignoring request data!)
+- Added null request check → 400
+- Added `DeviceId == Guid.Empty` check → 400
+- Added `SensorValue` range validation (0-1023 for analog sensor)
+- Added response validation
+- Added `ILogger<GasAlertController>`
+
+**4. Console.WriteLine → ILogger**
+
+*MqttBackgroundService.cs*:
+- Line 89: `Console.WriteLine($"Error processing...")` → `_logger.LogError(ex, "Error processing MQTT message on topic {Topic}", ...)`
+- Line 104: `Console.WriteLine($"Reconnection failed...")` → `_logger.LogWarning(ex, "MQTT reconnection attempt failed...")`
+
+*SensorDataWriter.cs*:
+- Line 88: `Console.WriteLine($"Error writing...")` → `_logger.LogError(ex, "Error writing sensor data to database")`
+
+### Decisions Made
+
+1. **Guard Clause Pattern**: Used early-return validation instead of nested if-else for readability
+2. **Structured Logging**: Used placeholders `{Topic}`, `{DeviceId}` instead of string interpolation for log aggregation
+3. **Consistent Error Response**: All controllers return `{ "error": "message" }` format for 400/500 responses
+4. **Skip Unknown Sensor Types**: Range validation only applies to known types (temperature, humidity), unknown types pass through
+
+### Issues Encountered
+
+None - all changes compiled successfully on first attempt.
+
+### Audit Status After This Session
+
+| Finding | Severity | Status |
+|---------|----------|--------|
+| Hardcoded credentials | Critical | ✅ Fixed (commit 7f2a67a) |
+| Background services disabled | Critical | ✅ Fixed |
+| MQTT handler input validation | Critical | ✅ Fixed |
+| Controller input validation | High | ✅ Fixed |
+| Console.WriteLine → ILogger | Medium | ✅ Fixed |
+| Global exception middleware | Medium | ⏳ Not addressed |
+
+### Next Session
+
+- Begin Phase 3 (Web Dashboard) OR
+- Address global exception handling middleware if required
+- Consider MQTT TLS certificate issue resolution
+
+### Session Statistics
+
+**Duration**: ~45 minutes
+**Files Modified**: 7
+**Lines Changed**: +190 / -28
+**Build Status**: ✅ 0 errors, 0 warnings

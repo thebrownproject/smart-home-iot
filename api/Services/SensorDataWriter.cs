@@ -1,5 +1,6 @@
 using api.models;
 using api.services.mqtt;
+using Microsoft.Extensions.Logging;
 
 namespace api.services;
 
@@ -12,16 +13,19 @@ public class SensorDataWriter : IHostedService, IDisposable
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly IConfiguration _configuration;
     private readonly SensorDataHandler _sensorDataHandler;
+    private readonly ILogger<SensorDataWriter> _logger;
     private Timer? _timer;
 
     public SensorDataWriter(
         IServiceScopeFactory scopeFactory,
         IConfiguration configuration,
-        SensorDataHandler sensorDataHandler)
+        SensorDataHandler sensorDataHandler,
+        ILogger<SensorDataWriter> logger)
     {
         _scopeFactory = scopeFactory;
         _configuration = configuration;
         _sensorDataHandler = sensorDataHandler;
+        _logger = logger;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -85,7 +89,7 @@ public class SensorDataWriter : IHostedService, IDisposable
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error writing sensor data: {ex.Message}");
+            _logger.LogError(ex, "Error writing sensor data to database");
         }
     }
 

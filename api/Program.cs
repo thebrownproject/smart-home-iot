@@ -52,9 +52,8 @@ internal static class Program
         builder.Services.AddSingleton<api.services.mqtt.MqttPublisher>();
 
         // Register background services
-        // TODO: Temporarily disabled for REST endpoint testing (MQTT TLS cert issue)
-        // builder.Services.AddHostedService<api.services.mqtt.MqttBackgroundService>();
-        // builder.Services.AddHostedService<api.services.SensorDataWriter>();
+        builder.Services.AddHostedService<api.services.mqtt.MqttBackgroundService>();
+        builder.Services.AddHostedService<api.services.SensorDataWriter>();
 
         // Configures the Swagger UI
         if (useSwagger)
