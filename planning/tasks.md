@@ -443,12 +443,13 @@
 
 ### Milestone 3.1: Next.js Project Setup
 
-- [ ] **T3.1**: Initialize Next.js project
+- [x] **T3.1**: Initialize Next.js project
 
   - Create `web/` directory
   - Run `npx create-next-app@latest` with TypeScript, Tailwind, App Router
   - Install dependencies: `mqtt`
   - Configure environment variables in `.env.local`
+  - **Completed**: 2025-12-04
 
 - [ ] **T3.2**: Set up C# API client
 
