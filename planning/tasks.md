@@ -460,12 +460,14 @@
   - **Started**: 2025-12-04
   - **Completed**: 2025-12-04
 
-- [ ] **T3.3**: Set up MQTT client provider
+- [x] **T3.3**: Set up MQTT client provider
   - File: `web/lib/mqtt.ts` and `web/components/MQTTProvider.tsx`
   - Connect to HiveMQ WebSocket (wss://...)
   - Subscribe to `devices/+/data` (all device sensor data)
   - Subscribe to `devices/+/status/#` (device status updates)
   - Provide real-time updates via React Context
+  - **Started**: 2025-12-04
+  - **Completed**: 2025-12-06
 
 ---
 

@@ -3961,3 +3961,124 @@ None - all changes compiled successfully on first attempt.
 **Files Modified**: 2 (`api/Program.cs`, `web/app/page.tsx`)  
 **Lines Added**: ~150  
 **Build Status**: ✅ Next.js builds, all API endpoints tested and working
+
+## Session 34 - 2025-12-06 - MQTT Provider with Bi-directional Communication ✅
+
+**Phase**: 3 - Web Dashboard  
+**Milestone**: 3.1 - MQTT & API Client Setup  
+**Branch**: main
+
+### Tasks Completed
+
+- [x] **T3.3**: Set up MQTT client provider - Implemented full bi-directional MQTT communication with React Context API
+
+### Changes Made
+
+**1. MQTT Provider Implementation** (`web/components/MQTTProvider.tsx`)
+- Created React Context with TypeScript types for sensor data, RFID checks, and device status
+- Implemented bi-directional MQTT communication:
+  - **Receive**: Subscribe to `data`, `rfid/check`, `status/*` topics
+  - **Send**: `publishMessage()` function for control commands
+  - **Request/Response**: Status request on page load via `request/status` → `response/status`
+- Added event handlers: handleConnect, handleMessage, handleDisconnect, handleError
+- Proper cleanup with `client.off()` to prevent memory leaks
+- 200ms delay before status request to ensure subscription completes
+
+**2. Display Components** (`web/components/MQTTStatus.tsx`, `web/components/MQTTFanToggle.tsx`)
+- **MQTTStatus**: Shows connection status and latest sensor data using `useMQTT()` hook
+- **MQTTFanToggle**: Fan control button with bi-directional updates
+  - Publishes to `devices/esp32_main/control/fan`
+  - Displays current fan state from `fanStatus` context
+  - Color-coded button (green=off, red=on)
+
+**3. Updated Page** (`web/app/page.tsx`)
+- Added MQTTStatus and MQTTFanToggle components to home page
+
+### Decisions Made
+
+1. **Context API over Props**: Used React Context to avoid prop drilling through multiple component levels
+   - `MQTTProvider` wraps entire app in layout.tsx
+   - Components access data via `useMQTT()` custom hook
+   - Automatic re-renders when MQTT messages arrive
+
+2. **Request/Response Pattern for Initial Status**: 
+   - Web publishes to `request/status` on connection (200ms delay)
+   - ESP32 responds on `response/status` with all device states
+   - Solves "unknown" status problem on page refresh
+   - More accurate than localStorage (reflects actual device state)
+
+3. **Bi-directional MQTT Topics**:
+   - **Control topics**: `devices/{id}/control/*` (web → ESP32)
+   - **Status topics**: `devices/{id}/status/*` (ESP32 → web)
+   - Prevents confusion and enables feedback loop
+
+4. **publishMessage Function Scope**: Defined at component level (not inside useEffect)
+   - Accessible to both JSX event handlers and useEffect
+   - Avoids scope issues with Context value object
+
+### Issues Encountered
+
+1. **Topic Direction Confusion**: Initially subscribed to `request/status` instead of `response/status`
+   - Web should publish to request, subscribe to response
+   - ESP32 should subscribe to request, publish to response
+
+2. **Function Scope Error**: `publishMessage` initially defined inside useEffect
+   - Caused "not in scope" error when adding to Context value
+   - Fixed by moving to component level before useEffect
+
+3. **Property Mismatch**: ESP32 `control_handler.py` expects `action` but web sends `state`
+   - **Not fixed yet** - requires ESP32 code update (see Next Session)
+
+4. **Missing Status Publishing**: ESP32 fan control doesn't publish status after executing command
+   - Fan turns on/off but web never knows
+   - **Not fixed yet** - requires ESP32 code update (see Next Session)
+
+### Key Learning Points
+
+- **Context Pattern**: "Data lake" for app-wide state without prop drilling
+- **Module-level Execution**: Code outside functions runs when file imports (mqtt.connect())
+- **Provider Pattern**: Component that renders children while providing data via Context
+- **Custom Hooks**: Wrappers around useContext for cleaner API and error checking
+- **Request/Response Pattern**: Professional IoT approach for querying device state
+
+### Next Session
+
+**CRITICAL - ESP32 Updates Required:**
+
+1. **Update `esp32/handlers/control_handler.py`** - `handle_fan_control()`:
+   - Change `action = data.get('action')` to `state = data.get('state')`
+   - Add status publishing after fan control:
+     ```python
+     # After fan.on() or fan.off()
+     status_payload = ujson.dumps({
+         "state": state,
+         "timestamp": time_sync.get_iso_timestamp()
+     })
+     self.mqtt.publish(TOPIC_STATUS_FAN, status_payload)
+     ```
+
+2. **Implement Request/Response Handler on ESP32**:
+   - Subscribe to `devices/esp32_main/request/status`
+   - When request received, publish current state of all outputs:
+     ```python
+     # In control_handler.py or new status_handler.py
+     response_payload = ujson.dumps({
+         "fan": {"state": "on/off", "timestamp": "..."},
+         "door": {"state": "open/closed", "timestamp": "..."},
+         "window": {"state": "open/closed", "timestamp": "..."}
+     })
+     self.mqtt.publish(TOPIC_RESPONSE_STATUS, response_payload)
+     ```
+
+3. **Add same pattern for door and window controls** (FR9.1, FR9.2)
+
+4. **Then proceed with T3.4**: Create sensor display card component
+
+### Session Statistics
+
+**Duration**: ~4 hours (with 24-hour break mid-session)  
+**Files Created**: 3 (`web/components/MQTTProvider.tsx`, `web/components/MQTTStatus.tsx`, `web/components/MQTTFanToggle.tsx`)  
+**Files Modified**: 2 (`web/app/page.tsx`, `web/components/MQTTProvider.tsx` updates)  
+**Lines Added**: ~250  
+**Build Status**: ✅ Next.js builds, MQTT connects, bi-directional communication working (pending ESP32 updates)
+

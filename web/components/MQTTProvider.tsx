@@ -29,6 +29,7 @@ type MQTTContextValue = {
   doorStatus: DeviceStatus | null;
   windowStatus: DeviceStatus | null;
   fanStatus: DeviceStatus | null;
+  publishMessage: (topic: string, message: object) => void;
 };
 
 const MQTTContext = createContext<MQTTContextValue>({
@@ -38,6 +39,7 @@ const MQTTContext = createContext<MQTTContextValue>({
   doorStatus: null,
   windowStatus: null,
   fanStatus: null,
+  publishMessage: () => {},
 });
 
 export function MQTTProvider({ children }: { children: React.ReactNode }) {
@@ -51,6 +53,16 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
   const [doorStatus, setDoorStatus] = useState<DeviceStatus | null>(null);
   const [windowStatus, setWindowStatus] = useState<DeviceStatus | null>(null);
   const [fanStatus, setFanStatus] = useState<DeviceStatus | null>(null);
+
+  const publishMessage = (topic: string, message: object) => {
+    client.publish(topic, JSON.stringify(message), (err) => {
+      if (err) {
+        console.error("Error publishing message:", err);
+      } else {
+        console.log("Message published to topic:", topic);
+      }
+    });
+  };
 
   useEffect(() => {
     const deviceId = "esp32_main";
@@ -69,6 +81,18 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
       client.subscribe(`devices/${deviceId}/status/#`, (err) => {
         if (err) console.error("Error subscribing to status topic:", err);
       });
+
+      client.subscribe(`devices/${deviceId}/response/status`, (err) => {
+        if (err)
+          console.error("Error subscribing to response status topic:", err);
+      });
+
+      setTimeout(() => {
+        publishMessage(`devices/${deviceId}/request/status`, {
+          requestId: Date.now().toString(),
+          timestamp: new Date().toISOString(),
+        });
+      }, 200);
     };
 
     const handleMessage = (topic: string, message: Buffer) => {
@@ -86,6 +110,11 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
           setWindowStatus(data);
         } else if (topic.endsWith("/status/fan")) {
           setFanStatus(data);
+        } else if (topic.endsWith("/response/status")) {
+          if (data.fan) setFanStatus(data.fan);
+          if (data.door) setDoorStatus(data.door);
+          if (data.window) setWindowStatus(data.window);
+          console.log("Status updated from response:", data);
         }
       } catch (error) {
         console.error("Error parsing message:", error);
@@ -123,6 +152,7 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
     doorStatus,
     windowStatus,
     fanStatus,
+    publishMessage,
   };
   return <MQTTContext.Provider value={value}>{children}</MQTTContext.Provider>;
 }
