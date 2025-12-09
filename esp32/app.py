@@ -20,6 +20,10 @@ class SmartHomeApp:
         self.buzzer_manager = BuzzerManager()
         self.fan_manager = FanManager()
 
+        # Create environment handler early for status requests
+        from handlers.environment_handler import EnvironmentHandler
+        self.environment = EnvironmentHandler()
+
         from outputs.oled import OLED
         oled = OLED()
         oled.show_text("MQTT Broker", "Connecting...")
@@ -51,7 +55,7 @@ class SmartHomeApp:
         self.mqtt.subscribe(TOPIC_CONTROL_DOOR, lambda t, m: self.control.handle_door_control(t, m, self.mqtt))
         self.mqtt.subscribe(TOPIC_CONTROL_WINDOW, lambda t, m: self.control.handle_window_control(t, m, self.mqtt))
         self.mqtt.subscribe(TOPIC_CONTROL_FAN, lambda t, m: self.control.handle_fan_control(t, m, self.mqtt))
-        self.mqtt.subscribe(TOPIC_REQUEST_STATUS, lambda t, m: self.control.handle_status_request(t, m, self.mqtt))
+        self.mqtt.subscribe(TOPIC_REQUEST_STATUS, lambda t, m: self.control.handle_status_request(t, m, self.mqtt, self.environment))
         self.memory.collect("After MQTT setup")
         oled.show_text("System Ready", "App Running")
         del oled
@@ -62,7 +66,6 @@ class SmartHomeApp:
         from handlers.steam_handler import SteamHandler
         from handlers.gas_handler import GasHandler
         from handlers.rfid_handler import RFIDHandler
-        from handlers.environment_handler import EnvironmentHandler
         from handlers.button_handler import ButtonHandler
 
         motion = MotionHandler()
@@ -70,7 +73,6 @@ class SmartHomeApp:
         steam = SteamHandler()
         gas = GasHandler()
         rfid = RFIDHandler()
-        environment = EnvironmentHandler()
         button = ButtonHandler()
 
         print("App running...")
@@ -79,7 +81,9 @@ class SmartHomeApp:
             self.rgb_manager.update()
             self.oled_manager.update()
             self.door_servo_manager.update()
+            self.window_servo_manager.update()
             self.buzzer_manager.update()
+            self.fan_manager.update()
             self.mqtt.check_messages()
 
             button.handle_buttons(self.oled_manager)
@@ -94,11 +98,11 @@ class SmartHomeApp:
                 steam.handle_steam_detection(self.mqtt, self.rgb_manager, self.oled_manager)
 
             if loop_count % 10 == 5:
-                gas.handle_gas_detection(self.mqtt, self.rgb_manager, self.oled_manager, self.buzzer_manager, button)
+                gas.handle_gas_detection(self.mqtt, self.rgb_manager, self.oled_manager, self.buzzer_manager, button, self.fan_manager)
 
             rfid.handle_rfid_detection(self.mqtt, self.oled_manager)
 
-            environment.handle_environment_detection(self.mqtt, self.oled_manager)
+            self.environment.handle_environment_detection(self.mqtt, self.oled_manager)
 
             if loop_count % 10 == 1:
                 self.memory.collect("App loop")

@@ -117,7 +117,7 @@ class ControlHandler:
         except (ValueError, AttributeError) as e:
             print(f"Error parsing fan control: {e}")
     
-    def handle_status_request(self, topic, msg, mqtt):
+    def handle_status_request(self, topic, msg, mqtt, environment_handler):
         import ujson
         from utils.time_sync import TimeSync
         from config import TOPIC_RESPONSE_STATUS
@@ -126,7 +126,7 @@ class ControlHandler:
             fan_state = "on"
         else:
             fan_state = "off"
-        
+
         if self.door_servo_manager.is_open:
             door_state = "open"
         else:
@@ -149,7 +149,9 @@ class ControlHandler:
             "window": {
                 "state": window_state,
                 "timestamp": TimeSync().get_iso_timestamp()
-            }
+            },
+            "temperature": environment_handler.last_temp,
+            "humidity": environment_handler.last_humidity
         })
         if not mqtt.publish(TOPIC_RESPONSE_STATUS, payload):
             print("[ControlHandler] MQTT publish failed - status request")

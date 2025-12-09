@@ -60,3 +60,6 @@ class WindowServoManager:
     def close(self):
         self.servo.close()
         self.is_open = False
+
+    def update(self):
+        pass
