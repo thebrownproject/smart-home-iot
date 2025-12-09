@@ -2,13 +2,10 @@
 
 import mqtt from "mqtt";
 
-export const client = mqtt.connect(
-  process.env.NEXT_PUBLIC_MQTT_BROKER!,
-  {
-    username: process.env.NEXT_PUBLIC_MQTT_USERNAME!,
-    password: process.env.NEXT_PUBLIC_MQTT_PASSWORD!,
-  }
-);
+export const client = mqtt.connect(process.env.NEXT_PUBLIC_MQTT_BROKER!, {
+  username: process.env.NEXT_PUBLIC_MQTT_USERNAME!,
+  password: process.env.NEXT_PUBLIC_MQTT_PASSWORD!,
+});
 
 // setup the callbacks
 client.on("connect", function () {
@@ -17,9 +14,4 @@ client.on("connect", function () {
 
 client.on("error", function (error) {
   console.log(error);
-});
-
-client.on("message", function (topic, message) {
-  // called each time a message is received
-  console.log("Received message:", topic, message.toString());
 });

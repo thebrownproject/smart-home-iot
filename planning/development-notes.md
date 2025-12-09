@@ -4170,3 +4170,79 @@ ESP32 Phase 1 is now 100% complete! All future work is Next.js frontend componen
 **Hardware Testing**: ✅ All MQTT communication tested and working
 **Status**: ESP32 complete - ready for web dashboard development
 
+## Session 36 - 2025-12-09 - Add Temperature/Humidity State to MQTT Provider ✅
+
+**Phase**: 3 - Web Dashboard (Next.js)
+**Milestone**: 3.2 - Dashboard UI Components
+**Branch**: main
+
+### Tasks Completed
+
+- Enhanced MQTTProvider to extract and store temperature and humidity from ESP32 status response
+- Removed duplicate console logging for cleaner debugging output
+
+### Changes Made
+
+**1. MQTTProvider Type System** (web/components/MQTTProvider.tsx)
+- Added `temperature: number | null` and `humidity: number | null` to `MQTTContextValue` type
+- Updated default context to include temperature and humidity defaults
+- Created useState hooks for both sensor values
+
+**2. Status Response Handler**
+- Modified `/response/status` message handler to extract temperature and humidity
+- Used `!== undefined` check to allow zero values (safer than truthiness check)
+- Temperature and humidity now populate from status response payload
+
+**3. Context Export**
+- Added temperature and humidity to exported context value
+- Components can now access instant sensor values via `useMQTT()` hook
+
+**4. Console Logging Cleanup**
+- Removed global message handler from `mqtt.ts` (lines 22-25)
+- Removed general "Received message on topic" log from MQTTProvider (line 114)
+- Now only logs meaningful "Status updated from response" message
+- Eliminated duplicate console output for cleaner debugging
+
+### Decisions Made
+
+1. **Separate State Variables**: Used dedicated `temperature` and `humidity` state instead of extending `latestSensorData` object. This separates instant status response values from real-time sensor stream data.
+
+2. **Undefined Check**: Used `data.temperature !== undefined` instead of `if (data.temperature)` to handle edge case where sensor might send `0` as valid value.
+
+3. **Logging Strategy**: Removed duplicate logs to show only one meaningful message per MQTT event. Keeps console clean while preserving important status updates.
+
+4. **Type Safety**: TypeScript ensures all components using `useMQTT()` get proper type hints for temperature and humidity fields.
+
+### Issues Encountered
+
+1. **Duplicate Console Logs**: Initially saw two sets of logs for each MQTT message:
+   - Global handler in `mqtt.ts` logged all messages
+   - MQTTProvider logged general messages + specific status updates
+   - **Solution**: Removed both redundant handlers, kept only status-specific log
+
+2. **TypeScript Errors During Incremental Implementation**: Adding temperature/humidity to type definition without updating all usages caused intermediate errors. Resolved by completing all 5 steps (type → default → state → handler → export).
+
+### Key Learning Points
+
+- **Status Response Pattern**: ESP32 publishes comprehensive state snapshot including outputs (fan/door/window) AND sensors (temperature/humidity) in single response
+- **Request on Mount**: 200ms delay after MQTT connect ensures broker is ready before requesting status
+- **Data Flow**: Status response provides instant values on page load → Real-time sensor data from `/data` topic provides ongoing updates
+
+### Next Session
+
+- **T3.4**: Create SensorCard component (web/components/SensorCard.tsx)
+  - Display temperature and humidity using `useMQTT()` hook
+  - Show values immediately on page load from status response
+  - Optionally update when new sensor data arrives on `/data` topic
+  - Display last update timestamp
+
+Temperature and humidity state infrastructure is now complete and ready for UI components!
+
+### Session Statistics
+
+**Duration**: ~2 hours
+**Files Modified**: 2 (MQTTProvider.tsx, mqtt.ts)
+**Lines Changed**: +8 / -5
+**Commits**: 1 (pending)
+**Status**: Ready for SensorCard component implementation
+

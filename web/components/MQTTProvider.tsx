@@ -30,6 +30,8 @@ type MQTTContextValue = {
   doorStatus: DeviceStatus | null;
   windowStatus: DeviceStatus | null;
   fanStatus: DeviceStatus | null;
+  temperature: number | null;
+  humidity: number | null;
   publishMessage: (topic: string, message: object) => void;
 };
 
@@ -41,6 +43,8 @@ const MQTTContext = createContext<MQTTContextValue>({
   doorStatus: null,
   windowStatus: null,
   fanStatus: null,
+  temperature: null,
+  humidity: null,
   publishMessage: () => {},
 });
 
@@ -57,6 +61,8 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
   const [doorStatus, setDoorStatus] = useState<DeviceStatus | null>(null);
   const [windowStatus, setWindowStatus] = useState<DeviceStatus | null>(null);
   const [fanStatus, setFanStatus] = useState<DeviceStatus | null>(null);
+  const [temperature, setTemperature] = useState<number | null>(null);
+  const [humidity, setHumidity] = useState<number | null>(null);
 
   // Function to publish messages to MQTT broker
   const publishMessage = (topic: string, message: object) => {
@@ -105,7 +111,6 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
     const handleMessage = (topic: string, message: Buffer) => {
       try {
         const data = JSON.parse(message.toString());
-        console.log("Received message on topic:", topic, data);
 
         if (topic.endsWith("/data")) {
           setLatestSensorData(data);
@@ -121,6 +126,8 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
           if (data.fan) setFanStatus(data.fan);
           if (data.door) setDoorStatus(data.door);
           if (data.window) setWindowStatus(data.window);
+          if (data.temperature !== undefined) setTemperature(data.temperature);
+          if (data.humidity !== undefined) setHumidity(data.humidity);
           console.log("Status updated from response:", data);
         }
       } catch (error) {
@@ -162,6 +169,8 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
     doorStatus,
     windowStatus,
     fanStatus,
+    temperature,
+    humidity,
     publishMessage,
   };
   return <MQTTContext.Provider value={value}>{children}</MQTTContext.Provider>;
