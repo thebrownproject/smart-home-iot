@@ -47,3 +47,16 @@ class DoorServoManager:
             self.countdown -= 1
             if self.countdown == 0 and self.is_open:
                 self.close()
+
+class WindowServoManager:
+    def __init__(self):
+        self.servo = Servo(pin=5)
+        self.is_open = None
+
+    def open(self):
+        self.servo.open()
+        self.is_open = True
+
+    def close(self):
+        self.servo.close()
+        self.is_open = False

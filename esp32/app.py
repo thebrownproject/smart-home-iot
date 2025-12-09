@@ -4,17 +4,21 @@ from utils.memory import Memory
 class SmartHomeApp:
     def __init__(self):
         self.memory = Memory()
-        from config import TOPIC_RFID_RESPONSE, TOPIC_CONTROL_DOOR, TOPIC_CONTROL_WINDOW, TOPIC_CONTROL_FAN
+        from config import TOPIC_RFID_RESPONSE, TOPIC_CONTROL_DOOR, TOPIC_CONTROL_WINDOW, TOPIC_CONTROL_FAN, TOPIC_REQUEST_STATUS
         from handlers.control_handler import ControlHandler
         from outputs.rgb import RGBManager
         from outputs.oled import OLEDManager
         from outputs.servo import DoorServoManager
+        from outputs.servo import WindowServoManager
         from outputs.buzzer import BuzzerManager
+        from outputs.fan import FanManager
 
         self.rgb_manager = RGBManager()
         self.oled_manager = OLEDManager()
         self.door_servo_manager = DoorServoManager()
+        self.window_servo_manager = WindowServoManager()
         self.buzzer_manager = BuzzerManager()
+        self.fan_manager = FanManager()
 
         from outputs.oled import OLED
         oled = OLED()
@@ -40,13 +44,14 @@ class SmartHomeApp:
                     time.sleep(3)
                     raise RuntimeError("MQTT connection failed after all retries - system cannot operate without broker")
 
-        self.control = ControlHandler(self.rgb_manager, self.oled_manager, self.door_servo_manager, self.buzzer_manager)
+        self.control = ControlHandler(self.rgb_manager, self.oled_manager, self.door_servo_manager, self.window_servo_manager, self.buzzer_manager, self.fan_manager)
 
         # Subscribe to MQTT topics with control handler methods as callbacks
         self.mqtt.subscribe(TOPIC_RFID_RESPONSE, self.control.handle_rfid_response)
-        self.mqtt.subscribe(TOPIC_CONTROL_DOOR, self.control.handle_door_control)
-        self.mqtt.subscribe(TOPIC_CONTROL_WINDOW, self.control.handle_window_control)
-        self.mqtt.subscribe(TOPIC_CONTROL_FAN, self.control.handle_fan_control)
+        self.mqtt.subscribe(TOPIC_CONTROL_DOOR, lambda t, m: self.control.handle_door_control(t, m, self.mqtt))
+        self.mqtt.subscribe(TOPIC_CONTROL_WINDOW, lambda t, m: self.control.handle_window_control(t, m, self.mqtt))
+        self.mqtt.subscribe(TOPIC_CONTROL_FAN, lambda t, m: self.control.handle_fan_control(t, m, self.mqtt))
+        self.mqtt.subscribe(TOPIC_REQUEST_STATUS, lambda t, m: self.control.handle_status_request(t, m, self.mqtt))
         self.memory.collect("After MQTT setup")
         oled.show_text("System Ready", "App Running")
         del oled

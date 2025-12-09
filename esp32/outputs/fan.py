@@ -18,3 +18,19 @@ class Fan:
 
     def is_on(self):
         return self._is_on
+
+class FanManager:
+    def __init__(self):
+        self.fan = Fan()
+        self.is_on = False 
+    
+    def on(self):
+        self.fan.on()
+        self.is_on = True
+
+    def off(self):
+        self.fan.off()
+        self.is_on = False
+    
+    def update(self):
+        pass
