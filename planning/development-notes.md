@@ -4082,3 +4082,91 @@ None - all changes compiled successfully on first attempt.
 **Lines Added**: ~250  
 **Build Status**: ✅ Next.js builds, MQTT connects, bi-directional communication working (pending ESP32 updates)
 
+
+## Session 35 - 2025-12-09 - ESP32 Bi-Directional MQTT Complete ✅
+
+**Phase**: 1 - Embedded Core (ESP32)  
+**Milestone**: 1.8 - Testing & Validation  
+**Branch**: main
+
+### Tasks Completed
+
+- ESP32 bi-directional MQTT implementation - Complete overhaul of control and status architecture
+
+### Changes Made
+
+**1. Manager Classes Created**
+- `FanManager` - Persistent fan state tracking (outputs/fan.py)
+- `WindowServoManager` - Persistent window state tracking (outputs/servo.py)
+- Both follow DoorServoManager pattern for consistency
+
+**2. Control Handler Refactoring** (handlers/control_handler.py)
+- Updated all handlers to use `state` property instead of `action` for API consistency
+- Added status publishing to fan, door, and window control handlers
+- Status publishes immediately after command execution (feedback loop)
+- Created `handle_status_request()` method for device state queries
+- Integrated environment sensor data (temperature, humidity) into status response
+
+**3. Gas Handler Fix** (handlers/gas_handler.py)
+- Resolved critical GPIO conflict where gas handler created temporary Fan() instances
+- Now uses persistent `fan_manager` passed as parameter
+- Eliminated fan turning off unexpectedly after MQTT commands
+
+**4. Environment Handler Integration** (app.py)
+- Moved EnvironmentHandler creation to `__init__()` instead of `run()`
+- Makes sensor data available for status requests
+- Status response includes both outputs (fan/door/window) and sensors (temp/humidity)
+
+**5. MQTT Subscription Updates** (app.py)
+- Added lambda wrappers to pass `mqtt` parameter to control handlers
+- Added `environment_handler` parameter to status request subscription
+- All control handlers now receive mqtt client for status publishing
+
+### Decisions Made
+
+1. **Manager Pattern Consistency**: Used persistent managers (FanManager, WindowServoManager) instead of lazy-load pattern for outputs that need state tracking. Trade-off: ~2KB more RAM for cleaner architecture and reliable bi-directional communication.
+
+2. **Property Naming**: Standardized on `state` for both control commands and status messages. Web sends `{"state": "on"}` and receives `{"state": "on"}` - consistent terminology across request/response.
+
+3. **Single Status Response**: Combined outputs AND sensors in one status response instead of separate messages. Simpler for web dashboard - one request gets everything.
+
+4. **Lambda Parameter Injection**: Used lambda functions to pass `mqtt` to handlers instead of storing mqtt on ControlHandler. Explicit dependencies, easier to test.
+
+5. **Sensor Data in Status**: Included temperature/humidity in status response for instant dashboard display on page load. Eliminates 0-60 second wait for first sensor reading.
+
+### Issues Encountered
+
+1. **Fan GPIO Conflict**: MQTT fan control worked but fan turned off after ~5 seconds. Root cause: gas_handler created temporary Fan() instances controlling same GPIO pins. Solved by passing persistent fan_manager.
+
+2. **WindowServoManager Missing update()**: Runtime AttributeError when app.py called `window_servo_manager.update()`. Added empty `update()` method for consistency with other managers.
+
+3. **Environment Handler Scope**: Initially created in `run()` but needed in `__init__()` for status request subscription. Moved creation earlier and changed `run()` to use `self.environment`.
+
+4. **JSON Key Order**: User noticed status response had different key order than code (door/window/fan vs fan/door/window). Explained that JSON objects are unordered - web accesses by key name so order doesn't matter.
+
+### Key Learning Points
+
+- **Resource Conflicts in Embedded**: Multiple objects controlling same GPIO pins causes unpredictable behavior. Persistent managers ensure single source of truth.
+- **Lambda Functions**: Parameter adapters that transform what MQTT gives (topic, msg) into what handlers need (topic, msg, mqtt, environment).
+- **Request/Response Pattern**: Professional IoT approach for querying device state. Web requests status, ESP32 responds with snapshot.
+- **Stateful vs Stateless**: Outputs (fan/door/window) need persistent state. Sensors (temp/humidity) read fresh each time.
+
+### Next Session
+
+- **T3.4**: Create sensor display card component (Next.js)
+  - Display real-time temperature and humidity from MQTT
+  - Use status response for instant data on page load
+  - Subscribe to sensor data topic for live updates
+
+ESP32 Phase 1 is now 100% complete! All future work is Next.js frontend components.
+
+### Session Statistics
+
+**Duration**: ~6 hours (full TAFE day)  
+**Files Modified**: 4 (app.py, control_handler.py, gas_handler.py, servo.py)  
+**Files Created**: 6 (esp32/lib/*.py - RFID and LCD libraries)  
+**Lines Changed**: +1196 / -17  
+**Commits**: 6 (including library additions and config cleanup)  
+**Hardware Testing**: ✅ All MQTT communication tested and working
+**Status**: ESP32 complete - ready for web dashboard development
+
