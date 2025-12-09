@@ -1,5 +1,4 @@
 # Documentation and reference materials
-Docs/
 *.pdf
 
 # Personal configuration files
@@ -70,7 +69,7 @@ api/bin/
 api/obj/
 
 # MicroPython
-*.mpy
+# *.mpy - Removed to allow tracking esp32/lib/ libraries
 
 # Logs
 *.log
@@ -90,3 +89,5 @@ tmp/
 # Personal notes and planning (optional - remove if you want to track these)
 Planning/personal_notes.md
 Planning/scratch.md
+# ESP32 Libraries Exception
+!esp32/lib/
