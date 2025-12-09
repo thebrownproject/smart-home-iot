@@ -1,9 +1,9 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect } from "react";
-
 import { client } from "@/lib/mqtt";
 
+// Type definitions
 export type SensorData = {
   sensor_type: "temperature" | "humidity" | "gas" | "motion";
   value?: number;
@@ -22,6 +22,7 @@ export type DeviceStatus = {
   timestamp: string;
 };
 
+// Type definition for MQTT context value
 type MQTTContextValue = {
   connected: boolean;
   latestSensorData: SensorData | null;
@@ -32,6 +33,7 @@ type MQTTContextValue = {
   publishMessage: (topic: string, message: object) => void;
 };
 
+// Context for MQTT provider
 const MQTTContext = createContext<MQTTContextValue>({
   connected: false,
   latestSensorData: null,
@@ -42,7 +44,9 @@ const MQTTContext = createContext<MQTTContextValue>({
   publishMessage: () => {},
 });
 
+// MQTT Provider component
 export function MQTTProvider({ children }: { children: React.ReactNode }) {
+  // State variables
   const [connected, setConnected] = useState(false);
   const [latestSensorData, setLatestSensorData] = useState<SensorData | null>(
     null
@@ -54,6 +58,7 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
   const [windowStatus, setWindowStatus] = useState<DeviceStatus | null>(null);
   const [fanStatus, setFanStatus] = useState<DeviceStatus | null>(null);
 
+  // Function to publish messages to MQTT broker
   const publishMessage = (topic: string, message: object) => {
     client.publish(topic, JSON.stringify(message), (err) => {
       if (err) {
@@ -64,6 +69,7 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  // Effect to handle MQTT connection and message handling
   useEffect(() => {
     const deviceId = "esp32_main";
     const handleConnect = () => {
@@ -95,6 +101,7 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
       }, 200);
     };
 
+    // Function to handle incoming messages from MQTT broker
     const handleMessage = (topic: string, message: Buffer) => {
       try {
         const data = JSON.parse(message.toString());
@@ -121,11 +128,13 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
+    // Function to handle disconnection from MQTT broker
     const handleDisconnect = () => {
       console.log("MQTT disconnected");
       setConnected(false);
     };
 
+    // Function to handle errors from MQTT broker
     const handleError = (error: Error) => {
       console.error("MQTT error:", error);
       setConnected(false);
@@ -145,6 +154,7 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // Value to be passed to the context provider
   const value: MQTTContextValue = {
     connected,
     latestSensorData,
@@ -157,6 +167,7 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
   return <MQTTContext.Provider value={value}>{children}</MQTTContext.Provider>;
 }
 
+// Hook to use MQTT context
 export function useMQTT() {
   const context = useContext(MQTTContext);
   if (context === undefined) {
