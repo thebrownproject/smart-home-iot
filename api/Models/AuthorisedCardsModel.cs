@@ -25,6 +25,9 @@ public class AuthorisedCardsModel : BaseModel
     [Column("user_id")]
     public Guid? UserId { get; set; }
 
+    [Column("username")]
+    public string? Username { get; set; }
+
     [Column("is_active")]
     public bool? IsActive { get; set; }
 

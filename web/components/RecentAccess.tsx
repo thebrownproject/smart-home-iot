@@ -64,8 +64,8 @@ export const RecentAccess = () => {
           onSelectionChange={(key) => setFilter(key as FilterType)}
         >
           <Tab key="all" title="All" />
-          <Tab key="success" title="Success" />
-          <Tab key="failed" title="Failed" />
+          <Tab key="success" title="Granted" />
+          <Tab key="failed" title="Denied" />
         </Tabs>
       </CardHeader>
       <CardBody className="pb-4 pt-3 px-4">
@@ -93,23 +93,18 @@ export const RecentAccess = () => {
                 <TableCell>
                   <Chip
                     color={
-                      scan.access_result === "granted" ? "success" : "danger"
+                      scan.accessResult === "granted" ? "success" : "danger"
                     }
                     variant="flat"
                     size="sm"
                   >
-                    {scan.access_result === "granted" ? "success" : "failed"}
+                    {scan.accessResult === "granted" ? "Granted" : "Denied"}
                   </Chip>
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">
-                      {scan.authorised_card_id || "Unknown"}
-                    </span>
-                    <span className="text-xs text-default-400">
-                      ID: {scan.card_id?.slice(-4).toUpperCase() ?? "N/A"}
-                    </span>
-                  </div>
+                  <span className="text-sm font-medium">
+                    {scan.username || "Unknown"}
+                  </span>
                 </TableCell>
                 <TableCell>
                   <span className="text-sm text-default-600">

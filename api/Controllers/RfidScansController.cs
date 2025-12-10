@@ -52,6 +52,24 @@ public class RfidScansController : ControllerBase
                 .Get();
         }
 
-        return Ok(response.Models);
+        // Get authorised cards to lookup usernames
+        var cardsResponse = await client.From<AuthorisedCardsModel>().Get();
+        var cardLookup = cardsResponse.Models.ToDictionary(c => c.Id, c => c.Username);
+
+        // Build response with username from authorised_cards
+        var result = response.Models.Select(scan => new
+        {
+            scan.Id,
+            scan.DeviceId,
+            scan.CardId,
+            scan.AuthorisedCardId,
+            scan.AccessResult,
+            scan.Timestamp,
+            Username = scan.AuthorisedCardId.HasValue && cardLookup.ContainsKey(scan.AuthorisedCardId.Value)
+                ? cardLookup[scan.AuthorisedCardId.Value]
+                : null
+        });
+
+        return Ok(result);
     }
 }

@@ -31,6 +31,7 @@ CREATE TABLE authorised_cards (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   card_id VARCHAR(100) NOT NULL UNIQUE,
   user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  username VARCHAR(100),  -- Denormalized for simpler queries (can remove user_id later)
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -55,6 +56,7 @@ CREATE TABLE rfid_scans (
   card_id VARCHAR(100) NOT NULL,
   authorised_card_id UUID REFERENCES authorised_cards(id) ON DELETE SET NULL,
   access_result VARCHAR(20) NOT NULL,
+  username VARCHAR(100),  -- Denormalized username for simpler queries
   timestamp TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX idx_rfid_timestamp ON rfid_scans(timestamp DESC);

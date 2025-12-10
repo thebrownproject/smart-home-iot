@@ -36,6 +36,9 @@ public class RfidScansModel : BaseModel
     [Column("access_result")]
     public string AccessResult { get; set; }
 
+    [Column("username")]
+    public string? Username { get; set; }
+
     [Column("timestamp")]
     public DateTimeOffset Timestamp { get; set; }
 }

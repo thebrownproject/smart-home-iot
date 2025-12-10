@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -20,19 +20,12 @@ export type GasAlertEntry = {
 
 export type RfidScanEntry = {
   id: string;
-  device_id: string;
-  card_id: string;
-  authorised_card_id: string;
-  access_result: "granted" | "denied";
+  deviceId: string;
+  cardId: string;
+  authorisedCardId: string | null;
+  accessResult: "granted" | "denied";
+  username: string | null;
   timestamp: string;
-};
-
-export type getAuthorisedCardEntry = {
-  id: string;
-  card_id: string;
-  user_id: string;
-  is_active: boolean;
-  created_at: string;
 };
 
 export const getMotionData = async (
@@ -78,11 +71,20 @@ export const getRfidScans = async (
   }
 };
 
+export type AuthorisedCardEntry = {
+  id: string;
+  cardId: string;
+  userId: string | null;
+  username: string | null;
+  isActive: boolean;
+  createdAt: string;
+};
+
 export const getAuthorisedCards = async (
-  id: string
-): Promise<getAuthorisedCardEntry[]> => {
+  cardId: string
+): Promise<AuthorisedCardEntry[]> => {
   try {
-    const response = await axios.get(`${API_URL}/AuthorisedCard/${id}`);
+    const response = await axios.get(`${API_URL}/api/AuthorisedCard/${cardId}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching authorised cards:", error);
