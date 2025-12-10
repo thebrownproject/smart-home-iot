@@ -4348,3 +4348,104 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
 **Commits**: 1 (pending)
 **Database Operations**: 1 (inserted test gas alert via Supabase MCP)
 **Status**: Sensor display complete - ready for alert indicators and RFID history
+
+## Session 38 - 2025-12-11 - Code Refactoring & Control Panel + RFID Access Table ✅
+
+**Phase**: 3 - Web Dashboard (Next.js)
+**Milestone**: 3.2 - Dashboard UI Components, 3.3 - Control Panel
+**Branch**: main
+
+### Tasks Completed
+
+- [x] **Code Refactoring**: Cleaned up technical debt from previous sessions
+  - Merged NavbarIcon + SensorIcon into single StatusIcon component
+  - Removed ~15 console.log statements from MQTTProvider
+  - Simplified updateDeviceStatus function (28 lines → 14 lines)
+  - Simplified SensorGrid ternary logic with helper variables (isOffline, isLoading)
+  - Deleted duplicate files (NavbarIcon.tsx, SensorIcon.tsx)
+  - Total reduction: ~68 lines removed
+
+- [x] **T3.9**: Created output control panel with device buttons
+  - ControlButton.tsx - Reusable button with loading state and timeout
+  - ControlPanel.tsx - Container with Door, Window, Fan controls
+  - Publishes to `devices/esp32_main/control/{device}` MQTT topics
+  - 5-second timeout reverts to previous state if no response
+  - Color-coded: green (open/on), red (closed/off)
+
+- [x] **T3.7**: Created RFID scan history table
+  - RecentAccess.tsx - HeroUI Table with filter tabs
+  - Tabs: All, Success, Failed (connected to getRfidScans API)
+  - Displays status chip, user name, card ID, timestamp
+  - Styled to match existing component patterns
+
+### Components Created
+
+**1. StatusIcon.tsx** (merged from NavbarIcon + SensorIcon)
+- Single reusable icon component with variant prop (flat/bordered)
+- Used by both navbar and sensor cards
+
+**2. ControlButton.tsx**
+- Self-contained button with local pending state
+- Tracks previous state for timeout revert
+- Publishes MQTT control messages
+
+**3. ControlPanel.tsx**
+- Card container with three ControlButtons
+- Reads device status from MQTTProvider context
+- Consistent styling with SensorCard/SensorGrid
+
+**4. RecentAccess.tsx**
+- HeroUI Table with filter tabs
+- Fetches from C# API on filter change
+- Equal-width columns with border styling
+
+### Decisions Made
+
+1. **Component Consolidation**: Merged duplicate icon components to reduce code duplication
+2. **Local State for Loading**: Each ControlButton manages its own pending state rather than shared context
+3. **5-Second Timeout**: Arbitrary but reasonable timeout for ESP32 response
+4. **Client-Side Filtering Issue**: API filter may not work correctly (shows failed under Success tab) - backend issue to investigate
+
+### Issues Encountered
+
+1. **Icon Import Error**: `Door` doesn't exist in lucide-react
+   - **Solution**: Changed to `DoorOpen`
+
+2. **card_id undefined**: API sometimes returns null card_id
+   - **Solution**: Added optional chaining (`card_id?.slice(-4)`)
+
+3. **Styling Inconsistency**: Initial ControlPanel had large buttons and wrong text sizes
+   - **Solution**: Matched padding, text sizes to existing SensorCard pattern
+
+4. **Table Column Alignment**: Status column had extra left padding
+   - **Solution**: Adjusted with classNames for consistent spacing
+
+### Files Modified
+
+- `web/components/StatusIcon.tsx` (created - merged component)
+- `web/components/ControlButton.tsx` (created)
+- `web/components/ControlPanel.tsx` (created)
+- `web/components/RecentAccess.tsx` (created)
+- `web/components/MQTTProvider.tsx` (refactored - removed logs, simplified)
+- `web/components/SensorGrid.tsx` (refactored - helper variables)
+- `web/components/SensorCard.tsx` (updated import)
+- `web/components/navbar.tsx` (updated import)
+- `web/app/page.tsx` (added ControlPanel, RecentAccess)
+- `web/components/NavbarIcon.tsx` (deleted)
+- `web/components/SensorIcon.tsx` (deleted)
+
+### Next Session
+
+- **T3.8**: Create status indicators for door/window/fan status display
+- **T3.10**: Add control confirmation feedback (toast notifications)
+- Fix API filter bug (Success tab showing failed entries)
+- Test ControlPanel with ESP32 hardware
+
+### Session Statistics
+
+**Files Created**: 4 (StatusIcon.tsx, ControlButton.tsx, ControlPanel.tsx, RecentAccess.tsx)
+**Files Deleted**: 2 (NavbarIcon.tsx, SensorIcon.tsx)
+**Files Modified**: 6
+**Lines Removed**: ~68 (refactoring)
+**Lines Added**: ~250
+**Status**: Dashboard UI nearly complete - control panel and RFID table functional

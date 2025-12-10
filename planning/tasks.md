@@ -495,13 +495,15 @@
   - Display "GAS DETECTED - FAN ACTIVE"
   - Hide when alert clears
 
-- [ ] **T3.7**: Create RFID scan history table **(FR8.3 - WEB)**
+- [x] **T3.7**: Create RFID scan history table **(FR8.3 - WEB)**
 
-  - File: `web/components/RFIDLog.tsx`
-  - Fetch from C# API (`GET /api/rfid/scans`)
+  - File: `web/components/RecentAccess.tsx`
+  - Fetch from C# API (`GET /api/RfidScans`)
   - Display: Card ID, Result (granted/denied), Timestamp, User
-  - Add filter dropdown: "All", "Success", "Failed"
-  - Pagination: Show last 50 scans
+  - Add filter tabs: "All", "Success", "Failed"
+  - HeroUI Table with border styling
+  - **Started**: 2025-12-11
+  - **Completed**: 2025-12-11
 
 - [ ] **T3.8**: Create status indicators **(FR8.4, FR8.5 - WEB)**
   - Display door/window status (open/closed) from MQTT
@@ -512,12 +514,15 @@
 
 ### Milestone 3.3: Control Panel (US9)
 
-- [ ] **T3.9**: Create output control panel
+- [x] **T3.9**: Create output control panel **(FR9.1 - WEB)**
 
-  - File: `web/components/ControlPanel.tsx`
-  - Buttons: "Open Door", "Close Door", "Open Window", "Close Window"
-  - Toggle for Fan: "Turn On" / "Turn Off"
+  - File: `web/components/ControlPanel.tsx`, `web/components/ControlButton.tsx`
+  - Three buttons: Door, Window, Fan
   - Click handler publishes MQTT command to `devices/esp32_main/control/*`
+  - Loading state with 5-second timeout
+  - Color-coded status (green=open/on, red=closed/off)
+  - **Started**: 2025-12-11
+  - **Completed**: 2025-12-11
 
 - [ ] **T3.10**: Add control confirmation feedback
   - Show toast notification when command sent
