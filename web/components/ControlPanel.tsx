@@ -1,6 +1,6 @@
 "use client";
 import { Card, CardHeader, CardBody } from "@heroui/card";
-import { DoorOpen, Wind, Fan } from "lucide-react";
+import { DoorClosedLocked, DoorOpen, Wind, Grid2x2 } from "lucide-react";
 import { useMQTT } from "./MQTTProvider";
 import { ControlButton } from "./ControlButton";
 
@@ -17,21 +17,27 @@ export const ControlPanel = () => {
           <ControlButton
             device="door"
             deviceState={doorStatus?.state || null}
-            icon={<DoorOpen size={20} />}
+            icon={
+              doorStatus?.state === "open" ? (
+                <DoorOpen size={25} />
+              ) : (
+                <DoorClosedLocked size={25} />
+              )
+            }
             label="Door"
             onPublish={publishMessage}
           />
           <ControlButton
             device="window"
             deviceState={windowStatus?.state || null}
-            icon={<Wind size={20} />}
+            icon={<Grid2x2 size={25} />}
             label="Window"
             onPublish={publishMessage}
           />
           <ControlButton
             device="fan"
             deviceState={fanStatus?.state || null}
-            icon={<Fan size={20} />}
+            icon={<Wind size={25} />}
             label="Fan"
             onPublish={publishMessage}
           />

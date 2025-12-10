@@ -41,8 +41,7 @@ export default function RootLayout({
           fontSans.variable
         )}
         style={{
-          backgroundImage:
-            "url(https://wallpapercg.com/download/macos-sequoia--24353.jpeg)",
+          backgroundImage: "url(/background.jpeg)",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundAttachment: "fixed",
