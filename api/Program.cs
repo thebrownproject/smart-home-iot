@@ -55,17 +55,19 @@ internal static class Program
         builder.Services.AddScoped<api.services.CardLookupService>();
 
         // Register MQTT message handlers (must be Singleton to work with MqttBackgroundService)
+        // SensorDataHandler registered both as itself (for SensorDataWriter) and as IMqttMessageHandler
         builder.Services.AddSingleton<api.services.mqtt.SensorDataHandler>();
+        builder.Services.AddSingleton<api.services.mqtt.IMqttMessageHandler>(sp => sp.GetRequiredService<api.services.mqtt.SensorDataHandler>());
         builder.Services.AddSingleton<api.services.mqtt.IMqttMessageHandler, api.services.mqtt.RfidValidationHandler>();
         builder.Services.AddSingleton<api.services.mqtt.IMqttMessageHandler, api.services.mqtt.StatusUpdateHandler>();
+        builder.Services.AddSingleton<api.services.mqtt.IMqttMessageHandler, api.services.mqtt.GasAlertHandler>();
 
         // Register MQTT publisher (shared by handlers)
         builder.Services.AddSingleton<api.services.mqtt.MqttPublisher>();
 
         // Register background services
-        // Temporarily disabled - MQTT TLS certificate issue
-        // builder.Services.AddHostedService<api.services.mqtt.MqttBackgroundService>();
-        // builder.Services.AddHostedService<api.services.SensorDataWriter>();
+        builder.Services.AddHostedService<api.services.mqtt.MqttBackgroundService>();
+        builder.Services.AddHostedService<api.services.SensorDataWriter>();
 
         // Configures the Swagger UI
         if (useSwagger)

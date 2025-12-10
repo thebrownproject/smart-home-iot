@@ -1,18 +1,22 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
+using api.models;
 
 namespace api.services.mqtt;
 
 /// <summary>
-/// Handles sensor data from ESP32 devices (temperature and humidity).
+/// Handles sensor data from ESP32 devices (temperature, humidity, and motion).
 /// Pattern: devices/{deviceId}/data
 ///
-/// Stores latest readings in memory for the SensorDataWriter to write to database every 30 minutes.
+/// Temperature/Humidity: Stores latest readings in memory for the SensorDataWriter to write to database every 30 minutes.
+/// Motion: Writes immediately to database as events occur.
 /// </summary>
 public class SensorDataHandler : IMqttMessageHandler
 {
     private readonly object _lockObject = new object();
     private readonly ILogger<SensorDataHandler> _logger;
+    private readonly IServiceScopeFactory _scopeFactory;
+    private readonly IConfiguration _configuration;
     private SensorDataMessage? _latestTemperature;
     private SensorDataMessage? _latestHumidity;
 
@@ -22,9 +26,14 @@ public class SensorDataHandler : IMqttMessageHandler
     private const double MinHumidity = 0.0;
     private const double MaxHumidity = 100.0;
 
-    public SensorDataHandler(ILogger<SensorDataHandler> logger)
+    public SensorDataHandler(
+        ILogger<SensorDataHandler> logger,
+        IServiceScopeFactory scopeFactory,
+        IConfiguration configuration)
     {
         _logger = logger;
+        _scopeFactory = scopeFactory;
+        _configuration = configuration;
     }
 
     public bool CanHandle(string topic)
@@ -82,6 +91,12 @@ public class SensorDataHandler : IMqttMessageHandler
                 _latestHumidity = data;
         }
 
+        // Handle motion events - write immediately to database
+        if (data.sensor_type == "motion")
+        {
+            return WriteMotionEventAsync(data);
+        }
+
         return Task.CompletedTask;
     }
 
@@ -90,6 +105,58 @@ public class SensorDataHandler : IMqttMessageHandler
         lock (_lockObject)
         {
             return (_latestTemperature, _latestHumidity);
+        }
+    }
+
+    /// <summary>
+    /// Writes motion detection event immediately to database
+    /// </summary>
+    private async Task WriteMotionEventAsync(SensorDataMessage motionData)
+    {
+        try
+        {
+            // Parse device UUID from configuration
+            var deviceUuidString = _configuration.GetValue<string>("DeviceUuid");
+            if (!Guid.TryParse(deviceUuidString, out var deviceId))
+            {
+                _logger.LogWarning("Invalid DeviceUuid configuration for motion event");
+                return;
+            }
+
+            // Parse timestamp
+            if (!DateTimeOffset.TryParse(motionData.timestamp, out var timestamp))
+            {
+                _logger.LogWarning("Invalid timestamp in motion data: {Timestamp}", motionData.timestamp);
+                return;
+            }
+
+            // Only write motion detection events (detected=true)
+            bool isMotionDetected = motionData.detected ?? false;
+
+            if (!isMotionDetected)
+            {
+                return; // Don't log "no motion" events
+            }
+
+            // Write to database
+            using var scope = _scopeFactory.CreateScope();
+            var supabase = scope.ServiceProvider.GetRequiredService<Supabase.Client>();
+
+            var motionLog = new SensorLogModel
+            {
+                Id = Guid.NewGuid(),
+                DeviceId = deviceId,
+                SensorType = "motion",
+                Value = 1, // Motion detected = 1
+                Timestamp = timestamp
+            };
+
+            await supabase.From<SensorLogModel>().Insert(motionLog);
+            _logger.LogInformation("Motion event written to database at {Timestamp}", timestamp);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error writing motion event to database");
         }
     }
 }
@@ -101,6 +168,7 @@ public class SensorDataMessage
 {
     public string sensor_type { get; set; } = string.Empty;
     public double value { get; set; }
+    public bool? detected { get; set; }  // For motion/gas sensors
     public string unit { get; set; } = string.Empty;
     public string timestamp { get; set; } = string.Empty;
 }

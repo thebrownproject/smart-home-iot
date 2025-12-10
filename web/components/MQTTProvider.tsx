@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { client } from "@/lib/mqtt";
 
 // Type definitions
@@ -32,7 +32,7 @@ type MQTTContextValue = {
   fanStatus: DeviceStatus | null;
   temperature: number | null;
   humidity: number | null;
-  gasDetected: boolean | null;
+  smartHomeStatus: boolean | null;
   publishMessage: (topic: string, message: object) => void;
 };
 
@@ -46,7 +46,7 @@ const MQTTContext = createContext<MQTTContextValue>({
   fanStatus: null,
   temperature: null,
   humidity: null,
-  gasDetected: null,
+  smartHomeStatus: null,
   publishMessage: () => {},
 });
 
@@ -65,7 +65,12 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
   const [fanStatus, setFanStatus] = useState<DeviceStatus | null>(null);
   const [temperature, setTemperature] = useState<number | null>(null);
   const [humidity, setHumidity] = useState<number | null>(null);
-  const [gasDetected, setGasDetected] = useState<boolean | null>(null);
+  const [smartHomeStatus, setSmartHomeStatus] = useState<boolean | null>(null);
+
+  // Track last time data was received from ESP32
+  const lastDataReceivedRef = useRef<number | null>(null);
+  const statusCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const initialLoadTimeRef = useRef<number>(Date.now()); // Track when page loaded
 
   // Function to publish messages to MQTT broker
   const publishMessage = (topic: string, message: object) => {
@@ -78,12 +83,29 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const updateDeviceStatus = () => {
+    const now = Date.now();
+    const timeSinceLoad = now - initialLoadTimeRef.current;
+    const timeSinceData = lastDataReceivedRef.current
+      ? now - lastDataReceivedRef.current
+      : null;
+
+    if (timeSinceData !== null && timeSinceData < 30000) {
+      setSmartHomeStatus(true); // Online - recent data
+    } else if (timeSinceData === null && timeSinceLoad < 30000) {
+      setSmartHomeStatus(null); // Loading - waiting for first data
+    } else {
+      setSmartHomeStatus(false); // Offline - no data for 30s+
+    }
+  };
+
   // Effect to handle MQTT connection and message handling
   useEffect(() => {
     const deviceId = "esp32_main";
+
     const handleConnect = () => {
-      console.log("Connected to MQTT broker");
       setConnected(true);
+      setSmartHomeStatus(null);
 
       client.subscribe(`devices/${deviceId}/data`, (err) => {
         if (err) console.error("Error subscribing to data topic:", err);
@@ -96,25 +118,16 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
       client.subscribe(`devices/${deviceId}/status/#`, (err) => {
         if (err) console.error("Error subscribing to status topic:", err);
       });
-
-      client.subscribe(`devices/${deviceId}/response/status`, (err) => {
-        if (err)
-          console.error("Error subscribing to response status topic:", err);
-      });
-
-      setTimeout(() => {
-        publishMessage(`devices/${deviceId}/request/status`, {
-          requestId: Date.now().toString(),
-          timestamp: new Date().toISOString(),
-        });
-      }, 200);
     };
 
-    // Function to handle incoming messages from MQTT broker
     const handleMessage = (topic: string, message: Buffer) => {
       try {
         const data = JSON.parse(message.toString());
-        console.log(`[MQTT] Topic: ${topic}`, data);
+
+        if (topic.startsWith("devices/esp32_main/")) {
+          lastDataReceivedRef.current = Date.now();
+          updateDeviceStatus();
+        }
 
         if (topic.endsWith("/data")) {
           setLatestSensorData(data);
@@ -126,9 +139,6 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
           if (data.sensor_type === "humidity" && data.value !== undefined) {
             setHumidity(data.value);
           }
-          if (data.sensor_type === "gas" && data.detected !== undefined) {
-            setGasDetected(data.detected);
-          }
         } else if (topic.endsWith("/rfid/check")) {
           setLatestRfidCheck(data);
         } else if (topic.endsWith("/status/door")) {
@@ -137,30 +147,25 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
           setWindowStatus(data);
         } else if (topic.endsWith("/status/fan")) {
           setFanStatus(data);
-        } else if (topic.endsWith("/response/status")) {
-          if (data.fan) setFanStatus(data.fan);
-          if (data.door) setDoorStatus(data.door);
-          if (data.window) setWindowStatus(data.window);
-          if (data.temperature !== undefined) setTemperature(data.temperature);
-          if (data.humidity !== undefined) setHumidity(data.humidity);
-          console.log("Status updated from response:", data);
         }
       } catch (error) {
         console.error("Error parsing message:", error);
       }
     };
 
-    // Function to handle disconnection from MQTT broker
     const handleDisconnect = () => {
-      console.log("MQTT disconnected");
       setConnected(false);
+      setSmartHomeStatus(null);
+      lastDataReceivedRef.current = null;
     };
 
-    // Function to handle errors from MQTT broker
     const handleError = (error: Error) => {
       console.error("MQTT error:", error);
       setConnected(false);
+      setSmartHomeStatus(null);
+      lastDataReceivedRef.current = null;
     };
+
     // Register handlers
     client.on("connect", handleConnect);
     client.on("message", handleMessage);
@@ -176,6 +181,19 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    statusCheckIntervalRef.current = setInterval(() => {
+      updateDeviceStatus();
+    }, 5000);
+
+    return () => {
+      if (statusCheckIntervalRef.current) {
+        clearInterval(statusCheckIntervalRef.current);
+        statusCheckIntervalRef.current = null;
+      }
+    };
+  }, []);
+
   // Value to be passed to the context provider
   const value: MQTTContextValue = {
     connected,
@@ -186,9 +204,10 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
     fanStatus,
     temperature,
     humidity,
-    gasDetected,
+    smartHomeStatus,
     publishMessage,
   };
+
   return <MQTTContext.Provider value={value}>{children}</MQTTContext.Provider>;
 }
 

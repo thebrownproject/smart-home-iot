@@ -1,5 +1,5 @@
 import { Card, CardHeader, CardBody, CardFooter } from "@heroui/card";
-import { SensorIcon } from "./SensorIcon";
+import { StatusIcon } from "./StatusIcon";
 
 export const SensorCard = ({
   title,
@@ -17,7 +17,7 @@ export const SensorCard = ({
   return (
     <Card isBlurred className="max-w-m min-w-[150px]" radius="lg" shadow="md">
       <CardHeader className="pt-4 pl-4">
-        <SensorIcon icon={icon} status={status} />
+        <StatusIcon icon={icon} status={status} />
       </CardHeader>
       <CardBody className="pb-3 pt-2 px-4 flex-col items-start">
         <h1 className="text-xs text-default-600 mt-2">{title}</h1>

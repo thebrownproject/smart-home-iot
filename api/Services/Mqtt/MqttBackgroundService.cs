@@ -56,10 +56,13 @@ public class MqttBackgroundService : IHostedService, IDisposable
             .WithTlsOptions(o =>
             {
                 o.UseTls();
+                // Accept all server certificates (required for HiveMQ Cloud)
+                o.WithCertificateValidationHandler(_ => true);
             })
             .Build();
 
         await _mqttClient!.ConnectAsync(options);
+        _logger.LogInformation("✅ Connected to MQTT broker: {Broker}:{Port}", broker, port);
 
         // Give the publisher access to the client
         _mqttPublisher.SetClient(_mqttClient);
@@ -72,6 +75,7 @@ public class MqttBackgroundService : IHostedService, IDisposable
             .Build();
 
         await _mqttClient.SubscribeAsync(subscribeOptions);
+        _logger.LogInformation("📬 Subscribed to MQTT topics: devices/+/data, devices/+/rfid/check, devices/+/status/#");
     }
 
     private async Task OnMessageReceivedAsync(MqttApplicationMessageReceivedEventArgs e)
@@ -81,11 +85,22 @@ public class MqttBackgroundService : IHostedService, IDisposable
             var topic = e.ApplicationMessage.Topic;
             var payload = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
 
-            // Route message to appropriate handler
-            var handler = _handlers.FirstOrDefault(h => h.CanHandle(topic));
-            if (handler != null)
+            _logger.LogInformation("📨 MQTT Message Received - Topic: {Topic}, Payload: {Payload}", topic, payload);
+
+            // Route message to ALL handlers that can process it
+            var matchingHandlers = _handlers.Where(h => h.CanHandle(topic)).ToList();
+
+            if (matchingHandlers.Count > 0)
             {
-                await handler.HandleAsync(topic, payload);
+                foreach (var handler in matchingHandlers)
+                {
+                    _logger.LogInformation("🔄 Routing to handler: {HandlerType}", handler.GetType().Name);
+                    await handler.HandleAsync(topic, payload);
+                }
+            }
+            else
+            {
+                _logger.LogWarning("⚠️ No handler found for topic: {Topic}", topic);
             }
         }
         catch (Exception ex)

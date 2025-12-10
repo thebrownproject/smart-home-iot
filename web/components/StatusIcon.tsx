@@ -3,25 +3,31 @@ import { Button } from "@heroui/button";
 type StatusType = "loading" | "normal" | "warning" | "danger";
 type ColorType = "default" | "success" | "warning" | "danger";
 
-type SensorIconProps = {
+type StatusIconProps = {
   icon: React.ReactNode;
   status: StatusType;
+  variant?: "flat" | "bordered";
   size?: "sm" | "md" | "lg";
 };
 
-export const SensorIcon = ({ icon, status, size = "lg" }: SensorIconProps) => {
+export const StatusIcon = ({
+  icon,
+  status,
+  variant = "bordered",
+  size = "lg",
+}: StatusIconProps) => {
   const colorMap: Record<StatusType, ColorType> = {
     loading: "default",
-    normal: "success", // Green
-    warning: "warning", // Orange/Yellow
-    danger: "danger", // Red
+    normal: "success",
+    warning: "warning",
+    danger: "danger",
   };
 
   return (
     <Button
       isIconOnly
       color={colorMap[status]}
-      variant="bordered"
+      variant={variant}
       size="sm"
       radius="full"
       isLoading={status === "loading"}
