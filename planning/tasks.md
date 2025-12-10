@@ -473,12 +473,14 @@
 
 ### Milestone 3.2: Dashboard UI Components (US8)
 
-- [ ] **T3.4**: Create sensor display card component **(FR8.1, FR8.2 - WEB)**
+- [x] **T3.4**: Create sensor display card component **(FR8.1, FR8.2 - WEB)**
 
   - File: `web/components/SensorCard.tsx`
   - Display current temperature, humidity (from MQTT via FR6.3)
   - Real-time updates when new values arrive
   - Show last update timestamp
+  - **Started**: 2025-12-10
+  - **Completed**: 2025-12-10
 
 - [ ] **T3.5**: Create motion detection display **(FR8.1 - WEB)**
 

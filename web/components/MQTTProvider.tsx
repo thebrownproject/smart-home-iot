@@ -32,6 +32,7 @@ type MQTTContextValue = {
   fanStatus: DeviceStatus | null;
   temperature: number | null;
   humidity: number | null;
+  gasDetected: boolean | null;
   publishMessage: (topic: string, message: object) => void;
 };
 
@@ -45,6 +46,7 @@ const MQTTContext = createContext<MQTTContextValue>({
   fanStatus: null,
   temperature: null,
   humidity: null,
+  gasDetected: null,
   publishMessage: () => {},
 });
 
@@ -63,6 +65,7 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
   const [fanStatus, setFanStatus] = useState<DeviceStatus | null>(null);
   const [temperature, setTemperature] = useState<number | null>(null);
   const [humidity, setHumidity] = useState<number | null>(null);
+  const [gasDetected, setGasDetected] = useState<boolean | null>(null);
 
   // Function to publish messages to MQTT broker
   const publishMessage = (topic: string, message: object) => {
@@ -111,9 +114,21 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
     const handleMessage = (topic: string, message: Buffer) => {
       try {
         const data = JSON.parse(message.toString());
+        console.log(`[MQTT] Topic: ${topic}`, data);
 
         if (topic.endsWith("/data")) {
           setLatestSensorData(data);
+
+          // Extract temperature and humidity from real-time sensor data
+          if (data.sensor_type === "temperature" && data.value !== undefined) {
+            setTemperature(data.value);
+          }
+          if (data.sensor_type === "humidity" && data.value !== undefined) {
+            setHumidity(data.value);
+          }
+          if (data.sensor_type === "gas" && data.detected !== undefined) {
+            setGasDetected(data.detected);
+          }
         } else if (topic.endsWith("/rfid/check")) {
           setLatestRfidCheck(data);
         } else if (topic.endsWith("/status/door")) {
@@ -171,6 +186,7 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
     fanStatus,
     temperature,
     humidity,
+    gasDetected,
     publishMessage,
   };
   return <MQTTContext.Provider value={value}>{children}</MQTTContext.Provider>;

@@ -4246,3 +4246,105 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
 **Commits**: 1 (pending)
 **Status**: Ready for SensorCard component implementation
 
+
+## Session 37 - 2025-12-10 - Create Sensor Display Components and Test Database Integration ✅
+
+**Phase**: 3 - Web Dashboard (Next.js)
+**Milestone**: 3.2 - Dashboard UI Components
+**Branch**: main
+
+### Tasks Completed
+
+- [x] **T3.4**: Created sensor display card component with real-time MQTT integration
+  - Built SensorCard.tsx for individual sensor display
+  - Built SensorGrid.tsx as container for all four sensors
+  - Built SensorIcon.tsx for status-based colored icons
+  - Integrated with MQTTProvider for real-time temperature/humidity
+  - Added gas detection state to MQTT Provider
+  - Connected to C# API for motion and gas alert data
+
+### Changes Made
+
+**1. Sensor Card Component** (web/components/SensorCard.tsx)
+- Generic card component accepts title, value, valueType, icon, and status
+- Uses HeroUI Card with blur effect and shadow
+- Displays sensor icon with color-coded status indicator
+- Shows value with unit label (°C, %, detections/hr)
+
+**2. Sensor Grid Component** (web/components/SensorGrid.tsx)
+- Grid layout (2 columns mobile, 4 columns desktop)
+- Four sensor cards: Temperature, Humidity, PIR Activity, Gas Sensor
+- Fetches motion data from C# API on mount
+- Polls gas alert data from C# API every 5 seconds
+- Uses MQTT for real-time temperature/humidity updates
+- Gas detection prioritizes MQTT over database (real-time > historical)
+- Shows loading state when data not yet available
+
+**3. Sensor Icon Component** (web/components/SensorIcon.tsx)
+- HeroUI Button with icon display
+- Status-based coloring: loading (default), normal (green), warning (orange), danger (red)
+- Shows spinner for loading state
+- Uses lucide-react icons (Thermometer, Droplet, Flame, ShieldAlert/Check)
+
+**4. MQTT Provider Enhancement** (web/components/MQTTProvider.tsx)
+- Added `gasDetected: boolean | null` to context
+- Parses gas sensor data from `/data` topic
+- Extracts temperature/humidity from real-time sensor messages
+- Added console logging for debugging MQTT message flow
+
+**5. API Client Updates** (web/lib/api.ts)
+- Fixed GasAlertEntry type to match C# API response (camelCase properties)
+- Changed `alert_end` from string to `string | null` (active alerts have no end time)
+- Added console logging for motion data debugging
+
+**6. Page Integration** (web/app/page.tsx)
+- Added SensorGrid to home page
+- Background image added to layout.tsx for visual design
+
+### Decisions Made
+
+1. **Dual Data Source for Gas Detection**: Used both MQTT (real-time) and database polling (historical) with MQTT taking priority. This ensures instant updates while maintaining state across page refreshes.
+
+2. **Database Polling Strategy**: Poll gas alerts every 5 seconds rather than relying solely on MQTT. This handles edge cases where MQTT message might be missed and provides reliable state recovery.
+
+3. **Status Indicator Design**: Four states (loading, normal, warning, danger) with color-coded icons. Loading uses spinner, normal=green, warning=orange, danger=red.
+
+4. **Component Architecture**: Separated SensorCard (presentation), SensorGrid (data fetching/state), and SensorIcon (status display) for reusability and separation of concerns.
+
+5. **Motion Data Fetch Pattern**: Fetch on mount only (not polling) since motion count is cumulative per hour and doesn't need frequent updates.
+
+### Issues Encountered
+
+1. **Database Test Data Missing**: Initially no gas alerts in database for testing.
+   - **Solution**: Used Supabase MCP tool to insert dummy gas alert with active status (alertEnd = null)
+
+2. **Type Mismatch in API Response**: C# API returns camelCase properties but TypeScript types used snake_case.
+   - **Solution**: Updated GasAlertEntry type to match API format (deviceId, sensorValue, alertStart, alertEnd)
+
+3. **Gas Detection State Reliability**: MQTT messages are transient - page refresh lost gas alert state.
+   - **Solution**: Implemented database polling as fallback, checking for active alerts (where alertEnd IS NULL)
+
+### Key Learning Points
+
+- **Data Layer Strategy**: MQTT provides real-time updates, database provides persistence. Both are needed for reliable UI state.
+- **Active Alert Detection**: Database query checks `alertEnd IS NULL` to identify ongoing gas alerts
+- **TypeScript Type Safety**: API response types must match actual backend response format (camelCase vs snake_case)
+- **Component Composition**: Small, focused components (SensorCard, SensorIcon) compose into larger feature (SensorGrid)
+- **HeroUI Card Styling**: `isBlurred` prop creates frosted glass effect, works well with background images
+
+### Next Session
+
+- **T3.5**: Create motion detection display component (consider refactoring into dedicated component if needed)
+- **T3.6**: Create gas alert indicator banner (prominent warning when gas detected)
+- **T3.7**: Create RFID scan history table with filtering
+- Consider adding timestamp display to sensor cards ("Last updated: 2 mins ago")
+
+### Session Statistics
+
+**Duration**: ~3 hours
+**Files Created**: 3 (SensorCard.tsx, SensorGrid.tsx, SensorIcon.tsx)
+**Files Modified**: 4 (MQTTProvider.tsx, api.ts, page.tsx, layout.tsx)
+**Lines Added**: ~200
+**Commits**: 1 (pending)
+**Database Operations**: 1 (inserted test gas alert via Supabase MCP)
+**Status**: Sensor display complete - ready for alert indicators and RFID history

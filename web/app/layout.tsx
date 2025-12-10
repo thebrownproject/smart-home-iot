@@ -37,9 +37,16 @@ export default function RootLayout({
       <head />
       <body
         className={clsx(
-          "min-h-screen text-foreground bg-background font-sans antialiased",
+          "min-h-screen text-foreground font-sans antialiased",
           fontSans.variable,
         )}
+        style={{
+          backgroundImage: 'url(https://wallpapercg.com/download/macos-sequoia--24353.jpeg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed',
+          backgroundRepeat: 'no-repeat',
+        }}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
           <div className="relative flex flex-col h-screen">

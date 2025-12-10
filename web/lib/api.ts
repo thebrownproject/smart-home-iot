@@ -12,10 +12,10 @@ export type SensorLogEntry = {
 
 export type GasAlertEntry = {
   id: string;
-  device_id: string;
-  sensor_value: number;
-  alert_start: string;
-  alert_end: string;
+  deviceId: string;
+  sensorValue: number;
+  alertStart: string;
+  alertEnd: string | null;
 };
 
 export type RfidScanEntry = {
@@ -42,6 +42,7 @@ export const getMotionData = async (
     const response = await axios.get(
       `${API_URL}/api/sensors/motion?hours=${hours}`
     );
+    console.log("Motion data:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error fetching motion data:", error);
