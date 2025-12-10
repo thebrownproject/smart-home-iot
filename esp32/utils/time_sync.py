@@ -28,8 +28,8 @@ class TimeSync:
         return hour >= self.night_start or hour < self.night_end
     
     def get_iso_timestamp(self):
-        local_time = self.get_local_time()
+        utc_time = time.localtime(time.time())  # UTC time, no offset
         return "{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}Z".format(
-          local_time[0], local_time[1], local_time[2],
-          local_time[3], local_time[4], local_time[5]
-      )
+            utc_time[0], utc_time[1], utc_time[2],
+            utc_time[3], utc_time[4], utc_time[5]
+        )
