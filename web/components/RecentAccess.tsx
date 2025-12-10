@@ -55,7 +55,7 @@ export const RecentAccess = () => {
 
   return (
     <Card isBlurred className="w-full" radius="lg" shadow="md">
-      <CardHeader className="pt-4 pl-4 flex justify-between items-center">
+      <CardHeader className="pt-4 pl-4 flex justify-between items-start">
         <h1 className="text-xs text-default-600 pb-5">Recent Access</h1>
         <Tabs
           aria-label="Filter options"

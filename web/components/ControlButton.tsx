@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@heroui/button";
+import { useMQTT } from "./MQTTProvider";
 
 type DeviceType = "door" | "window" | "fan";
 type DeviceState = "open" | "closed" | "close" | "on" | "off" | null;
@@ -23,6 +24,10 @@ export const ControlButton = ({
   const [isPending, setIsPending] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const previousStateRef = useRef<DeviceState>(deviceState);
+  const { smartHomeStatus } = useMQTT();
+
+  const isOffline = !smartHomeStatus;
+  const isLoading = smartHomeStatus === null;
 
   const getNextState = (currentState: DeviceState) => {
     if (device === "fan") {
@@ -32,7 +37,7 @@ export const ControlButton = ({
   };
 
   const getButtonColor = () => {
-    if (isPending) return "default";
+    if (isPending || isLoading || isOffline) return "default";
     if (device === "fan") {
       return deviceState === "on" ? "success" : "danger";
     }
@@ -77,10 +82,11 @@ export const ControlButton = ({
         variant="flat"
         size="lg"
         radius="full"
-        isLoading={isPending}
+        isLoading={isPending || isLoading || isOffline}
+        isDisabled={isOffline}
         onPress={handleClick}
       >
-        {!isPending && icon}
+        {!isPending && !isLoading && !isOffline && icon}
       </Button>
       <span className="text-xs text-default-600 mt-1">{label}</span>
     </div>
