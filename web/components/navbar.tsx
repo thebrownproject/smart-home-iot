@@ -6,6 +6,7 @@ import {
   NavbarItem,
 } from "@heroui/navbar";
 import { StatusIcon } from "@/components/StatusIcon";
+import { AsthmaAlertIcon } from "@/components/AsthmaAlertIcon";
 import { HouseWifi } from "lucide-react";
 import NextLink from "next/link";
 
@@ -16,27 +17,32 @@ export const Navbar = () => {
   const { smartHomeStatus } = useMQTT();
 
   return (
-    <HeroUINavbar maxWidth="xl" position="sticky">
+    <HeroUINavbar maxWidth="xl" position="sticky" className="px-4">
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
-        <NavbarBrand as="li" className="gap-3 max-w-fit">
+        <NavbarBrand as="li" className="gap-2 max-w-fit">
           <NextLink className="flex justify-start items-center gap-2" href="/">
-            <StatusIcon
-              status={
-                smartHomeStatus === null
-                  ? "loading"
-                  : smartHomeStatus
-                    ? "normal"
-                    : "danger"
-              }
-              icon={<HouseWifi />}
-              variant="flat"
-            />
+            <p className="text-3xl font-bold text-inherit">Zap</p>
           </NextLink>
-          <p className="text-3xl font-bold text-inherit">Zap</p>
+          <div className="flex items-center gap-2">
+            <NextLink href="/">
+              <StatusIcon
+                status={
+                  smartHomeStatus === null
+                    ? "loading"
+                    : smartHomeStatus
+                      ? "normal"
+                      : "danger"
+                }
+                icon={<HouseWifi />}
+                variant="flat"
+              />
+            </NextLink>
+            <AsthmaAlertIcon />
+          </div>
         </NavbarBrand>
       </NavbarContent>
 
-      <NavbarContent className="basis-1 pl-4" justify="end">
+      <NavbarContent className="basis-1" justify="end">
         <NavbarItem className="mt-1">
           <ThemeSwitch />
         </NavbarItem>

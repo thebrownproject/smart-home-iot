@@ -482,18 +482,24 @@
   - **Started**: 2025-12-10
   - **Completed**: 2025-12-10
 
-- [ ] **T3.5**: Create motion detection display **(FR8.1 - WEB)**
+- [x] **T3.5**: Create motion detection display **(FR8.1 - WEB)**
 
   - Query C# API for motion events in last hour
   - Display count: "PIR Detections (Last Hour): 12"
   - Auto-refresh every 5 minutes
+  - **Implementation**: Integrated into SensorGrid.tsx (Motion Sensor card)
+  - **Started**: 2025-12-10
+  - **Completed**: 2025-12-11
 
-- [ ] **T3.6**: Create gas alert indicator **(FR8.2 - WEB)**
+- [x] **T3.6**: Create gas alert indicator **(FR8.2 - WEB)**
 
   - File: `web/components/GasAlert.tsx`
   - Show red banner when gas detected (via MQTT)
   - Display "GAS DETECTED - FAN ACTIVE"
   - Hide when alert clears
+  - **Implementation**: Integrated into SensorGrid.tsx (Gas Sensor card shows ALERT/Safe)
+  - **Started**: 2025-12-10
+  - **Completed**: 2025-12-11
 
 - [x] **T3.7**: Create RFID scan history table **(FR8.3 - WEB)**
 
@@ -505,10 +511,13 @@
   - **Started**: 2025-12-11
   - **Completed**: 2025-12-11
 
-- [ ] **T3.8**: Create status indicators **(FR8.4, FR8.5 - WEB)**
+- [x] **T3.8**: Create status indicators **(FR8.4, FR8.5 - WEB)**
   - Display door/window status (open/closed) from MQTT
   - Display fan status (on/off)
   - Use color-coded badges (green = open, red = closed)
+  - **Implementation**: Integrated into ControlButton.tsx (color-coded status buttons)
+  - **Started**: 2025-12-10
+  - **Completed**: 2025-12-11
 
 ---
 
@@ -524,10 +533,13 @@
   - **Started**: 2025-12-11
   - **Completed**: 2025-12-11
 
-- [ ] **T3.10**: Add control confirmation feedback
+- [x] **T3.10**: Add control confirmation feedback
   - Show toast notification when command sent
   - Update button state based on status MQTT messages
   - Disable buttons while command in progress
+  - **Implementation**: Added UX for button interactions and alerts
+  - **Started**: 2025-12-11
+  - **Completed**: 2025-12-11
 
 ---
 
@@ -540,11 +552,13 @@
   - RFID log table on side panel
   - Responsive design (mobile-friendly)
 
-- [ ] **T3.12**: Add asthma alert banner
+- [~] **T3.12**: Add asthma alert banner
   - Subscribe to `devices/esp32_main/data` MQTT topic
   - Parse humidity and temperature values
   - Show prominent yellow banner when humidity > 50% AND temp > 27°C
   - Display: "⚠️ ASTHMA ALERT - Humidity: 55%, Temp: 28°C"
+  - **Implementation**: AsthmaAlertIcon component in navbar with popover
+  - **Started**: 2025-12-11
 
 ---
 

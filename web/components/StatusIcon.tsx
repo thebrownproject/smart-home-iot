@@ -14,7 +14,7 @@ export const StatusIcon = ({
   icon,
   status,
   variant = "bordered",
-  size = "lg",
+  size = "sm",
 }: StatusIconProps) => {
   const colorMap: Record<StatusType, ColorType> = {
     loading: "default",
@@ -28,7 +28,7 @@ export const StatusIcon = ({
       isIconOnly
       color={colorMap[status]}
       variant={variant}
-      size="sm"
+      size={size}
       radius="full"
       isLoading={status === "loading"}
     >
