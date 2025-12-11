@@ -94,8 +94,20 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
       setSmartHomeStatus(true); // Online - recent data
     } else if (timeSinceData === null && timeSinceLoad < 30000) {
       setSmartHomeStatus(null); // Loading - waiting for first data
+      // Clear sensor data while loading
+      setTemperature(null);
+      setHumidity(null);
+      setDoorStatus(null);
+      setWindowStatus(null);
+      setFanStatus(null);
     } else {
       setSmartHomeStatus(false); // Offline - no data for 30s+
+      // Clear sensor data when offline
+      setTemperature(null);
+      setHumidity(null);
+      setDoorStatus(null);
+      setWindowStatus(null);
+      setFanStatus(null);
     }
   };
 
@@ -118,6 +130,15 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
       client.subscribe(`devices/${deviceId}/status/#`, (err) => {
         if (err) console.error("Error subscribing to status topic:", err);
       });
+
+      client.subscribe(`devices/${deviceId}/response/status`, (err) => {
+        if (err) console.error("Error subscribing to response status topic:", err);
+      });
+
+      // Request initial status on connect
+      setTimeout(() => {
+        publishMessage(`devices/${deviceId}/request/status`, {});
+      }, 500);
     };
 
     const handleMessage = (topic: string, message: Buffer) => {
@@ -147,6 +168,24 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
           setWindowStatus(data);
         } else if (topic.endsWith("/status/fan")) {
           setFanStatus(data);
+        } else if (topic.endsWith("/response/status")) {
+          // Handle comprehensive status response
+          if (data.fan) {
+            setFanStatus(data.fan);
+          }
+          if (data.door) {
+            setDoorStatus(data.door);
+          }
+          if (data.window) {
+            setWindowStatus(data.window);
+          }
+          if (data.temperature !== undefined) {
+            setTemperature(data.temperature);
+          }
+          if (data.humidity !== undefined) {
+            setHumidity(data.humidity);
+          }
+          console.log("Status response received:", data);
         }
       } catch (error) {
         console.error("Error parsing message:", error);
@@ -182,9 +221,14 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const deviceId = "esp32_main";
+
     statusCheckIntervalRef.current = setInterval(() => {
       updateDeviceStatus();
-    }, 5000);
+
+      // Request status every 20 seconds to keep connection alive
+      publishMessage(`devices/${deviceId}/request/status`, {});
+    }, 20000); // Every 20 seconds
 
     return () => {
       if (statusCheckIntervalRef.current) {
@@ -192,7 +236,7 @@ export function MQTTProvider({ children }: { children: React.ReactNode }) {
         statusCheckIntervalRef.current = null;
       }
     };
-  }, []);
+  }, [publishMessage]);
 
   // Value to be passed to the context provider
   const value: MQTTContextValue = {

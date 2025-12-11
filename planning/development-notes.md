@@ -242,18 +242,21 @@ A running diary of development decisions, important context, and session-to-sess
 ### Decisions Made
 
 1. **Enhanced Relational Design for ERD:**
+
    - Added `devices` table to track ESP32 hardware (future-proof for multi-room expansion)
    - Created 4 foreign keys from event tables → devices (sensor_logs, motion_events, gas_alerts, rfid_scans)
    - Linked `rfid_scans` → `authorised_cards` → `users` (proper access control chain)
    - Total: 6 foreign key relationships vs original 1 (better for assessment ERD)
 
 2. **Scope Refinement:**
+
    - Removed `location` and `status` from devices (single ESP32 in Phase 1, no value)
    - Removed `card_name` from authorised_cards (redundant with user.username)
    - Kept Phase 4 tables (`users`, `authorised_cards`) in schema but unused until Phase 4
    - Rationale: Better ERD now, no downside, easier Phase 4 implementation
 
 3. **Australian Spelling:**
+
    - Changed `authorized_cards` → `authorised_cards` throughout codebase
    - Updated `authorized_card_id` → `authorised_card_id` foreign key column
    - Fixed in database-schema.sql, tasks.md, file-structure.md
@@ -266,6 +269,7 @@ A running diary of development decisions, important context, and session-to-sess
 ### Schema Structure
 
 **Tables (7 total):**
+
 - `devices` - ESP32 hardware registry
 - `sensor_logs` - Temperature, humidity, gas, steam readings
 - `motion_events` - PIR detection timestamps
@@ -275,6 +279,7 @@ A running diary of development decisions, important context, and session-to-sess
 - `authorised_cards` - RFID card registry (Phase 4)
 
 **Indexes (13 total):**
+
 - Timestamp-based queries optimized for web dashboard
 - Foreign key indexes for JOIN performance
 
@@ -317,24 +322,28 @@ SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIs
 ### Decisions Made
 
 1. **Config File Pattern (Security Best Practice):**
+
    - Use `config.py` instead of `.env` (MicroPython has no dotenv library)
    - Create `config.example.py` as template (committed to Git)
    - Actual `config.py` is gitignored (never committed)
    - Rationale: Same pattern as .env files in web development, demonstrates security awareness for portfolio
 
 2. **YAGNI Principle Added to CLAUDE.md:**
+
    - Only implement features explicitly required by current task
    - Don't add "nice to have" features (debug flags, device IDs, intervals) until needed
    - Keep code simple and focused for student project
    - Rationale: Prevents feature bloat, easier to understand/maintain
 
 3. **ESP32 Filesystem Cleanup:**
+
    - Removed old project files (`src/`, `boot.py`, `wifi_config.py`, test files)
    - Kept only `Lib/` directory (MQTT, DHT11, RFID, SSL libraries)
    - Deployed clean project structure from `embedded/` directory
    - Rationale: Clean environment = predictable behavior, no conflicts
 
 4. **Deploy Script vs Slash Command:**
+
    - Deleted `deploy.py` Python script (unreliable `cp -r` with wildcards)
    - Updated `/deploy` slash command with manual file-by-file copying
    - Slash command includes venv activation (fixes mpremote not found error)
@@ -350,10 +359,12 @@ SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIs
 ### Issues Encountered
 
 1. **ESP32 Device Path Changes:**
+
    - Device path changed from `/dev/tty.usbserial-10` to `/dev/tty.usbserial-210` after reconnect
    - Solution: Updated deploy.py and slash command, added reminder to check `ls /dev/tty.usb*`
 
 2. **mpremote Not Found:**
+
    - Initial deploy failed because mpremote wasn't in PATH
    - Solution: Activate venv before running commands (mpremote installed in venv)
    - Updated `/deploy` slash command to include venv activation
@@ -366,6 +377,7 @@ SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIs
 ### Test Results
 
 **MQTT Connection Test (test_mqtt.py):**
+
 ```
 ✅ WiFi connected: 10.52.126.8
 ✅ MQTT client connected to HiveMQ Cloud (301d2478bf674954a8b8e5ad05732a73.s1.eu.hivemq.cloud:8883)
@@ -374,6 +386,7 @@ SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIs
 ```
 
 All credentials working:
+
 - WiFi: CyFi / SecurityA40
 - MQTT: HiveMQ broker with SSL/TLS (thebrownproject user)
 - Supabase: https://uehfuypnccdqvdssknqq.supabase.co (anon key configured)
@@ -381,17 +394,20 @@ All credentials working:
 ### Files Created/Modified
 
 **Created:**
+
 - `embedded/config.example.py` - Credential template
 - `embedded/config.py` - Actual credentials (gitignored)
 - `embedded/tests/test_mqtt.py` - MQTT connection test
 - `.claude/commands/deploy.md` - Updated deployment process
 
 **Modified:**
+
 - `.gitignore` - Added `embedded/config.py`
 - `CLAUDE.md` - Added YAGNI principle section
 - `planning/tasks.md` - Marked T1.3 complete
 
 **Deleted:**
+
 - `deploy.py` - Replaced with slash command
 
 ### Next Session
@@ -416,6 +432,7 @@ All credentials working:
 ### WiFi Boot Implementation
 
 **Added to boot.py:**
+
 ```python
 # WiFi initialization with 10-second timeout
 wlan = network.WLAN(network.STA_IF)
@@ -430,6 +447,7 @@ while not wlan.isconnected() and timeout > 0:
 ```
 
 **Design decision - Graceful degradation:**
+
 - WiFi failure prints warning but system continues to main.py
 - Rationale: Better for development/debugging (can still access REPL)
 - Network-dependent features will fail with clear error messages
@@ -440,6 +458,7 @@ while not wlan.isconnected() and timeout > 0:
 **Milestone 1.1: Environment & Database Setup** ✅ **COMPLETE**
 
 All tasks finished:
+
 - ✅ T1.1: Hardware validation testing
 - ✅ T1.2: Supabase project and database schema
 - ✅ T1.3: MQTT credentials in ESP32 config
@@ -462,17 +481,20 @@ All tasks finished:
 ### Tasks Started (In Progress)
 
 - [~] **T1.6**: Implement PIR motion sensor class
+
   - Implementation complete with debounce logic (500ms)
   - Uses digital Pin 14, returns boolean
   - Needs hardware testing to verify motion detection
 
 - [~] **T1.7**: Implement Gas sensor class
+
   - Implementation complete with active LOW logic
   - Uses Pin 23 with PULL_UP resistor
   - Returns True when gas detected (pin reads 0)
   - Needs hardware testing with gas sensor
 
 - [~] **T1.8**: Implement Steam/Moisture sensor class
+
   - Implementation complete using ADC (analog sensor)
   - Uses Pin 34 with 12-bit ADC, 0-3.3V range
   - Threshold: 746 ADC value (equivalent to 0.6V from reference)
@@ -487,27 +509,32 @@ All tasks finished:
 ### Decisions Made
 
 **DHT11 Sensor (reviewed existing code):**
+
 - Kept error handling pattern (return None on OSError)
 - No temperature validation (-20 to 60°C) - deemed scope creep, not in requirements
 - Documented that `read_data()` is more efficient than calling `read_temperature()` and `read_humidity()` separately
 
 **PIR Sensor:**
+
 - Added debounce logic IN sensor class (500ms threshold)
 - Alternative considered: debounce in main.py (rejected for encapsulation)
 - Used `time.ticks_diff()` for proper timer wrap-around handling
 
 **Gas Sensor:**
+
 - Determined NO debounce needed (sustained event, not quick trigger)
 - Active LOW logic: Pin reads 0 when gas detected (PULL_UP resistor)
 - Fan control logic stays in main.py (separation of concerns)
 
 **Steam Sensor:**
+
 - Changed from digital to analog (ADC) based on reference code
 - Pin 34 (ADC capable), not Pin 24
 - Threshold 746 raw ADC = 0.6V (reference code pattern)
 - Servo control stays in main.py
 
 **RFID Sensor:**
+
 - Two-method design: `scan_card()` reads card, `get_card_id()` extracts UID
 - String concatenation for UID (e.g., "147210521") vs sum (safer, no collisions)
 - Safety check in `get_card_id()`: verify `uid.size > 0` before extracting
@@ -515,15 +542,18 @@ All tasks finished:
 ### Key Learning Moments
 
 **Analog vs Digital Sensors:**
+
 - Digital (PIR, Gas): Returns 0 or 1, simple Pin.IN
 - Analog (Steam): Returns 0-4095, needs ADC configuration
 - Formula: `voltage = adc_value / 4095.0 * 3.3`
 
 **Active HIGH vs Active LOW:**
+
 - Steam sensor: Active HIGH (moisture = pin reads 1)
 - Gas sensor: Active LOW with PULL_UP (gas = pin reads 0)
 
 **Separation of Concerns:**
+
 - Sensors read hardware, return data (pure functions)
 - Main loop handles business logic (what to do with sensor data)
 - Output control, MQTT publishing, database logging = main.py responsibility
@@ -537,6 +567,7 @@ All tasks finished:
 - Next: Continue Milestone 1.2 testing, or move to Milestone 1.3 (Outputs)
 
 ---
+
 ## Session 7 - October 9, 2025 - Sensor Testing & Validation ✅
 
 **Phase**: Phase 1 - Embedded System Core  
@@ -553,18 +584,21 @@ All tasks finished:
 ### Decisions Made
 
 1. **Test Organization Structure:**
+
    - Created `embedded/tests/sensors/` subdirectory for sensor-specific tests
    - Pattern: One test file per sensor matching production code
    - Follows existing infrastructure (matches `tests/test_mqtt.py` pattern)
    - Rationale: Clean separation of test vs production code, professional organization for portfolio
 
 2. **Sensor Constructor Simplification:**
+
    - Removed pin number parameters from all sensor classes
    - Pin assignments now hardcoded in `__init__()` (matches hardware pinout document)
    - DHT11: Pin 17, PIR: Pin 14, Gas: Pin 23, Steam: Pin 34, RFID: I2C (21/22)
    - Rationale: Single ESP32 with fixed wiring, YAGNI principle (don't need pin flexibility)
 
 3. **Testing Philosophy - Assert vs Simple Validation:**
+
    - Started with `assert` statements for type/range validation
    - User preferred simpler tests without assertions (personal choice)
    - Final approach: Show readings, count valid results, pass/fail based on test completion
@@ -579,12 +613,14 @@ All tasks finished:
 ### Issues Encountered & Resolutions
 
 1. **RFID Library Import Error:**
+
    - **Problem**: `ImportError: no module named 'mfrc522_i2c'`
    - **Root Cause**: Missing `soft_iic.py` dependency in ESP32 `Lib/` folder
    - **Solution**: Uploaded `soft_iic.py` from reference code to `Lib/` directory
    - **Learning**: MicroPython requires manual dependency management (no auto-install like pip)
 
 2. **RFID I2C Communication Failure:**
+
    - **Problem**: "IIC slave device not ack" error
    - **Root Cause**: Pin objects passed to `mfrc522()` instead of integers
    - **Wrong**: `mfrc522(Pin(22), Pin(21), 0x28)`
@@ -593,6 +629,7 @@ All tasks finished:
    - **Learning**: Always check reference code for exact API usage patterns
 
 3. **I2C Device Detection Issues:**
+
    - **Problem**: Initially `I2C.scan()` returned empty list `[]`
    - **Possible causes**: USB-C power delivery issues, loose connections, faulty RFID module
    - **Solution**: Switched RFID module, re-seated connections
@@ -607,30 +644,35 @@ All tasks finished:
 ### Test File Patterns Established
 
 **DHT11 Test** (`test_dht11.py`):
+
 - Tests `read_data()`, `read_temperature()`, `read_humidity()` methods
 - 15 total readings (5 per method) with 2-second intervals
 - Score: 15/15 = pass, validates sensor returns non-None values
 - ~30 seconds runtime
 
 **RFID Test** (`test_rfid.py`):
+
 - Tests `scan_card()` and `get_card_id()` methods
 - User prompt: "Scan card during test (5 attempts, 2s intervals)"
 - Pass condition: ≥1 successful scan detected
 - Displays card ID when detected
 
 **Gas Test** (`test_gas.py`):
+
 - Tests `read_value()` (returns 0 or 1) and `is_gas_detected()` (returns bool)
 - 5 readings + 1 boolean check = 6 total tests
 - Shows interpretation: "GAS DETECTED ⚠️" vs "No gas (normal)"
 - Pass if all 6 tests complete without errors
 
 **Steam Test** (created by user, similar pattern expected):
+
 - Should test `read()` (ADC 0-4095) and `is_moisture_detected()` (bool)
 - Optional user trigger instructions
 
 ### Files Created
 
 **Test Files:**
+
 - `embedded/tests/sensors/__init__.py` - Package marker
 - `embedded/tests/sensors/test_dht11.py` - DHT11 automated test (41 lines)
 - `embedded/tests/sensors/test_rfid.py` - RFID manual test (32 lines)
@@ -638,8 +680,9 @@ All tasks finished:
 - `embedded/tests/I2Ctst.py` - I2C bus scanner (4 lines)
 
 **Modified Sensor Classes:**
+
 - `embedded/sensors/dht11.py` - Removed `pin_number` parameter
-- `embedded/sensors/pir.py` - Removed `pin` parameter  
+- `embedded/sensors/pir.py` - Removed `pin` parameter
 - `embedded/sensors/gas.py` - Removed `pin` parameter
 - `embedded/sensors/steam.py` - Removed `pin` parameter
 - `embedded/sensors/rfid.py` - Fixed to pass integers, not Pin objects
@@ -647,12 +690,14 @@ All tasks finished:
 ### Key Learning Moments
 
 **MicroPython Import System:**
+
 - `__init__.py` marks directories as packages
 - Direct imports (`from sensors.dht11 import X`) work automatically
 - Package-level imports (`from sensors import X`) require `__init__.py` configuration
 - No automatic dependency resolution - libraries must be manually uploaded
 
 **I2C Debugging Workflow:**
+
 1. Check power (voltage stable? sufficient current?)
 2. Scan bus (`I2C.scan()`) to verify device responds
 3. Check library API (reference code shows correct usage)
@@ -660,6 +705,7 @@ All tasks finished:
 5. Test functionality (can read data?)
 
 **Testing in Embedded Systems:**
+
 - Can't mock hardware - tests verify real sensor integration
 - Pass criteria: "Does sensor work?" not "Can we trigger it?"
 - Manual triggers acceptable for classroom constraints
@@ -670,6 +716,7 @@ All tasks finished:
 **Milestone 1.2: Sensor Module Implementation** ✅ **COMPLETE**
 
 All tasks finished:
+
 - ✅ T1.5: DHT11 sensor class (completed Session 6)
 - ✅ T1.6: PIR motion sensor class
 - ✅ T1.7: Gas sensor class
@@ -687,6 +734,7 @@ All sensors tested and validated with hardware!
 - Will need reference code from `Docs/reference-code/` for each output
 
 ---
+
 ## Session 8 - October 9, 2025 - Output Module Implementation ✅
 
 **Phase**: Phase 1 - Embedded System Core  
@@ -704,12 +752,14 @@ All sensors tested and validated with hardware!
 ### Decisions Made
 
 1. **RGB LED Implementation:**
+
    - Used `neopixel.NeoPixel.fill()` for efficient multi-LED control (all 4 LEDs same color)
    - Tuple unpacking (`*color`) in `flash()` method to match `set_color(r, g, b)` signature
    - Hardcoded pin 26 and 4 LEDs (from reference docs)
    - Rationale: Matches requirements (solid colors + flashing), simple API
 
 2. **Servo Motor Simplification (YAGNI Applied):**
+
    - Removed `set_angle(degrees)` method - not required by any FR
    - Kept only `open()` and `close()` methods (0° and 180°)
    - Generic class accepts pin parameter (door: pin 13, window: pin 5)
@@ -717,6 +767,7 @@ All sensors tested and validated with hardware!
    - Rationale: All requirements only use fully open or fully closed positions
 
 3. **Fan Motor Control:**
+
    - H-bridge driver with two PWM pins (INA: 19, INB: 18)
    - Only one direction needed (fans don't reverse)
    - `duty(700)` = ~68% power (good balance of speed and noise)
@@ -724,6 +775,7 @@ All sensors tested and validated with hardware!
    - Rationale: Simple on/off control matches FR4.2 requirement
 
 4. **Buzzer Volume and Frequency:**
+
    - Initial frequency `100Hz` caused weird noises (too low, bass rumble)
    - **Fixed**: Set frequency to `2000Hz` in `__init__()` (clear beep tone)
    - Initial `duty(512)` too loud → reduced to `duty(100)` (~10% volume)
@@ -739,18 +791,21 @@ All sensors tested and validated with hardware!
 ### Issues Encountered & Resolutions
 
 1. **RGB LED Flash Method - Tuple Unpacking:**
+
    - **Problem**: `flash(color, times)` called `set_color(color)` but `set_color` expects `(r, g, b)` not tuple
    - **Error**: `TypeError: function takes 4 positional arguments but 2 were given`
    - **Solution**: Use unpacking operator: `self.set_color(*color)`
    - **Learning**: `*` unpacks tuple `(255, 0, 0)` into separate args `255, 0, 0`
 
 2. **Servo set_angle() Removed:**
+
    - **Question**: Task spec said `set_angle(degrees)` but requirements only need open/close
    - **Decision**: Removed method (YAGNI principle)
    - **Updated**: tasks.md line 118 to remove `set_angle()` from method list
    - **Rationale**: No FR uses intermediate angles (45°, 90°, etc.)
 
 3. **Buzzer Frequency Issues:**
+
    - **Problem**: First beep normal, subsequent beeps had "weird noises"
    - **Root Cause**: `beep()` called `freq(100)` every time, re-setting frequency
    - **Solution**: Move `freq(2000)` to `__init__()`, only set duty in `beep()`
@@ -766,9 +821,10 @@ All sensors tested and validated with hardware!
 ### Test Files Created
 
 **Outputs:**
+
 - `embedded/tests/outputs/test_led.py` - Basic LED on/off/toggle test
 - `embedded/tests/outputs/test_rgb.py` - RGB solid colors + flashing patterns
-- `embedded/tests/outputs/test_fan.py` - Fan on/off with `is_running()` verification  
+- `embedded/tests/outputs/test_fan.py` - Fan on/off with `is_running()` verification
 - `embedded/tests/outputs/test_buzzer.py` - Beep patterns with various durations
 
 **All tests passed on hardware** - outputs respond correctly!
@@ -776,18 +832,21 @@ All sensors tested and validated with hardware!
 ### Key Learning Moments
 
 **PWM Control Patterns:**
+
 - **Servo**: Frequency 50Hz (standard), duty cycle controls angle (25-128)
 - **Fan**: Frequency 10kHz, duty cycle controls speed (0-1023, use ~700)
 - **Buzzer**: Frequency controls pitch (2kHz = clear beep), duty controls volume (100 = quiet)
 - **RGB LED**: Uses NeoPixel protocol (not PWM), `fill()` sets all LEDs at once
 
 **YAGNI in Practice:**
+
 - Servo `set_angle()` removed - no requirement needs it
 - Fan only spins one direction - no reverse needed
 - Buzzer no custom frequencies - 2kHz works for all beeps
 - Simpler code = fewer bugs = easier maintenance
 
 **Hardware Testing Philosophy:**
+
 - Volume/speed settings need human judgment (too loud? too fast?)
 - Can't programmatically verify "correct" buzzer volume
 - Tests validate hardware responds + code doesn't crash
@@ -798,10 +857,11 @@ All sensors tested and validated with hardware!
 **Milestone 1.3: Output Module Implementation** ✅ **COMPLETE**
 
 All tasks finished:
+
 - ✅ T1.10: LED control class
 - ✅ T1.11: RGB LED (SK6812) class
 - ✅ T1.12: Servo motor class
-- ✅ T1.13: Fan control class  
+- ✅ T1.13: Fan control class
 - ✅ T1.14: Buzzer class
 
 All outputs tested and hardware-validated!
@@ -829,23 +889,27 @@ All outputs tested and hardware-validated!
 ### Decisions Made
 
 1. **Hardware Clarification - LCD vs OLED:**
+
    - Documentation said "OLED SSD1306" but actual hardware is 16x2 character LCD (LCD1602)
    - Evidence: I2C scan shows address 0x27 (typical for LCD), not 0x3C (typical for OLED SSD1306)
    - Session 7 notes said "OLED + RFID" but meant LCD (0x27) + RFID (0x28)
    - Decision: Use `i2c_lcd` library from reference code, not `ssd1306`
 
 2. **Library Location - /Lib/ vs embedded/display/:**
+
    - Initial approach: Copied `i2c_lcd.py` and `lcd_api.py` to `embedded/display/`
    - **Better approach**: Upload to ESP32 `/Lib/` folder (like other dependencies)
    - Rationale: Keeps app code separate from library dependencies, matches existing pattern (mfrc522, soft_iic)
    - Import changes from `from display.i2c_lcd import I2cLcd` → `from i2c_lcd import I2cLcd`
 
 3. **Class Name "OLED" Despite LCD Hardware:**
+
    - Kept class name as `OLED` for API compatibility with requirements
    - Added docstring note explaining discrepancy
    - Methods match required API: `show_text()`, `clear()`, `show_temp_humidity()`
 
 4. **Default Parameters for Flexibility:**
+
    - `show_text(line1, line2="")` - Makes second line optional
    - Allows single-line displays: `oled.show_text("Status: OK")`
    - Or two-line: `oled.show_text("Hello", "World")`
@@ -857,12 +921,14 @@ All outputs tested and hardware-validated!
 ### Issues Encountered & Resolutions
 
 1. **ImportError: no module named 'ssd1306':**
+
    - **Problem**: Initial implementation tried to use SSD1306 OLED library
    - **Root Cause**: Hardware is actually a character LCD, not OLED
    - **Solution**: Switched to `i2c_lcd` library from reference code (pj8_1_lcd1602)
    - **Learning**: Always verify actual hardware with I2C scan before assuming specs
 
 2. **File Organization Confusion:**
+
    - **Question**: Where should LCD libraries go - app code or Lib folder?
    - **Answer**: `/Lib/` folder on ESP32 for reusable dependencies
    - **Pattern**: App code in `embedded/`, libraries in `/Lib/`
@@ -875,6 +941,7 @@ All outputs tested and hardware-validated!
 ### Implementation Details
 
 **OLED Class (embedded/display/oled.py):**
+
 - Uses `I2cLcd` from `i2c_lcd` library (16x2 LCD1602)
 - I2C address: 0x27 (not 0x3C)
 - Methods:
@@ -883,6 +950,7 @@ All outputs tested and hardware-validated!
   - `show_temp_humidity(temp, humidity)` - Format and display sensor data
 
 **Test File (embedded/tests/display/test_oled.py):**
+
 - Tests all three methods with delays
 - Displays "Hello" / "World", then "Temp: 20C" / "Humid: 50%", then clears
 - User confirmed working on hardware
@@ -890,17 +958,20 @@ All outputs tested and hardware-validated!
 ### Key Learning Moments
 
 **Character LCD vs OLED Display API:**
+
 - **LCD (HD44780)**: `clear()`, `move_to(x, row)`, `putstr(text)` - Row/column based
 - **OLED (SSD1306)**: `fill()`, `text(str, x, y)`, `show()` - Pixel-based with frame buffer
 - LCD is simpler for text-only displays, OLED allows graphics/custom fonts
 
 **I2C Address as Hardware Identifier:**
+
 - 0x27 = Character LCD with PCF8574 I2C backpack
 - 0x3C = OLED SSD1306 display
 - 0x28 = RFID RC522 reader (in this project)
 - Always run I2C scan to verify actual hardware!
 
 **MicroPython Library Management:**
+
 - No package manager like pip - manual file uploads required
 - `/Lib/` folder = global library location (like site-packages)
 - Libraries with dependencies need ALL files uploaded (e.g., i2c_lcd.py + lcd_api.py)
@@ -908,25 +979,29 @@ All outputs tested and hardware-validated!
 ### Files Created/Modified
 
 **Created:**
+
 - `embedded/display/oled.py` - LCD display class (26 lines)
 - `embedded/display/__init__.py` - Package marker
 - `embedded/tests/display/test_oled.py` - Display test with delays
 - `embedded/tests/display/__init__.py` - Package marker
 
 **Uploaded to ESP32 /Lib/:**
+
 - `i2c_lcd.py` - LCD I2C driver (from pj8_1_lcd1602)
 - `lcd_api.py` - HD44780 LCD API (dependency)
 
 **Modified:**
+
 - `planning/tasks.md` - Marked T1.15 complete, clarified LCD vs OLED
 
 ### Test Results
 
 **Display Test (test_oled.py):**
+
 ```
 ✓ OLED initialized
 ✓ Test 1: Displaying 'Hello' / 'World' (3 seconds)
-✓ Test 2: Displaying temp/humidity (3 seconds)  
+✓ Test 2: Displaying temp/humidity (3 seconds)
 ✓ Test 3: Clearing display
 ✓ OLED test completed successfully!
 ```
@@ -959,23 +1034,27 @@ All methods working correctly on 16x2 LCD hardware.
 ### Decisions Made
 
 1. **Folder Naming Refactor:**
+
    - Renamed `embedded/` → `esp32/` (hardware-specific naming)
    - Renamed `network/` → `comms/` (avoids conflict with Python built-in `network` module)
    - Rationale: `network` is a MicroPython built-in, causing import collision
    - New structure: `esp32/comms/wifi_manager.py`
 
 2. **Simplified Retry Logic (Not Exponential Backoff):**
+
    - Student opted for simple fixed 2-second intervals instead of exponential backoff
    - 5 total attempts = 10 seconds max wait time
    - Reasoning: YAGNI principle - single device, stable environment, easier to understand
    - Exponential backoff is overkill for this use case
 
 3. **WiFi Interface Reset Pattern:**
+
    - Added `disconnect()` + `active(False)` + `active(True)` before each connection
    - Clears "WiFi Internal Error" state from previous failed attempts
    - Critical for reusability - can call `connect()` multiple times
 
 4. **boot.py WiFi Removal:**
+
    - Removed WiFi connection logic from boot.py (caused conflicts)
    - WiFiManager now has full control from main.py
    - boot.py only handles minimal system initialization (gc.collect, memory info)
@@ -988,12 +1067,14 @@ All methods working correctly on 16x2 LCD hardware.
 ### Issues Encountered & Resolutions
 
 1. **ImportError: no module named 'network.wifi_manager':**
+
    - **Problem**: `network` is a built-in MicroPython module
    - **Root Cause**: Python prioritizes built-ins over user folders
    - **Solution**: Renamed folder `network/` → `connectivity/` → `comms/`
    - **Learning**: Always check for built-in module name conflicts
 
 2. **OSError: Wifi Internal Error:**
+
    - **Problem**: Calling `wlan.connect()` when already connected or in error state
    - **First attempt**: Added check for `isconnected()` before connecting
    - **Second issue**: Failed connection left interface in bad state
@@ -1001,6 +1082,7 @@ All methods working correctly on 16x2 LCD hardware.
    - **Pattern**: `wlan.disconnect()` → `wlan.active(False)` → `time.sleep(0.5)` → `wlan.active(True)`
 
 3. **boot.py vs main.py Conflict:**
+
    - **Problem**: boot.py connected to WiFi, then WiFiManager tried to connect again → "Internal Error"
    - **Solution**: Removed all WiFi logic from boot.py
    - **Decision**: boot.py = system init only, main.py = application init (including WiFi)
@@ -1014,18 +1096,21 @@ All methods working correctly on 16x2 LCD hardware.
 ### Implementation Details
 
 **WiFiManager Class (esp32/comms/wifi_manager.py):**
+
 - `__init__()`: Create WLAN interface, set max_retries = 5
 - `connect()`: Reset interface, connect with retry loop (2s intervals), return True/False
 - `is_connected()`: Returns `wlan.isconnected()` directly (no state caching)
 - `get_ip()`: Returns IP if connected, None otherwise
 
 **main.py Integration:**
+
 - Shows welcome message on LCD
 - Calls `wifi_manager.connect()`
 - Displays "WiFi Connected / [SSID]" on LCD
 - Enters "Test Mode" (placeholder for future event loop)
 
 **Test File (esp32/tests/network/test_wifi.py):**
+
 - Creates WiFiManager instance
 - Calls `connect()` method
 - Prints connection status and IP
@@ -1033,16 +1118,19 @@ All methods working correctly on 16x2 LCD hardware.
 ### Key Learning Moments
 
 **Built-in Module Name Collisions:**
+
 - MicroPython has built-in modules: `network`, `time`, `machine`, `gc`, etc.
 - User folders with same names cause import priority issues
 - Solution: Use different names (`comms`, `utils`, `helpers`)
 
 **WiFi Error Recovery Pattern:**
+
 - WiFi interfaces can get stuck in error states
 - Always reset interface before reconnecting: `disconnect()` → `deactivate()` → `activate()`
 - Common in production IoT systems (reset modem before retry)
 
 **UX Design in Embedded Systems:**
+
 - Technical info (IP) vs user-relevant info (network name)
 - Display what users recognize and care about
 - Keep technical details in logs/serial for developers
@@ -1050,22 +1138,26 @@ All methods working correctly on 16x2 LCD hardware.
 ### Files Created/Modified
 
 **Created:**
+
 - `esp32/comms/wifi_manager.py` - WiFiManager class (45 lines)
 - `esp32/comms/__init__.py` - Package marker
 - `esp32/tests/network/test_wifi.py` - WiFi connection test
 
 **Modified:**
+
 - `esp32/main.py` - Added WiFi connection with LCD status display
 - `esp32/boot.py` - Removed WiFi connection logic (now minimal system init)
 - `planning/tasks.md` - Marked T1.16 complete
 
 **Renamed:**
+
 - `embedded/` → `esp32/` (project-wide folder rename)
 - `embedded/network/` → `esp32/comms/` (avoid built-in module collision)
 
 ### Test Results
 
 **WiFi Connection Test:**
+
 ```
 WiFi Manager Test
 Connecting to WiFi: CyFi
@@ -1075,12 +1167,14 @@ IP address: 10.52.126.8
 ```
 
 **Main.py Boot Sequence (LCD Display):**
+
 1. "Welcome to / Smart Home!" (2 seconds)
 2. "Connecting to / WiFi..." (during connection)
 3. "WiFi Connected / CyFi" (3 seconds)
 4. "Test Mode / Ready" (stays on screen)
 
 **Serial Output:**
+
 ```
 Smart Home System - Boot Sequence Starting...
 System Memory: XXXXX bytes free
@@ -1099,20 +1193,24 @@ Main loop not implemented yet - entering Test Mode
 All planning documents still reference old folder names. Next session MUST update:
 
 1. **`planning/file-structure.md`**:
+
    - Change ALL `embedded/` → `esp32/`
    - Change ALL `network/` → `comms/`
    - Update file paths throughout
 
 2. **`planning/tasks.md`**:
+
    - Update T1.17 (MQTT): `embedded/network/mqtt_client.py` → `esp32/comms/mqtt_client.py`
    - Update T1.18 (Supabase): `embedded/network/supabase.py` → `esp32/comms/supabase.py`
    - Search for ANY remaining `embedded/` or `network/` references
 
 3. **`planning/architecture.md`**:
+
    - Update any code examples showing imports
    - Update file paths in explanations
 
 4. **`CLAUDE.md`**:
+
    - Update deployment instructions
    - Update file structure references
    - Update example imports
@@ -1121,12 +1219,14 @@ All planning documents still reference old folder names. Next session MUST updat
    - Use correct folder structure from start
 
 **Search commands to find remaining references:**
+
 ```bash
 grep -r "embedded/" planning/
 grep -r "network/" planning/
 ```
 
 **Next Technical Task:**
+
 - Continue with **T1.17**: Implement MQTT client wrapper
 - File: `esp32/comms/mqtt_client.py`
 - Use `umqtt.simple` library
@@ -1151,10 +1251,12 @@ grep -r "network/" planning/
 ### Decisions Made
 
 1. **Class Naming to Avoid Collision:**
+
    - Named class `SmartHomeMQTTClient` instead of `MQTTClient`
    - Rationale: `MQTTClient` already imported from `umqtt.simple` - would cause name collision
 
 2. **Callback-First Subscribe Pattern:**
+
    - Must call `set_callback()` BEFORE `subscribe()`
    - Order matters: `self.client.set_callback(callback)` → `self.client.subscribe(topic)`
 
@@ -1171,6 +1273,7 @@ grep -r "network/" planning/
 ### Test Results
 
 MQTT Client Wrapper Test: ✅ ALL PASSED
+
 - Connected to HiveMQ Cloud
 - Subscribed to `home/test`
 - Published test message
@@ -1183,6 +1286,7 @@ MQTT Client Wrapper Test: ✅ ALL PASSED
 - Use `urequests` for HTTP POST to Supabase
 
 ---
+
 ## Session 12 - October 11, 2025 - Supabase HTTP Client (Partial)
 
 **Phase**: Phase 1 - Embedded System Core
@@ -1200,16 +1304,19 @@ MQTT Client Wrapper Test: ✅ ALL PASSED
 ### Decisions Made
 
 1. **Database Device Record:**
+
    - Inserted device record via Supabase MCP: `device_id=1`, `device_type='esp32_main'`, `device_name='Smart Home Lab'`
    - Rationale: Foreign key constraint requires device record before sensor logs can be inserted
 
 2. **HTTP Client Implementation Pattern:**
+
    - Use `urequests.post()` with manual JSON encoding: `ujson.dumps(data).encode('utf-8')`
    - Required headers: `apikey`, `Authorization`, `Content-Type: application/json`
    - REST API endpoint: `/rest/v1/table_name` (not direct PostgreSQL connection)
    - Status code 201 = successful INSERT (not 200)
 
 3. **Memory Safety for ESP32:**
+
    - Always call `response.close()` immediately after checking status
    - Boolean return pattern (`True/False`) matches MQTT client for consistency
    - Manual JSON string encoding required (MicroPython urequests doesn't auto-handle `json=` parameter reliably)
@@ -1221,12 +1328,14 @@ MQTT Client Wrapper Test: ✅ ALL PASSED
 ### Issues Encountered & Resolutions
 
 1. **HTTP 400 "Empty or invalid json":**
+
    - **Problem**: Initial attempts with `json=` parameter and `data=ujson.dumps()` both failed
    - **Root Cause**: MicroPython urequests expects byte-encoded data, not plain strings
    - **Solution**: Use `.encode('utf-8')` to convert JSON string to bytes
    - **Learning**: ESP32 HTTP libraries behave differently than desktop Python requests
 
 2. **HTTP 409 Foreign Key Violation:**
+
    - **Problem**: `device_id=1` didn't exist in devices table
    - **Root Cause**: Schema has foreign key constraint (sensor_logs → devices)
    - **Solution**: Inserted device record via Supabase MCP with proper device type and name
@@ -1240,6 +1349,7 @@ MQTT Client Wrapper Test: ✅ ALL PASSED
 ### Test Results
 
 **Supabase Insert Test:**
+
 ```
 Status Code: 201 (Success)
 Result: True
@@ -1249,13 +1359,16 @@ Database entry: id=2, device_id=1, sensor_type="temperature", value=25.00, unit=
 ### Files Created/Modified
 
 **Created:**
+
 - `esp32/comms/supabase.py` - Supabase HTTP client class (partial - only `insert_sensor_log()` complete)
 - `esp32/tests/comms/test_supabase.py` - Basic test for sensor log insertion
 
 **Modified:**
+
 - `planning/tasks.md` - Marked T1.18 as in-progress with status note
 
 **Database:**
+
 - Inserted device record: id=1 ("Smart Home Lab")
 - Verified sensor_logs table working with test insert
 
@@ -1285,6 +1398,7 @@ Database entry: id=2, device_id=1, sensor_type="temperature", value=25.00, unit=
 ### Decisions Made
 
 1. **RFID Scan Method Design - Three Parameters:**
+
    - `insert_rfid_scan(card_id, result, authorised_card_id=None)`
    - `card_id`: Raw RFID card identifier string (e.g., "147210521")
    - `result`: Access outcome as string - `"granted"` or `"denied"` (VARCHAR, not boolean)
@@ -1292,17 +1406,20 @@ Database entry: id=2, device_id=1, sensor_type="temperature", value=25.00, unit=
    - Rationale: Supports both denied scans (FK=None) and authorized scans (FK=record ID)
 
 2. **Column Naming Alignment:**
+
    - Database schema uses `access_result VARCHAR(20)` not `result BOOLEAN`
    - Allows extensibility: `"granted"`, `"denied"`, future states like `"expired"`, `"revoked"`
    - Method parameter name `result` maps to database column `access_result` in data dict
 
 3. **Foreign Key for Audit Trail:**
+
    - `authorised_card_id` creates relational link: rfid_scans → authorised_cards → users
    - Nullable FK allows logging denied scans (unknown cards) without breaking constraints
    - When card is authorized, stores both raw card_id AND the authorised_cards.id reference
    - Enables queries like "Who accessed the door?" via JOIN relationships
 
 4. **YAGNI Applied - Additional Methods Deferred:**
+
    - Discussed need for `check_card_authorized()` (GET request), `insert_motion_event()`, `insert_gas_alert()`
    - Decision: Add methods as-needed when tasks require them (T1.20, T1.22, T1.23)
    - Rationale: Reduces current complexity, saves ESP32 memory, methods added incrementally
@@ -1317,12 +1434,14 @@ Database entry: id=2, device_id=1, sensor_type="temperature", value=25.00, unit=
 ### Issues Encountered & Resolutions
 
 1. **Schema Column Name Mismatch:**
+
    - **Problem**: Initial implementation used `"result": result` in data dict
    - **Root Cause**: Database column is `access_result`, not `result`
    - **Solution**: Changed line 45 to `"access_result": result`
    - **Learning**: Always verify exact column names from schema before implementation
 
 2. **RFID Workflow Clarification:**
+
    - **Question**: Is `insert_rfid_scan()` for authorization or logging?
    - **Answer**: It's for logging AFTER authorization check happens
    - **Full workflow**:
@@ -1340,16 +1459,19 @@ Database entry: id=2, device_id=1, sensor_type="temperature", value=25.00, unit=
 ### Key Learning Moments
 
 **REST API Design Patterns:**
+
 - **GET requests**: Query data (e.g., check if card exists in authorised_cards table)
 - **POST requests**: Create data (e.g., log scan event to rfid_scans table)
 - RFID access control needs BOTH operations in sequence
 
 **Database Schema Types:**
+
 - VARCHAR allows flexible categorical values ("granted", "denied", "expired")
 - BOOLEAN limits to true/false, less extensible for future states
 - Trade-off: VARCHAR uses slightly more storage but provides better future-proofing
 
 **Foreign Key Relationships:**
+
 - Nullable FKs (`ON DELETE SET NULL`) preserve history when referenced records deleted
 - Example: If authorised_card deleted, scan history remains with NULL FK (card no longer valid)
 - Enables audit queries even after card/user removal from system
@@ -1357,12 +1479,14 @@ Database entry: id=2, device_id=1, sensor_type="temperature", value=25.00, unit=
 ### Files Modified
 
 **Modified:**
+
 - `esp32/comms/supabase.py` - Fixed column name `result` → `access_result` (line 45)
 - `planning/tasks.md` - Marked T1.18 complete with updated method signatures
 
 ### Test Results
 
 **RFID Scan Insert Test:**
+
 ```
 Status Code: 201 (Success)
 Result: True
@@ -1374,6 +1498,7 @@ Database entry: device_id=1, card_id="test123", access_result="denied", authoris
 **Milestone 1.4: Display & Network Integration** ✅ **COMPLETE**
 
 All tasks finished:
+
 - ✅ T1.15: OLED/LCD display class
 - ✅ T1.16: WiFi connection manager
 - ✅ T1.17: MQTT client wrapper
@@ -1414,12 +1539,14 @@ All tasks finished:
 ### Decisions Made
 
 1. **3-Layer Architecture Pattern:**
+
    - `main.py` - Entry point (orchestration only, 15 lines)
    - `system_init.py` - Hardware abstraction layer (initializes all sensors/outputs, boot sequence with WiFi/time sync)
    - `app.py` - Application logic layer (SmartHomeApp class with event loop containing automation rules)
    - Rationale: Clean separation of concerns, maintainable as complexity grows, professional structure for portfolio
 
 2. **NTP Time Synchronization:**
+
    - Created `TimeSync` class with timezone-aware methods
    - Timezone offset stored in `config.py` (TIMEZONE_OFFSET_HOURS = 10 for AEDT)
    - `sync_time()` - Call once at boot to sync with NTP servers
@@ -1428,12 +1555,14 @@ All tasks finished:
    - Rationale: ESP32 has no RTC battery, must sync time on each boot
 
 3. **Nighttime Detection Logic:**
+
    - Wraparound time range: `hour >= 20 OR hour < 7`
    - Cannot use `AND` logic for ranges crossing midnight
    - Pattern appears in overnight shifts, time-based scheduling systems
    - Returns boolean for simple LED control: `if is_nighttime(): led.on() else: led.off()`
 
 4. **Deleted boot.py:**
+
    - MicroPython runs boot.py (optional) then main.py
    - All initialization now in `system_init.py` called from `main.py`
    - No need for boot.py - simplified to 2-file boot pattern
@@ -1449,6 +1578,7 @@ All tasks finished:
 ### Issues Encountered & Resolutions
 
 1. **Timezone Calculation Bug:**
+
    - **Problem**: `is_nighttime()` returned True at 3pm
    - **Root Cause**: Forgot to multiply hours by 3600 (seconds conversion)
    - **Wrong**: `self.timezone_offset = TIMEZONE_OFFSET_HOURS` (stored 10)
@@ -1456,12 +1586,14 @@ All tasks finished:
    - **Learning**: Always convert time units explicitly - hours → seconds = × 3600
 
 2. **Servo Constructor Missing Pin Parameter:**
+
    - **Problem**: `TypeError: function takes 2 positional arguments but 1 were given`
    - **Root Cause**: `Servo()` requires pin parameter, `system_init.py` called `Servo()` without pin
    - **Solution**: Changed to `self.door_servo = Servo(pin=13)` and `self.window_servo = Servo(pin=5)`
    - **Learning**: Python error "2 arguments" counts `self` as position 1
 
 3. **Buzzer Auto-Starting on Init:**
+
    - **Problem**: Buzzer sounded on system boot
    - **Root Cause**: PWM initialized without explicitly setting duty to 0
    - **Solution**: Added `self.buzzer.duty(0)` to Buzzer `__init__()`
@@ -1478,18 +1610,22 @@ All tasks finished:
 All documentation updated to reflect new architecture:
 
 1. **`planning/file-structure.md`:**
+
    - Updated structure diagram: removed boot.py, added app.py and system_init.py
    - Updated Key Files descriptions with 3-layer architecture explanation
 
 2. **`CLAUDE.md`:**
+
    - Added "System Architecture (3-Layer Boot Pattern)" section
    - Explained main → system_init → app flow with rationale
 
 3. **`.claude/commands/deploy.md`:**
+
    - Updated core files list: removed boot.py, added app.py and system_init.py
    - Changed folder references: `embedded/` → `esp32/`, `network/` → `comms/`
 
 4. **`.claude/commands/continue.md`:**
+
    - Updated Key Files list to reflect new architecture
 
 5. **`planning/tasks.md`:**
@@ -1498,16 +1634,19 @@ All documentation updated to reflect new architecture:
 ### Key Learning Moments
 
 **Wraparound Time Logic:**
+
 - Time ranges crossing midnight require OR logic, not AND
 - Example: 8pm-7am = `hour >= 20 OR hour < 7`
 - Appears in overnight shifts, scheduling systems, automation rules
 
 **Dependency Injection in Embedded Systems:**
+
 - Create hardware objects once, pass container object to app
 - App extracts references: `self.led = system.led`
 - Benefits: Single initialization, easy testing, clear dependencies
 
 **Architecture Scalability:**
+
 - Simple monolithic code works for 1-2 features
 - Professional 3-layer separation necessary for 5+ automation rules
 - Invest in structure early - makes future tasks faster
@@ -1515,12 +1654,14 @@ All documentation updated to reflect new architecture:
 ### Files Created/Modified
 
 **Created:**
+
 - `esp32/app.py` - SmartHomeApp class with event loop (35 lines)
 - `esp32/system_init.py` - SystemInit class with hardware init and boot sequence (80 lines)
 - `esp32/utils/time_sync.py` - TimeSync class with NTP and timezone handling (28 lines)
 - `esp32/tests/utils/test_time_sync.py` - Time sync test
 
 **Modified:**
+
 - `esp32/main.py` - Simplified to orchestrator (15 lines)
 - `esp32/system_init.py` - Added all hardware initialization (sensors, outputs, comms)
 - `esp32/outputs/buzzer.py` - Added `duty(0)` to `__init__()` for safe startup
@@ -1532,25 +1673,30 @@ All documentation updated to reflect new architecture:
 - `.claude/commands/continue.md` - Updated key files list
 
 **Deleted:**
+
 - `esp32/boot.py` - No longer needed with new architecture
 
 ### Test Results
 
 **Time Sync Test:**
+
 ```
 Time synchronized successfully
 (2025, 10, 11, 16, 1, 9, 5, 284)
 Is nighttime: False
 ```
+
 ✅ Timezone conversion working (UTC 6am → AEDT 4pm)
 ✅ Nighttime detection accurate (4pm = daytime)
 
 **LED Control Test:**
+
 ```
 App running...
 Daytime - LED OFF
 Good day / Light is off
 ```
+
 ✅ LED responds to time checks
 ✅ LCD shows status messages
 
@@ -1559,6 +1705,7 @@ Good day / Light is off
 **Milestone 1.5: Core Automation Logic (US1-US5)** - 1/5 tasks complete
 
 Tasks remaining:
+
 - T1.20: PIR motion response
 - T1.21: Steam detection & window control
 - T1.22: Gas detection & emergency response
@@ -1572,6 +1719,7 @@ Tasks remaining:
 - Will need to add database/MQTT methods as needed (YAGNI)
 
 ---
+
 ## Session 15 - October 12, 2025 - Ultra-Lazy Loading Memory Optimization & PIR Motion Detection ✅
 
 **Phase**: Phase 1 - Embedded System Core
@@ -1589,6 +1737,7 @@ Tasks remaining:
 ### Major Decisions Made
 
 1. **Ultra-Lazy Loading Architecture Pattern:**
+
    - **Problem**: ESP32 running out of memory (ENOMEM errors) during HTTP POST operations
    - **Root cause**: Loading all sensors/outputs at boot consumed 25KB, leaving only 70KB free (HTTP needs 25-30KB)
    - **Solution**: Load sensors/outputs inside methods only when needed, delete immediately after use
@@ -1596,6 +1745,7 @@ Tasks remaining:
    - Applied to: system_init.py (all boot methods) and app.py (all event handlers)
 
 2. **SystemInit Refactor - Minimal Boot:**
+
    - Removed ALL imports from top of file except essentials (time, Memory, config)
    - `__init__()` creates ONLY Memory utility object (1 object vs previous 14)
    - Each init method imports what it needs: WiFi, OLED, TimeSync, MQTT
@@ -1603,6 +1753,7 @@ Tasks remaining:
    - Result: Boot memory improved from 72KB → 95KB free (+23KB / +32%)
 
 3. **SmartHomeApp Refactor - Event-Scoped Objects:**
+
    - `__init__()` creates ONLY Memory reference and persistent MQTT client (can't delete MQTT - needs persistent connection)
    - Each event handler imports sensors/outputs locally
    - Time-based lighting: Imports TimeSync, LED, OLED → uses → deletes
@@ -1610,9 +1761,10 @@ Tasks remaining:
    - Memory baseline stable at 89-91KB throughout operation
 
 4. **MQTT Persistence Requirement:**
+
    - Initial attempt deleted MQTT client after each publish → error: "'NoneType' object has no attribute 'write'"
    - Learning: MQTT maintains TCP connection to broker, cannot be recreated each time
-   - Solution: Create MQTT once in app.__init__(), keep persistent (~3-5KB cost worth it)
+   - Solution: Create MQTT once in app.**init**(), keep persistent (~3-5KB cost worth it)
    - All other objects (sensors, outputs, Supabase) can be safely deleted
 
 5. **Memory Utility Class Pattern:**
@@ -1623,15 +1775,16 @@ Tasks remaining:
 
 ### Memory Optimization Results
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **Boot start** | 96KB | **107KB** | +11KB |
-| **After init** | 72KB | **95KB** | **+23KB (+32%)** |
-| **App baseline** | 70KB | **91KB** | +21KB |
-| **During motion event** | 69KB (ENOMEM) | **86KB** | +17KB |
-| **HTTP POST success** | ❌ Failed | ✅ **Working** | Fixed! |
+| Metric                  | Before        | After          | Improvement      |
+| ----------------------- | ------------- | -------------- | ---------------- |
+| **Boot start**          | 96KB          | **107KB**      | +11KB            |
+| **After init**          | 72KB          | **95KB**       | **+23KB (+32%)** |
+| **App baseline**        | 70KB          | **91KB**       | +21KB            |
+| **During motion event** | 69KB (ENOMEM) | **86KB**       | +17KB            |
+| **HTTP POST success**   | ❌ Failed     | ✅ **Working** | Fixed!           |
 
 **Memory stability:**
+
 - Baseline: 89-91KB free (idle)
 - Motion event: 86-88KB (peak HTTP usage 84KB)
 - Recovery: Returns to 89-91KB after event (GC working correctly)
@@ -1639,6 +1792,7 @@ Tasks remaining:
 ### Implementation Pattern Established
 
 **For one-time/infrequent operations (< 1Hz):**
+
 ```python
 def _method(self):
     from module import Class
@@ -1649,14 +1803,17 @@ def _method(self):
 ```
 
 **For frequent operations (> 1Hz):**
+
 - Keep object loaded (e.g., MQTT client)
 - Trade-off: Persistent memory cost vs performance
 
 **Objects that MUST persist:**
+
 - ❌ MQTT client (maintains TCP connection)
 - ❌ Memory utility (used throughout)
 
 **Objects that CAN be lazy-loaded:**
+
 - ✅ All sensors (PIR, DHT11, Gas, Steam, RFID)
 - ✅ All outputs (LED, RGB, Servo, Fan, Buzzer)
 - ✅ OLED display
@@ -1667,6 +1824,7 @@ def _method(self):
 ### Issues Encountered & Resolutions
 
 1. **ENOMEM Error During HTTP POST:**
+
    - **Problem**: `[Errno 12] ENOMEM` when calling `supabase.insert_motion_event()`
    - **Root Cause**: Only 69KB free before HTTP, but `urequests` needs 25-30KB for headers + body + response buffer
    - **First attempt**: Lazy-loaded Supabase → helped slightly (72KB free)
@@ -1674,12 +1832,14 @@ def _method(self):
    - **Final solution**: Ultra-lazy loading ALL objects → 91KB free baseline → HTTP works!
 
 2. **Learning from RFID Scanner Project:**
+
    - Reviewed working RFID project code at `/Users/fraserbrown/Documents/Programming/Kangan/Web_Dev/Repos/rfid-rabbit-shelter-tracking-system/RFID/handheld-rfid-scanner-firmware.py`
    - Key insight: That project imports WiFi inside `_connect_to_wifi()` method and deletes after use
    - Pattern: `wifi_manager = WiFiManager()` → use → `del wifi_manager` → `gc.collect()`
    - Also learned: Send JSON directly without `.encode('utf-8')` - urequests handles it
 
 3. **MQTT Persistence Issue:**
+
    - **Problem**: Created new MQTT client in each motion event → `'NoneType' object has no attribute 'write'`
    - **Root Cause**: MQTT needs persistent TCP socket connection to broker
    - **Solution**: Create MQTT once in `app.__init__()`, store as `self.mqtt`, reuse for all publishes
@@ -1693,22 +1853,26 @@ def _method(self):
 ### Key Learning Moments
 
 **Memory Fragmentation in Embedded Systems:**
+
 - It's not just about total free memory - need CONTIGUOUS blocks
 - 70KB fragmented memory < 90KB contiguous for large allocations
 - HTTP requests need 25-30KB contiguous block for buffers
 - Solution: Aggressive GC before expensive operations creates large free blocks
 
 **Import Timing Matters:**
+
 - Imports at top of file: Module loaded permanently into RAM
 - Imports inside function: Module still cached by Python, but object lifecycle controlled
 - `del` + `gc.collect()` frees object memory, not module code (acceptable trade-off)
 
 **GET vs POST Memory Footprint:**
+
 - GET requests: Small query string, small JSON response (~10-15KB)
 - POST requests: Large headers + JSON body + response buffer (~25-30KB)
 - For RFID auth: Can use GET for real-time checks (smaller memory), batch POST logs later
 
 **Which Objects Need Persistence:**
+
 - Stateful objects (MQTT, WiFi) maintain connections → must persist
 - Stateless objects (sensors, outputs) recreate instantly → can delete
 - Rule: If it holds a network socket or file handle, keep it loaded
@@ -1716,18 +1880,21 @@ def _method(self):
 ### Files Created/Modified
 
 **Modified:**
-- `esp32/system_init.py` - Ultra-lazy loading: only Memory in __init__, all else imported in methods
-- `esp32/app.py` - Ultra-lazy loading: only Memory + MQTT in __init__, sensors/outputs imported in handlers
+
+- `esp32/system_init.py` - Ultra-lazy loading: only Memory in **init**, all else imported in methods
+- `esp32/app.py` - Ultra-lazy loading: only Memory + MQTT in **init**, sensors/outputs imported in handlers
 - `esp32/comms/supabase.py` - Added Memory class usage, removed `.encode('utf-8')` from POST data
 - `esp32/utils/memory.py` - Created Memory utility class for consistent GC tracking
 
 **Commits:**
+
 - "Implement lazy-loading pattern for Supabase client to optimize memory"
 - "Implement aggressive lazy-loading to solve ENOMEM memory issues"
 
 ### Test Results
 
 **Motion Detection Test:**
+
 ```
 === Smart Home System Starting ===
 [MEMORY] GC after Before system init: 107040 bytes free.
@@ -1747,6 +1914,7 @@ Motion - DB OK
 ```
 
 ✅ **All systems working:**
+
 - Time-based LED control: Loading/deleting TimeSync, LED, OLED each check
 - Motion detection: Loading/deleting PIR, RGB each poll
 - MQTT publishing: Using persistent MQTT client
@@ -1756,6 +1924,7 @@ Motion - DB OK
 ### Architecture Impact
 
 **Scalability for remaining tasks:**
+
 - T1.21 (Steam): Will import Steam + WindowServo in handler
 - T1.22 (Gas): Will import Gas + Fan in handler
 - T1.23 (RFID): Will import RFID + Buzzer + DoorServo in handler (GET for auth check, batch POST for logs)
@@ -1771,7 +1940,6 @@ Motion - DB OK
 - Expected memory: Stable ~85-90KB
 
 ---
-
 
 ## Session 16 - October 12, 2025 - Architecture Refactor: Modular Handlers Pattern ✅
 
@@ -1790,18 +1958,21 @@ Motion - DB OK
 ### Decisions Made
 
 1. **Handler Class Design Pattern (Evolved from Initial Plan):**
+
    - **Initial plan**: Standalone functions taking `system` and `mqtt` parameters
    - **Final implementation**: Handler classes with `__init__()` and method taking `mqtt` parameter
    - **Rationale**: Classes provide better encapsulation, can own Memory utility, easier to test
    - **Pattern**: `LightingHandler().handle_time_based_lighting()` - stateless processors
 
 2. **Dependency Injection for MQTT:**
+
    - Handlers don't store MQTT client as instance variable
    - MQTT passed as method parameter: `handle_motion_detection(self, mqtt)`
    - App layer owns persistent connections, handlers own business logic
    - Keeps handlers focused and testable - receive what they need, use it, done
 
 3. **Handler Structure:**
+
    ```python
    class MotionHandler:
        def __init__(self):
@@ -1821,11 +1992,13 @@ Motion - DB OK
 ### Issues Encountered & Resolutions
 
 1. **Missing Memory Import in motion.py:**
+
    - **Problem**: `NameError: name 'Memory' is not defined`
    - **Solution**: Added `from utils.memory import Memory` at top of file
    - **Learning**: Each handler needs its own Memory utility for garbage collection
 
 2. **MQTT Reference Error:**
+
    - **Problem**: `handle_motion_detection()` referenced `self.mqtt` which doesn't exist
    - **Solution**: Changed method signature to accept `mqtt` parameter, updated app.py to pass `self.mqtt`
    - **Pattern**: Dependency injection keeps handlers stateless
@@ -1838,12 +2011,14 @@ Motion - DB OK
 ### Key Learning Moments
 
 **Handler Design Pattern:**
+
 - Handlers are stateless processors - they don't store app-level resources
 - Dependency injection passes needed resources as method parameters
 - This keeps handlers focused and testable
 - App layer owns persistent connections (MQTT), handlers own business logic
 
 **Refactoring Checklist:**
+
 - When extracting code to new files, check ALL dependencies (imports, parameters, references)
 - Test immediately after refactor to catch issues early
 - Small, incremental changes are safer than big rewrites
@@ -1851,10 +2026,12 @@ Motion - DB OK
 ### Files Created/Modified
 
 **Created:**
+
 - `esp32/handlers/lighting.py` - LightingHandler class with ultra-lazy loading (24 lines)
 - `esp32/handlers/motion.py` - MotionHandler class with MQTT and Supabase integration (42 lines)
 
 **Modified:**
+
 - `esp32/app.py` - Refactored to use handler classes, passes MQTT to handlers
 - `esp32/handlers/motion.py` - Added Memory import, RGB color change, fixed MQTT parameter
 
@@ -1866,7 +2043,6 @@ Motion - DB OK
 - Expected memory: Stable ~85-90KB with lazy loading pattern
 
 ---
-
 
 ## Session 17 - October 12, 2025 - Steam Detection & Handler Refinements ✅
 
@@ -1886,18 +2062,21 @@ Motion - DB OK
 ### Decisions Made
 
 1. **Handler Naming Convention:**
+
    - All handler files use `*_handler.py` suffix (e.g., `steam_handler.py`, `motion_handler.py`)
    - Prevents naming collisions with sensor files (e.g., `sensors/steam.py` vs `handlers/steam_handler.py`)
    - Improves IDE search results and file clarity
    - Pattern: `handlers/lighting_handler.py`, `handlers/motion_handler.py`, `handlers/steam_handler.py`
 
 2. **RGB Control Strategy - Temporary Solution:**
+
    - Steam: Flash blue 3 times using `rgb.flash((0, 0, 255), 3)` (temporary indicator per FR3.3)
    - Motion: Set solid orange, turns off after timeout (persistent indicator per FR2.2)
    - Handlers do NOT turn off RGB in else blocks - prevents conflicts
    - Future: T1.29 will implement state machine with priority (gas > steam > motion)
 
 3. **Motion Timeout Implementation - Counter-Based:**
+
    - User preferred simple countdown over `time.time()` timestamps
    - Pattern: `motion_count = 3` decrements each handler call, RGB off when reaches 0
    - Guard clause prevents underflow: `if motion_count > 0: motion_count -= 1`
@@ -1913,18 +2092,21 @@ Motion - DB OK
 ### Issues Encountered & Resolutions
 
 1. **Missing Pin Parameter in Servo Constructor:**
+
    - **Problem**: `TypeError: function takes 2 positional arguments but 1 were given`
    - **Root Cause**: `Servo()` called without required `pin` parameter
    - **Solution**: Changed to `Servo(pin=5)` for window servo
    - **Learning**: Python error message "2 arguments" counts `self` as first position
 
 2. **RGB State Conflicts Between Handlers:**
+
    - **Problem**: Steam handler turned RGB off in else block, killing motion orange indicator
    - **Root Cause**: Multiple handlers competing for same output without priority system
    - **Solution**: Removed `rgb.off()` from handler else blocks; use flash for temporary indicators
    - **Future**: T1.29 will implement proper state machine with event priority (gas > steam > motion)
 
 3. **Duplicate Print in TimeSync:**
+
    - **Problem**: User saw "Time synchronized successfully" printed twice
    - **Root Cause**: Print statement in `sync_time()` method AND in `system_init.py` caller
    - **Solution**: Removed print from method, added `return True` for proper boolean status
@@ -1939,23 +2121,27 @@ Motion - DB OK
 ### Key Learning Moments
 
 **Event-Driven Systems & State Management:**
+
 - Multiple event handlers controlling same output creates conflicts
 - Quick fix: Only turn outputs ON, never OFF (works for simple cases)
 - Proper solution: State machine with priority levels (T1.29 task)
 - Pattern appears in interrupt handlers, RTOS scheduling, embedded control systems
 
 **Counter vs Timestamp for Timeouts:**
+
 - Counter-based: Intuitive ("10 loops = 5 seconds"), easy to tune, no time calculations
 - Timestamp-based: More accurate, but requires understanding epoch time and conversions
 - For student projects: Simpler > more accurate (easier to understand and debug)
 
 **Guard Clauses for State Management:**
+
 - `if counter > 0: counter -= 1` prevents underflow (counter going negative)
 - `if counter < MAX: counter += 1` prevents overflow
 - Without guards, state drifts into invalid ranges causing bugs
 - Common in battery indicators, retry counters, animation frames, debounce timers
 
 **Polling Intervals vs Response Time:**
+
 - Faster polling (every 1 sec): More responsive, more CPU/power usage
 - Slower polling (every 5 sec): Lower power, coarser timeout control
 - Motion: 2 second polling is good balance (feels instant, not wasteful)
@@ -1964,9 +2150,11 @@ Motion - DB OK
 ### Files Created/Modified
 
 **Created:**
+
 - `esp32/handlers/steam_handler.py` - SteamHandler class with flash RGB and window control (29 lines)
 
 **Modified:**
+
 - `esp32/handlers/motion_handler.py` - Added counter timeout (3 loops = 6 seconds), added RGB orange, removed rgb.off()
 - `esp32/handlers/steam_handler.py` - Fixed servo pin parameter, removed rgb.off() conflict
 - `esp32/utils/time_sync.py` - Removed duplicate print, added return True for success
@@ -1976,12 +2164,14 @@ Motion - DB OK
 ### Architecture Impact
 
 **Handler Pattern Proven:**
+
 - Lighting, Motion, Steam handlers all follow same pattern
 - Ultra-lazy loading working perfectly (memory stable 85-90KB)
 - Handlers are stateless processors receiving `mqtt` parameter
 - Pattern is repeatable for remaining tasks (gas, RFID, environment)
 
 **Next handlers to implement:**
+
 - T1.22 (Gas): `GasHandler` - Turn on fan, set RGB red, log to `gas_alerts` table
 - T1.23 (RFID): `RFIDHandler` - Scan cards, check authorization, control door servo
 - Then T1.29: Implement state machine to handle RGB priority properly
@@ -2014,18 +2204,21 @@ Motion - DB OK
 ### Decisions Made
 
 1. **State Management in Handlers:**
+
    - Added `self.gas_alarm_active` boolean to track alarm lifecycle
    - Pattern: Track "are we in alert mode?" to prevent duplicate activations
    - Chose simple boolean over alert_id approach for Phase 1 (can enhance in T1.29)
    - Keeps handler stateful but simpler than database-tracking approach
 
 2. **Where State Belongs - Sensor vs Handler:**
+
    - **Sensors remain stateless** - Just read hardware, return current value
    - **Handlers are stateful** - Track context, decide actions, orchestrate components
    - Separation of concerns: Sensor = "What is gas value?" Handler = "What should I do about it?"
    - Keeps sensors reusable and testable in isolation
 
 3. **Gas Handler State Machine:**
+
    ```
    State 1 (No alarm): gas detected → Activate (fan on, RGB red, DB insert, MQTT)
    State 2 (Alarm active): gas still detected → Do nothing (keep running)
@@ -2034,6 +2227,7 @@ Motion - DB OK
    ```
 
 4. **Polling Interval for Gas Detection:**
+
    - Chose **10 seconds** (same as steam)
    - Safety-critical but sensor is reliable enough for 10s intervals
    - Trade-off: Could be 2-5 seconds for faster response, but 10s acceptable for Phase 1
@@ -2048,18 +2242,21 @@ Motion - DB OK
 ### Issues Encountered & Resolutions
 
 1. **MQTT Connection Failures in Tests:**
+
    - **Problem**: Tests showed error `-202` and `ENOTCONN` (not connected)
    - **Root Cause**: Handler tests connected MQTT without WiFi first
    - **Solution**: Added `WiFiManager().connect()` before `mqtt.connect()` in all handler tests
    - **Learning**: MQTT and Supabase both require WiFi - must initialize in correct order
 
 2. **Logic Flow Bug - Alarm Never Deactivates:**
+
    - **Problem**: First implementation only had activation logic, no deactivation
    - **Root Cause**: Missing `else` block to check if alarm is currently active
    - **Solution**: Added nested if/else to handle all 4 state combinations
    - **Learning**: State machines need both transitions: inactive→active AND active→inactive
 
 3. **Missing MQTT Clear Message:**
+
    - **Problem**: Web dashboard wouldn't know when gas cleared
    - **Root Cause**: Only published `{"detected": true}`, never `{"detected": false}`
    - **Solution**: Added MQTT publish when gas clears with "Gas cleared" message
@@ -2074,24 +2271,28 @@ Motion - DB OK
 ### Key Learning Moments
 
 **Stateful vs Stateless Design:**
+
 - Sensors: Stateless hardware abstraction (just read pins)
 - Handlers: Stateful business logic (remember context, decide actions)
 - Analogy: Thermometer (sensor) vs Thermostat (handler with set point memory)
 - Keeps architecture clean and components reusable
 
 **State Machine Design Pattern:**
+
 - Gas alarm is a 2-state system: `inactive` and `active`
 - Each state has different behaviors based on sensor input
 - Must handle ALL combinations: (state × input) matrix
 - Missing any combination = incomplete logic = bugs
 
 **Test-Driven Development Benefits:**
+
 - Student created isolated handler tests BEFORE integration
 - Much faster iteration than testing in main loop
 - Can trigger specific scenarios without physical sensors
 - Catches bugs before deploying to hardware
 
 **Safety-Critical Features:**
+
 - Gas detection is life-threatening (not just convenience)
 - Polling intervals matter: 60s too slow, 10s acceptable, 2s ideal
 - Real-world analogy: Smoke detectors check continuously
@@ -2100,10 +2301,12 @@ Motion - DB OK
 ### Files Created/Modified
 
 **Created:**
+
 - `esp32/handlers/gas_handler.py` - GasHandler class with stateful alarm tracking (41 lines)
 - `esp32/tests/handlers/test_gas_handler.py` - Gas handler test with WiFi initialization
 
 **Modified:**
+
 - `esp32/app.py` - Added gas handler to main loop (polls every 10 seconds)
 - `esp32/comms/supabase.py` - Already had `insert_gas_alert()` method (lines 83-103)
 - `esp32/tests/handlers/test_motion_handler.py` - Added WiFi initialization
@@ -2113,18 +2316,21 @@ Motion - DB OK
 ### Architecture Impact
 
 **Handler Pattern Consistency:**
+
 - All handlers now follow same pattern: Lighting, Motion, Steam, Gas
 - All use stateful class instances (motion_count, gas_alarm_active, etc.)
 - All use ultra-lazy loading (import inside method, delete after use)
 - Memory stable at 95KB (confirmed in gas handler test output)
 
 **Testing Infrastructure Established:**
+
 - `esp32/tests/handlers/` - Isolated handler tests
 - `esp32/tests/sensors/` - Sensor validation tests
 - Pattern: Test each layer independently before integration
 - Professional practice: Unit tests → Integration tests → System tests
 
 **Next Handler: RFID (T1.23)**
+
 - Will follow same pattern: RFIDHandler class with state if needed
 - More complex: Needs to query Supabase for card validation
 - Will handle: Unknown card rejection, known card door opening, database logging
@@ -2160,6 +2366,7 @@ Motion - DB OK
 ### Decisions Made
 
 1. **Supabase Query Pattern with REST API Filtering:**
+
    - Query URL: `/authorised_cards?card_id=eq.{card_id}&is_active=eq.true`
    - PostgREST filter syntax: `?field=eq.value&field2=eq.value2`
    - Returns list of matching records, even if only one match: `[{...}]`
@@ -2168,12 +2375,14 @@ Motion - DB OK
    - **Why filtering matters**: Without filter, downloads entire table (wasteful bandwidth/memory)
 
 2. **HTTP Response Resource Management:**
+
    - Critical order: Read data FIRST, then close connection
    - Pattern: `response.json()` → `response.close()` → `return data`
    - Closing before reading = data lost (like closing a book before reading the page)
    - Prevents memory leaks on ESP32's limited RAM
 
 3. **RFID Handler Logic Flow:**
+
    - Scan card → Query database → Check if record exists
    - If card_record exists: Access granted path (green, door, LCD)
    - If card_record is None: Access denied path (red, buzzer, LCD)
@@ -2181,6 +2390,7 @@ Motion - DB OK
    - MQTT payload includes card_id for web dashboard display
 
 4. **RFID Polling Interval:**
+
    - Chose **2 seconds** (faster than gas/steam)
    - Balance: Responsive access control vs not overwhelming database queries
    - Security feature = should feel quick to users
@@ -2195,24 +2405,28 @@ Motion - DB OK
 ### Issues Encountered & Resolutions
 
 1. **Query Method Returns All Cards (No Filter):**
+
    - **Problem**: Initial `get_card_result()` fetched entire `authorised_cards` table
    - **Root Cause**: Missing URL query parameters
    - **Solution**: Added `?card_id=eq.{card_id}&is_active=eq.true` filter to URL
    - **Learning**: REST API filtering reduces bandwidth and improves ESP32 performance
 
 2. **Response.close() Before Response.json() Bug:**
+
    - **Problem**: Student closed HTTP response before reading JSON data
    - **Root Cause**: Incorrect order of operations (close → read instead of read → close)
    - **Solution**: Reordered to `cards = response.json()` → `response.close()`
    - **Learning**: Always consume response data before releasing network buffer
 
 3. **Variable Name Mismatch (result vs card_record):**
+
    - **Problem**: Line 31 referenced `card_record['id']` but variable was named `result`
    - **Root Cause**: Inconsistent naming during refactoring
    - **Solution**: Renamed variable to `card_record` for clarity
    - **Learning**: Descriptive names prevent bugs (card_record > result > data)
 
 4. **Missing time Import in Test File:**
+
    - **Problem**: Test used `time.sleep(1)` without importing time
    - **Root Cause**: Copy-paste from other test files, forgot import
    - **Solution**: Added `import time` to test file
@@ -2227,6 +2441,7 @@ Motion - DB OK
 ### Key Learning Moments
 
 **REST API Query Filtering:**
+
 - Supabase uses PostgREST syntax for filtering: `?column=operator.value`
 - Common operators: `eq` (equals), `gt` (greater than), `lt` (less than)
 - Multiple filters with `&`: `?field1=eq.value1&field2=eq.value2`
@@ -2234,18 +2449,21 @@ Motion - DB OK
 - Critical for IoT: Filter server-side to reduce data transfer
 
 **Resource Management on Constrained Devices:**
+
 - HTTP responses hold network buffers in memory
 - Must close connections to free resources
 - Order matters: consume data → close connection → process data
 - ESP32 has ~100KB RAM, every byte counts
 
 **Database Query vs Insert Patterns:**
+
 - Inserts: POST with JSON body → 201 Created → close
 - Queries: GET with URL params → 200 OK → parse JSON → close → return data
 - Queries return arrays, inserts return success boolean
 - Both need error handling (network failures, invalid responses)
 
 **Student's Learning Progress:**
+
 - Tackled first database READ operation (previous tasks were only writes)
 - Successfully debugged order-of-operations bug independently
 - Understood REST API filtering concept quickly
@@ -2254,10 +2472,12 @@ Motion - DB OK
 ### Files Created/Modified
 
 **Created:**
+
 - `esp32/handlers/rfid_handler.py` - RFIDHandler class with database query (43 lines)
 - `esp32/tests/handlers/test_rfid_handler.py` - RFID handler test file (25 lines)
 
 **Modified:**
+
 - `esp32/comms/supabase.py` - Added `get_card_result(card_id)` query method (lines 60-77)
 - `esp32/app.py` - Added RFID handler to main loop (polls every 2 seconds, lines 19, 25, 46-48)
 - `planning/tasks.md` - Marked T1.23 complete, added T1.23.1-T1.23.3 for future work
@@ -2265,18 +2485,21 @@ Motion - DB OK
 ### Architecture Impact
 
 **First Database READ Operation:**
+
 - Previous handlers only INSERT data (motion_events, gas_alerts, sensor_logs)
 - RFID handler QUERIES database before deciding action
 - Pattern established: Query → Process → Act → Log
 - Opens door for other read operations (user lookups, historical queries)
 
 **Supabase Client Enhancement:**
+
 - Added query capability alongside existing insert methods
 - Pattern: `get_*` methods return data or None, `insert_*` methods return boolean
 - Memory efficient: Close responses immediately after reading
 - Can be extended for other queries (authorised users, device config, etc.)
 
 **Handler Polling Strategy:**
+
 - Lighting: 60s (time-based, no urgency)
 - Motion: 5s (security, moderate urgency)
 - Gas: 10s (safety-critical but sensor reliable)
@@ -2284,6 +2507,7 @@ Motion - DB OK
 - RFID: 2s (security + user experience, should feel responsive)
 
 **Complete Handler Pattern Now Established:**
+
 1. Import dependencies inside method (ultra-lazy loading)
 2. Instantiate sensors/outputs
 3. Read sensor state
@@ -2334,12 +2558,14 @@ Motion - DB OK
 ### Decisions Made
 
 1. **Maintained Modular Handler Pattern:**
+
    - Student asked excellent architecture question: "Should this be in handlers/ folder?"
    - Confirmed: Yes - consistency with lighting/motion/gas/steam/rfid handlers
    - Pattern: main.py orchestrates → app.py event loop → handlers/ automation logic
    - Benefits: lazy-loading, memory management, maintainability
 
 2. **MQTT Payload Format - JSON Required:**
+
    - **Student's initial approach**: Published raw numbers `mqtt.publish("home/temperature", 24.5)`
    - **Problem**: Web dashboard (Next.js) expects structured JSON for parsing
    - **Solution**: Use `json.dumps({"value": temp, "unit": "C"})` format
@@ -2347,6 +2573,7 @@ Motion - DB OK
    - **Learning moment**: Data contracts between systems must be explicit
 
 3. **Error Handling for Sensor Failures:**
+
    - **Student's initial code**: No None check after `dht11.read_data()`
    - **Problem**: DHT11 can fail (timeout, wiring), returns `(None, None)`
    - **Impact**: Calling `oled.show_temp_humidity(None, None)` would crash system
@@ -2361,12 +2588,14 @@ Motion - DB OK
 ### Issues Encountered & Resolutions
 
 1. **MQTT Payload Format Missing (Student Code Review):**
+
    - **Issue**: Student implemented `mqtt.publish("home/temperature", temperature)` without JSON
    - **Root Cause**: Worked for testing (MQTT accepts any payload), but wrong for web integration
    - **Resolution**: Added `import json` and formatted payloads with `json.dumps()`
    - **Learning**: Test-driven development can miss integration requirements if not thinking ahead
 
 2. **No Error Handling for Sensor Read Failures:**
+
    - **Issue**: No check if `temperature is None or humidity is None`
    - **Root Cause**: Student focused on happy path (sensor working correctly)
    - **Resolution**: Added early return with cleanup if sensor fails
@@ -2380,24 +2609,28 @@ Motion - DB OK
 ### Key Learning Moments
 
 **Data Contracts Between Systems:**
+
 - ESP32 publishes → MQTT broker → Next.js subscribes
 - Both sides must agree on message format (JSON with `value` and `unit` keys)
 - Breaking this contract = silent failures (messages arrive but can't be parsed)
 - Document MQTT topic formats in `planning/architecture.md` for reference
 
 **Defensive Programming on Constrained Devices:**
+
 - ESP32 runs 24/7 with ~100KB RAM - can't afford crashes
 - Sensor failures are normal (electromagnetic interference, loose wiring, age)
 - Pattern: Read sensor → Validate result → Use data → Cleanup
 - Early returns prevent cascading failures down the handler chain
 
 **Consistency in Architecture:**
+
 - Student questioned handler placement - shows good architectural thinking
 - Consistency > perfection: All automation logic goes in `handlers/`
 - Breaking patterns creates technical debt and confusion for future developers
 - Established patterns make codebase predictable and maintainable
 
 **Student's Progress:**
+
 - Asked clarifying architecture question before implementing (excellent instinct)
 - Successfully tested on hardware independently
 - Receptive to code review feedback and understood the "why" behind fixes
@@ -2406,10 +2639,12 @@ Motion - DB OK
 ### Files Created/Modified
 
 **Created:**
+
 - `esp32/handlers/enviroment_handler.py` - EnvironmentHandler class (36 lines)
 - `esp32/tests/handlers/test_enviroment_handler.py` - Test file (25 lines)
 
 **Modified:**
+
 - `esp32/handlers/enviroment_handler.py` - Added JSON formatting and error handling (reviewed/fixed)
 - `esp32/app.py` - Added environment handler import and 2-second polling (lines 20, 27, 52-54)
 - `planning/tasks.md` - Marked T1.24 complete with dates
@@ -2417,11 +2652,13 @@ Motion - DB OK
 ### Architecture Impact
 
 **Complete Environmental Monitoring Pipeline:**
+
 - DHT11 sensor → Handler reads every 2s → LCD displays → MQTT publishes
 - Ready for Phase 3: Next.js can subscribe to `home/temperature` and `home/humidity`
 - JSON format enables web dashboard to display live sensor data
 
 **Handler Pattern Evolution:**
+
 - Lighting: Time-based (60s polling)
 - Motion: Event-driven with database logging (5s polling)
 - Gas: Stateful alarm with database start/end tracking (10s polling)
@@ -2430,6 +2667,7 @@ Motion - DB OK
 - **Environment (NEW)**: Continuous monitoring with real-time display + MQTT (2s polling)
 
 **All handler patterns now demonstrated:**
+
 - Time-based triggers (lighting)
 - Event detection (motion, gas, steam)
 - Database READ operations (RFID)
@@ -2454,8 +2692,6 @@ Motion - DB OK
 
 ---
 
-
-
 ## Session 6 - 2025-10-14 - MQTT-Only Architecture Refactor ✅
 
 **Phase**: Phase 1 - Embedded System Core
@@ -2477,6 +2713,7 @@ Motion - DB OK
 ### Decisions Made
 
 **1. MQTT-Only Communication Pattern (Critical Architecture Change):**
+
 - **Decision**: ESP32 communicates EXCLUSIVELY via MQTT - NO HTTP/REST calls to Supabase
 - **Rationale**: MicroPython's `urequests` library causes memory leaks over time
 - **Impact**: All database writes now handled by C# middleware (Phase 2)
@@ -2484,6 +2721,7 @@ Motion - DB OK
 - **Security**: ESP32 no longer has database credentials - centralized in C# layer
 
 **2. Topic Structure Standardization:**
+
 - **Pattern**: `devices/{deviceId}/{category}/{subcategory}`
 - **Device ID**: `esp32_main` (scalable to multiple devices)
 - **Publish Topics**: `devices/esp32_main/data` (sensors), `devices/esp32_main/rfid/check`, `devices/esp32_main/status/*` (outputs)
@@ -2491,6 +2729,7 @@ Motion - DB OK
 - **Rationale**: Aligns with MQTT best practices, clear hierarchy, wildcard support
 
 **3. Non-Blocking Flash Pattern for RGB:**
+
 - **Issue**: `rgb.flash()` used `time.sleep()` which froze entire event loop for 3 seconds
 - **Decision**: Implemented countdown timer pattern in handlers (like motion_handler)
 - **Pattern**: `flash_count = 6` (3 flashes × 2 states), decrement each loop, toggle RGB on even/odd
@@ -2498,24 +2737,28 @@ Motion - DB OK
 - **Applied To**: Steam handler (blue flash - FR3.3), prepared for RFID handler (red flash - FR5.3)
 
 **4. Configuration-Driven Topic Management:**
+
 - **Decision**: Centralize all MQTT topics in `config.py` as constants
 - **Pattern**: `TOPIC_SENSOR_DATA`, `TOPIC_STATUS_FAN`, `TOPIC_RFID_REQUEST`, etc.
 - **Added Comments**: FR references for traceability (e.g., "# For web dashboard display - FR8.4, FR8.5")
 - **Removed**: LED status/control topics (not in PRD requirements FR8-FR9)
 
 **5. Output Status Publishing:**
+
 - **Decision**: Handlers must publish output state changes to status topics
 - **Implemented**: Gas handler publishes fan status, steam handler publishes window status
 - **Purpose**: Enables web dashboard to display output states (FR8.4, FR8.5)
 - **Pattern**: Publish to `devices/esp32_main/status/{output}` with payload `{"state": "on/off/open/closed", "timestamp": "..."}`
 
 **6. Consolidation of Duplicate Handlers:**
+
 - **Discovery**: `database_log_handler.py` and `environment_handler.py` both read DHT11
 - **Decision**: Keep `environment_handler.py` (displays on OLED + publishes MQTT), delete `database_log_handler.py`
 - **Rationale**: C# middleware handles database writes, no need for separate "log" handler
 - **Student Insight**: "I am pretty sure that the c# api will be handling all of the database posting" - excellent architectural thinking!
 
 **7. PRD-Driven Feature Removal:**
+
 - **Analyzed**: LED control/status not in PRD requirements (FR8.4, FR8.5, FR9.1-9.3 only mention door/window/fan)
 - **Decision**: Removed `TOPIC_STATUS_LED` and `TOPIC_CONTROL_LED` from config and architecture.md
 - **Principle**: YAGNI - only implement what's required, avoid feature creep
@@ -2524,6 +2767,7 @@ Motion - DB OK
 ### Issues Encountered
 
 **1. Blocking RGB Flash Discovered by Student:**
+
 - **Issue**: Student noticed steam_handler used `rgb.flash()` with blocking `time.sleep()` in tight event loop
 - **Root Cause**: RGB class method froze system for 3 seconds during flash animation
 - **Impact**: Motion detection, gas detection, RFID scanning all stopped during flash
@@ -2531,17 +2775,20 @@ Motion - DB OK
 - **Learning**: Single-threaded event loops require non-blocking patterns - student recognized this independently!
 
 **2. Door Status in Motion Handler (Bug):**
+
 - **Issue**: Motion handler was publishing door status to `TOPIC_STATUS_DOOR` - incorrect logic
 - **Root Cause**: Undocumented feature creep - motion detection doesn't control door
 - **Resolution**: Removed door status publishing, only RGB orange and MQTT sensor data remain
 - **Lesson**: Always check PRD - if feature isn't documented, it's probably wrong
 
 **3. Inconsistent MQTT Topics:**
+
 - **Issue**: Old handlers used `home/*` topics, new architecture uses `devices/esp32_main/*`
 - **Resolution**: Updated all handlers to use topic constants from config.py
 - **Pattern**: Import topics from config: `from config import TOPIC_SENSOR_DATA, TOPIC_STATUS_FAN`
 
 **4. Missing RFID Request/Response Pattern:**
+
 - **Issue**: RFID handler doesn't implement MQTT request/response flow with C# middleware
 - **Current**: Handler validates ANY card as granted (no database check)
 - **Required**: Publish UID to `rfid/check`, wait for response on `rfid/response`, react to validation
@@ -2549,6 +2796,7 @@ Motion - DB OK
 - **Next Session**: Major refactor needed for RFID (most complex handler)
 
 **5. Motion Handler Countdown Timer Naming Confusion:**
+
 - **Issue**: Student had `motion_count = 3` countdown but loop runs every 1 second (not 1/3 second)
 - **Resolution**: Countdown of 3 = RGB stays on for 3 loop iterations = 3 seconds total
 - **Learning**: Non-blocking timers work at loop frequency, not absolute time
@@ -2556,6 +2804,7 @@ Motion - DB OK
 ### Key Learning Moments
 
 **Separation of Concerns - RGB Flash Logic:**
+
 - **Question**: "Could I write a flash method into rgb without using time?"
 - **Discussion**: Technically yes (add update() method), but architecturally wrong
 - **Principle**: RGB class should control hardware ONLY, not manage application state/timing
@@ -2564,24 +2813,28 @@ Motion - DB OK
 - **Conclusion**: YAGNI applies - only 2-3 handlers flash, duplication is minimal
 
 **Documentation as Source of Truth:**
+
 - **Discovery**: architecture.md included LED topics, but PRD doesn't require them
 - **Learning**: When docs conflict, PRD wins (it's the contract for assessment)
 - **Action**: Updated architecture.md to remove LED, aligned with PRD requirements
 - **Insight**: Documentation drift is common - design docs from early project phases become stale
 
 **Request/Response in Pub/Sub Systems:**
+
 - **Challenge**: MQTT is publish/subscribe, not request/response like HTTP
 - **Pattern**: Publish request to one topic, subscribe to response topic, match via correlation
 - **ESP32 Limitation**: Can't maintain HTTP connections, so MQTT becomes transport layer
 - **Architecture**: RFID check/response uses this pattern with C# middleware as validator
 
 **Memory Management in Event Loops:**
+
 - **Pattern**: Lazy load dependencies inside handler methods
 - **Cleanup**: Delete objects after use, run garbage collection
 - **Rationale**: ESP32 has ~100KB RAM - can't keep all objects in memory permanently
 - **Student Applied**: Correctly added `time_sync` to all `del` statements after review
 
 **PRD-Driven Development:**
+
 - **Student Question**: "Is it a functional requirement that if motion is detected then the door needs to close?"
 - **Process**: Checked PRD (US2, FR2.1-2.3) - no door control mentioned
 - **Learning**: When uncertain about features, consult PRD - it's the requirements contract
@@ -2590,6 +2843,7 @@ Motion - DB OK
 ### Architecture Impact
 
 **Complete MQTT-Only Migration:**
+
 - ✅ Gas handler: MQTT sensor data + fan status
 - ✅ Environment handler: MQTT temp/humidity data
 - ✅ Motion handler: MQTT motion events
@@ -2598,18 +2852,21 @@ Motion - DB OK
 - ❌ Removed: All Supabase HTTP client code (`esp32/comms/supabase.py` and subdirectory)
 
 **Handler Status Publishing Compliance:**
+
 - ✅ Fan status published by gas_handler (FR8.5)
 - ✅ Window status published by steam_handler (FR8.4)
 - ✅ Door status will be published by RFID handler (FR8.4) - pending refactor
 - ❌ LED status removed (not in PRD)
 
 **Non-Blocking Patterns Established:**
+
 - ✅ Motion handler: Countdown timer for RGB orange
 - ✅ Steam handler: Non-blocking blue flash (6-state countdown)
 - ⚠️ RFID handler: Needs non-blocking red flash (next session)
 - ✅ RGB class: Removed blocking flash() method entirely
 
 **Configuration Management:**
+
 - ✅ All MQTT topics centralized in config.py
 - ✅ Topic constants imported by handlers
 - ✅ FR references added as comments for traceability
@@ -2618,10 +2875,12 @@ Motion - DB OK
 ### Files Modified This Session
 
 **Configuration:**
+
 - `esp32/config.py` - Removed LED topics, added FR comments
 - `esp32/config.example.py` - Matched changes to config.py
 
 **Handlers (Refactored):**
+
 - `esp32/handlers/gas_handler.py` - MQTT-only, fan status publishing
 - `esp32/handlers/environment_handler.py` - MQTT-only, consolidated with database logger
 - `esp32/handlers/motion_handler.py` - MQTT-only, removed door status bug
@@ -2629,25 +2888,31 @@ Motion - DB OK
 - `esp32/handlers/database_log_handler.py` - Deprecated (functionality moved to environment_handler)
 
 **Outputs:**
+
 - `esp32/outputs/rgb.py` - Removed blocking flash() method
 
 **Documentation:**
+
 - `planning/architecture.md` - Removed LED topics from status/control sections, aligned with PRD
 
 **Removed:**
+
 - ❌ `esp32/comms/supabase.py` - No longer needed (MQTT-only)
 - ❌ `esp32/comms/supabase/` directory - All modules deleted (gas_alerts.py, motion_events.py, rfid_scans.py, rfid_results.py, sensor_logs.py)
 
 ### Next Session Priorities
 
 **High Priority - RFID Handler Refactor:**
+
 1. Implement MQTT request/response pattern (FR5.1, FR5.2)
+
    - Publish card UID to `devices/esp32_main/rfid/check`
    - Subscribe to `devices/esp32_main/rfid/response` (requires callback setup)
    - Wait for C# middleware validation result
    - React based on `valid: true/false`
 
 2. Add non-blocking red flash for denied access (FR5.3)
+
    - Countdown timer pattern: `flash_count = 6`
    - Red flash + buzzer on invalid card
 
@@ -2655,16 +2920,19 @@ Motion - DB OK
    - `devices/esp32_main/status/door` with `{"state": "open"/"closed"}`
 
 **Medium Priority - MQTT Subscription Setup:**
+
 - Configure MQTT client to subscribe to `devices/esp32_main/rfid/response`
 - Implement callback routing in mqtt_client.py or app.py
 - Handle incoming validation responses in RFID handler
 
 **Low Priority - Cleanup:**
+
 - Remove `database_log_handler.py` import from app.py (line 22)
 - Test end-to-end flow with all refactored handlers
 - Update tasks.md with completed architecture refactor milestones
 
 **Preparation Needed:**
+
 - Review architecture.md RFID flow (Pattern 4, lines 97-115)
 - Understand MQTT subscription callback patterns
 - Plan state management for "pending validation" in RFID handler
@@ -2699,12 +2967,14 @@ Motion - DB OK
 ### Decisions Made
 
 1. **TLS Certificate Validation for Development**:
+
    - Used `.WithCertificateValidationHandler(_ => true)` to bypass strict certificate validation
    - Appropriate for student project and development environment
    - Added comment noting this is for development only (production would need proper validation)
    - Reason: HiveMQ Cloud's certificate chain isn't trusted by default .NET certificate store
 
 2. **MQTTnet API Version Differences**:
+
    - MQTTnet 5.0.1 uses `.UseTls()` method (not property) inside `.WithTlsOptions()` lambda
    - Different from older versions that had `.WithTls()` directly on builder
    - Important for future reference when updating MQTTnet library
@@ -2717,11 +2987,13 @@ Motion - DB OK
 ### Issues Encountered
 
 1. **Initial Connection Failure**: Port 8883 with no TLS configuration
+
    - Error: `MqttConnectingFailedException: Error while authenticating. Connection closed.`
    - Root cause: Port mismatch (8883 requires TLS, but code had no TLS configuration)
    - Resolution: Added `.WithTlsOptions()` configuration
 
 2. **Certificate Validation Rejection**:
+
    - Error: `The remote certificate was rejected by the provided RemoteCertificateValidationCallback`
    - Root cause: .NET doesn't trust HiveMQ Cloud's certificate chain by default
    - Resolution: Added custom validation handler that accepts all certificates for development
@@ -2734,6 +3006,7 @@ Motion - DB OK
 ### Testing Performed
 
 1. **MQTT Connection Test**:
+
    - Started C# API with `dotnet run`
    - Verified successful connection logs:
      - ✅ Connected to MQTT broker successfully
@@ -2770,9 +3043,7 @@ Motion - DB OK
 
 ---
 
-
-
-## Session 17 - 2025-10-16 - RGB Manager Implementation for Multi-Handler Coordination 
+## Session 17 - 2025-10-16 - RGB Manager Implementation for Multi-Handler Coordination
 
 **Phase**: Phase 1 - Embedded System Core  
 **Milestone**: 1.7 - Manual Controls & State Management (T1.23.1 partial)  
@@ -2785,6 +3056,7 @@ Motion - DB OK
 ### Architecture Decisions Made
 
 1. **RGBManager Pattern - Active Object Design**:
+
    - Created centralized RGBManager class that owns RGB hardware and manages all timing/priority
    - Uses countdown timers (not timestamps) to align with existing handler patterns and avoid time module
    - Implements priority system: gas (3) > rfid (2) > steam (1) > motion (0)
@@ -2792,18 +3064,21 @@ Motion - DB OK
    - Handlers request colors via simple API: `rgb_manager.show('motion', (255,165,0), 3)`
 
 2. **Shared State Management via Dependency Injection**:
+
    - Single RGBManager instance created in `SmartHomeApp.__init__()` (line 13)
    - Passed to ControlHandler during initialization (line 21)
    - Passed to other handlers (motion, steam, gas) as function parameter
    - Prevents multiple RGB manager instances that would conflict
 
 3. **Non-Blocking Countdown Pattern**:
+
    - Rejected timestamp approach (`time.time()`) to avoid importing time module
    - Uses simple integer countdown decremented each loop iteration
    - Aligns with existing patterns in SteamHandler.flash_count and MotionHandler.motion_count
    - Trade-off: Depends on consistent 1-second loop timing
 
 4. **Handler-Specific Flash Logic**:
+
    - Steam flashing managed by SteamHandler (lines 42-48 in steam_handler.py)
    - Handler calls `rgb_manager.show()` with alternating colors each iteration
    - Keeps flash logic in handler domain rather than overcomplicating manager
@@ -2817,15 +3092,17 @@ Motion - DB OK
 ### Issues Encountered
 
 1. **Initial Over-Engineering**:
+
    - First implementation was 120+ lines with verbose docstrings, print statements, special flashing logic
    - User feedback: "too verbose"
    - Refactored to 27 lines focusing on core functionality only
    - Learning: Apply YAGNI (You Aren't Gonna Need It) principle - only add features when explicitly needed
 
 2. **Singleton Anti-Pattern Risk**:
+
    - User initially created new RGBManager() inside control_handler.handle_rfid_response()
    - Would create multiple manager instances with separate state (no coordination)
-   - Fixed by storing shared manager reference in ControlHandler.__init__()
+   - Fixed by storing shared manager reference in ControlHandler.**init**()
    - Learning: When multiple consumers need shared state, pass ONE instance to all
 
 3. **Timestamp vs Countdown Debate**:
@@ -2836,11 +3113,11 @@ Motion - DB OK
 ### Files Modified
 
 - `esp32/outputs/rgb.py`: Added RGBManager class (27 lines) with priority-based show() and update() methods
-- `esp32/app.py`: Created shared rgb_manager in __init__(), call update() in main loop, pass to handlers
+- `esp32/app.py`: Created shared rgb_manager in **init**(), call update() in main loop, pass to handlers
 - `esp32/handlers/motion_handler.py`: Simplified to use `rgb_manager.show('motion', (255,165,0), 3)`
 - `esp32/handlers/steam_handler.py`: Flash loop now uses rgb_manager.show() with alternating colors
 - `esp32/handlers/gas_handler.py`: Refresh pattern - request red for 11s every 10s to maintain continuous display
-- `esp32/handlers/control_handler.py`: Store rgb_manager reference in __init__(), use in handle_rfid_response()
+- `esp32/handlers/control_handler.py`: Store rgb_manager reference in **init**(), use in handle_rfid_response()
 - `planning/tasks.md`: Marked T1.23.1 as in-progress with partial completion note
 
 ### Next Session
@@ -2863,7 +3140,6 @@ Motion - DB OK
 
 ---
 
-
 ## Session 18 - 2025-10-16 - Event Loop Optimization and MQTT Throttling
 
 **Phase**: Phase 1 - Embedded System Core  
@@ -2885,22 +3161,26 @@ This session focused on debugging and resolving critical performance issues disc
 ### Architecture Decisions Made
 
 1. **Change Detection Pattern for Display Updates**:
-   - Environment handler tracks `last_temp` and `last_humidity` 
+
+   - Environment handler tracks `last_temp` and `last_humidity`
    - Only updates display when values change OR display is idle
    - Prevents unnecessary LCD redraws (reduced from 30/min to ~1/10min)
 
 2. **Idle Detection for Fallback Display**:
+
    - Added `oled_manager.owner is None` check
    - Environment reclaims display instantly when idle (eliminates 1s gap)
    - Acts as default/screensaver state
 
 3. **Temporal Load Balancing**:
+
    - Gas handler: `% 10 == 0` → `% 10 == 5` (offset from steam)
    - GC timing: `% 10 == 0` → `% 10 == 1` (runs after handlers, not during)
    - Motion polling: Every 5s → Every 2s (catches short PIR triggers)
    - Prevents harmonic collisions where multiple handlers run simultaneously
 
 4. **Loop Counter Initialization**:
+
    - Changed `loop_count = 0` → `loop_count = 1`
    - Mathematical fix: `0 % n == 0` for all n (everything runs at startup)
    - First loop now only runs GC + environment (gentle startup)
@@ -2916,15 +3196,18 @@ This session focused on debugging and resolving critical performance issues disc
 ### Issues Encountered
 
 1. **Display Flicker Root Cause**:
+
    - Problem: Environment ran every 2s, calling `oled_manager.show()` unconditionally
    - Each `show()` triggered `lcd.clear()` → visible flash
    - Solution: Only call `show()` when values change or display idle
 
 2. **Motion Detection Timing**:
+
    - Problem: PIR triggers for 2-3s, but polling every 5s = 40% miss rate
    - Solution: Reduce polling to 2s interval (now catches all motion)
 
 3. **Loop 10 Memory Crash Analysis**:
+
    - At loop 10: Motion + Steam + Gas + Environment + GC all run
    - ~16 concurrent module imports exceeded ESP32's ~100KB free RAM
    - Solution: Stagger gas to loop 5, GC to loop 1 (temporal distribution)
@@ -2950,21 +3233,25 @@ This session focused on debugging and resolving critical performance issues disc
 
 ### Key Learnings
 
-1. **Polling Frequency ≠ Display Update Frequency**: 
+1. **Polling Frequency ≠ Display Update Frequency**:
+
    - Can run handler every loop but only update display/MQTT when needed
    - Early exit pattern reduces ~98% of expensive operations
 
 2. **Modulo Arithmetic Harmonics**:
+
    - Intervals that share factors (2, 10) create collisions
    - Zero is divisible by everything (`0 % n == 0`)
    - Use offsets and staggering to distribute load
 
 3. **DHT11 Hardware Constraint**:
+
    - Requires minimum 2 seconds between reads
    - Calling too frequently causes blocking/hanging
    - Counter-based throttling respects hardware timing without `import time`
 
 4. **MQTT Broker Rate Limiting**:
+
    - Free tier brokers have message rate limits
    - 120 msg/min overwhelmed HiveMQ → 30s timeout
    - Throttle to match requirements (FR6.4: log every 30 minutes, not every second)
@@ -3007,6 +3294,7 @@ This session focused on debugging and resolving critical performance issues disc
 ### Decisions Made
 
 1. **DoorServoManager Pattern**:
+
    - Created manager class following existing RGBManager/OLEDManager pattern
    - Auto-close countdown timer (5 seconds default, configurable via parameter)
    - State tracking (`is_open`) to prevent redundant servo commands
@@ -3014,11 +3302,13 @@ This session focused on debugging and resolving critical performance issues disc
    - Called `door_servo_manager.update()` in main event loop for countdown decrement
 
 2. **Removed Duplicate MQTT Initialization**:
+
    - Deleted `_connect_to_mqtt()` from system_init.py (was creating temporary connection)
    - MQTT now only initialized once in app.py (persistent connection)
    - Faster boot time (~2-3s saved) and cleaner separation of concerns
 
 3. **Boot Sequence UX Overhaul**:
+
    - All messages now use two-line format (Title / Description)
    - Added "Connecting..." messages BEFORE operations (not just after)
    - Increased all delays by +0.5s for readability (total boot ~10s)
@@ -3033,12 +3323,14 @@ This session focused on debugging and resolving critical performance issues disc
 ### Issues Encountered
 
 1. **Object Lifecycle Bug in control_handler.py**:
+
    - **Problem**: Created `DoorServoManager()` locally then immediately deleted it
    - **Impact**: Countdown timer destroyed before `update()` could be called → door never auto-closed
    - **Solution**: Pass shared `door_servo_manager` reference via dependency injection
    - **Learning**: Stateful objects with timers must persist across loop iterations
 
 2. **TypeError: can't convert 'int' object to str**:
+
    - **Problem**: Assumed `get_local_time()` returned string, actually returns tuple
    - **Impact**: Tried to slice integer with `[:5]`, caused crash on boot
    - **Solution**: Extract hour/minute from tuple indices `[3]` and `[4]`, format manually
@@ -3062,11 +3354,13 @@ This session focused on debugging and resolving critical performance issues disc
 ### Key Learnings
 
 1. **Dependency Injection vs Lazy Loading**:
+
    - Lazy loading works for stateless/fire-and-forget objects (Buzzer, temporary Servo)
    - Stateful objects with timers need DI to persist across function calls
    - Rule: If it has `update()` method, it belongs in app.py as shared instance
 
 2. **UX Flow Design**:
+
    - Boot sequence now has three clear phases: System Init → App Init → Operational
    - "Connecting..." messages before operations feel more responsive than silent waits
    - Closure signals ("App Running") help users understand state transitions
@@ -3093,7 +3387,6 @@ This session focused on debugging and resolving critical performance issues disc
 
 ---
 
-
 ## Session 20 - 2025-10-18 - C# Sensor Logging & BuzzerManager Implementation ✅
 
 **Phase**: Phase 2 - API Layer (with Phase 1 refinements)
@@ -3103,6 +3396,7 @@ This session focused on debugging and resolving critical performance issues disc
 ### Tasks Completed
 
 - [x] **T1.25 / T2.6**: Implement 30-minute sensor logging in C# middleware
+
   - Verified ESP32 environment handler already publishes temp/humidity every 60 seconds
   - Added timer-based database writer to `MqttBackgroundService.cs`
   - Stores latest temperature/humidity readings in memory
@@ -3118,17 +3412,20 @@ This session focused on debugging and resolving critical performance issues disc
 ### Decisions Made
 
 1. **Integrated Sensor Logging into MqttBackgroundService**:
+
    - Could have created separate `SensorDataWriter.cs` service
    - Chose to add timer logic to existing MQTT service (simpler, fewer moving parts)
    - Pattern: Store latest readings → Timer callback → Scoped Supabase client → Insert
    - Matches existing RFID validation pattern (lines 189-213)
 
 2. **Hardcoded Device UUID in Config**:
+
    - Avoided creating `DeviceModel` and database lookup (YAGNI for single-device project)
    - Added `DeviceUuid: "cbd2eeab-74e2-4e22-a47a-38b8d86e98c0"` to `appsettings.json`
    - Simpler than dynamic device registration for student demo
 
 3. **BuzzerManager Simplification**:
+
    - Initial implementation had complex ternary logic and unused `__init__` parameter
    - Refactored to require `duration` parameter in `start()` method only
    - Clearer code: explicit if/else instead of ternary expression
@@ -3141,12 +3438,14 @@ This session focused on debugging and resolving critical performance issues disc
 ### Issues Encountered
 
 1. **Undefined Variable Bug in BuzzerManager.start()**:
+
    - **Problem**: `self.countdown = duration` referenced undefined `duration` variable
    - **Cause**: `__init__` parameter not stored as instance variable
    - **Solution**: Simplified to require `duration` parameter only in `start()` method
    - **Learning**: Parameters in one method aren't accessible in another without `self.`
 
 2. **Overly Complex Code**:
+
    - **Problem**: Ternary expression hard to read for optional parameters
    - **Solution**: Replaced with explicit if/else block (4 lines vs 1, but clearer)
    - **Learning**: Readability > cleverness (especially for student projects)
@@ -3171,11 +3470,13 @@ This session focused on debugging and resolving critical performance issues disc
 ### Key Learnings
 
 1. **Background Service Timer Pattern**:
+
    - Use `System.Threading.Timer` for periodic tasks in background services
    - Always use `IServiceScopeFactory` to get scoped services in singleton contexts
    - Pattern: `using var scope = _scopeFactory.CreateScope(); var client = scope.GetService<T>();`
 
 2. **YAGNI in Configuration**:
+
    - Don't create models/services until you need full CRUD operations
    - Hardcoded UUIDs acceptable for single-device demos
    - Optional parameters in `__init__` often unnecessary
@@ -3210,6 +3511,7 @@ This session focused on debugging and resolving critical performance issues disc
 ### Tasks Completed
 
 - [x] **T1.26**: Implement asthma alert system
+
   - Integrated asthma logic into existing `EnvironmentHandler.handle_environment_detection()`
   - Added condition check: temperature > 27°C AND humidity > 50%
   - Displays "ASTHMA ALERT" on OLED when conditions met
@@ -3231,12 +3533,14 @@ This session focused on debugging and resolving critical performance issues disc
 ### Decisions Made
 
 1. **Asthma Alert Integration Pattern**:
+
    - Initially student created separate `handle_asthma_alert()` method
    - Refactored to integrate into existing `handle_environment_detection()`
    - Rationale: Avoid duplicate DHT11 sensor reads (efficiency)
    - Pattern: Read sensor once, use data for both temp/humidity display AND asthma detection
 
 2. **Button Handler Architecture**:
+
    - Initially student attempted direct hardware control in button handler
    - Refactored to state management pattern: ButtonHandler sets flags, other handlers read flags
    - Gas handler: Checks `button_handler.gas_alarm_enabled`, skips detection if disabled
@@ -3244,22 +3548,26 @@ This session focused on debugging and resolving critical performance issues disc
    - This separates concerns: button input vs. alarm logic
 
 3. **Persistent Flag Pattern for Button Detection**:
+
    - Problem: Button presses missed if occurring between 1-second loop checks
    - Solution: Edge detection sets persistent flag, flag consumed when processed
    - Flow: Detect press → Set flag → Process flag → Clear flag
    - Prevents: Missing quick presses, prevents repeated action on held button
 
 4. **Gas Alarm Button: One-Time vs Toggle**:
+
    - Initially: One-time disable (couldn't re-enable without restart)
    - Changed to: Toggle (consistent with PIR button behavior)
    - Better UX: Both buttons work the same way
 
 5. **OLED Priority for Button Feedback**:
+
    - Added 'button' owner with priority 5 (highest)
    - Prevents environment handler from immediately overwriting button feedback
    - User sees confirmation for 3 seconds before display reverts
 
 6. **Button Pin Constants**:
+
    - Defined in `button.py` instead of `config.py`
    - Keeps button hardware definitions with Button class
    - Alternative discussed: centralized in config.py (both valid approaches)
@@ -3273,31 +3581,37 @@ This session focused on debugging and resolving critical performance issues disc
 ### Issues Encountered
 
 1. **String Interpolation Bug**:
+
    - Student used `"Humid: {humidity}%"` instead of f-string
    - Fixed: `f"Humid: {humidity}%"`
    - Learning: Python string interpolation requires f prefix
 
 2. **MQTT Topic Confusion**:
+
    - Task said `home/asthma_alert`, but architecture uses device-specific topics
    - Used: `devices/{id}/asthma_alert` (consistent with other sensor topics)
    - Better for multi-device systems
 
 3. **Architecture Misunderstanding - Direct Hardware Control**:
+
    - Student initially had button handler call `fan.off()` and `buzzer.stop()` directly
    - Problem: ButtonHandler shouldn't know about gas alarm implementation details
    - Fixed: State management pattern (handler sets flags, other handlers read)
 
 4. **OLED Not Showing Button Feedback**:
+
    - Button handler used 'gas' and 'motion' owners (low priority)
    - Environment handler (runs every loop) immediately overwrote display
    - Fixed: Added 'button' owner with priority 5 (highest)
 
 5. **Button Presses Missed**:
+
    - Button checks only once per second (1-second loop)
    - Quick presses between checks were missed
    - Fixed: Persistent flag pattern - press sets flag, flag persists until processed
 
 6. **OLED Upload Issue**:
+
    - KeyError: 'button' when running on ESP32
    - Cause: `oled.py` with updated priority dict not uploaded
    - Fixed: Re-uploaded entire project to ensure sync
@@ -3310,21 +3624,25 @@ This session focused on debugging and resolving critical performance issues disc
 ### Key Learnings
 
 1. **Event Consumption Pattern**:
+
    - Set flag on event → Check flag → Process → Clear flag
    - Prevents event loss and prevents repeated processing
    - Common in embedded systems and game loops
 
 2. **State Management in Event-Driven Systems**:
+
    - ButtonHandler owns button state (`pir_enabled`, `gas_alarm_enabled`)
    - Other handlers READ state, don't WRITE it
    - Clear separation of concerns
 
 3. **OLED Priority System**:
+
    - Higher number = higher priority
    - Button feedback needs highest priority for good UX
    - System prevents lower priority displays from interrupting higher priority
 
 4. **Lazy Loading in MicroPython**:
+
    - Import inside methods, not at top of file
    - Delete objects after use + garbage collection
    - Critical for ESP32's limited RAM (~100KB)
@@ -3389,6 +3707,7 @@ This session focused on debugging and resolving critical performance issues disc
 ### Decisions Made
 
 1. **State Machine Implementation Pattern**:
+
    - Architecture doc specified "state machine" for event priority (gas > steam > motion)
    - Student implementation uses **distributed priority system** via Manager pattern
    - **RGBManager**: `{'gas': 3, 'rfid': 2, 'steam': 1, 'motion': 0}`
@@ -3397,12 +3716,14 @@ This session focused on debugging and resolving critical performance issues disc
    - Rationale: More modular than centralized state machine, easier to extend, no single point of failure
 
 2. **Manager Pattern = Distributed State Machine**:
+
    - Traditional state machine: Centralized logic checks all sensors, decides single state, executes actions
    - Manager pattern: Each output manages own state, handlers request access, managers grant/deny based on priority
    - Equivalent functionality with better separation of concerns
    - Handlers don't need to know about each other or global system state
 
 3. **Task Completion Decision**:
+
    - Initial concern: Missing state machine and error handling
    - Analysis revealed: State machine exists via Manager pattern, already working
    - Error handling: MQTT has retry logic, handlers have sensor validation
@@ -3417,18 +3738,21 @@ This session focused on debugging and resolving critical performance issues disc
 ### Key Learnings
 
 1. **Distributed vs. Centralized State Machines**:
+
    - Centralized: Single state variable, main loop switches on state
    - Distributed: Each subsystem manages own state, coordinates via priority
    - Student's Manager pattern is distributed state machine
    - Trade-offs: Distributed is more modular but requires careful priority management
 
 2. **Priority Systems in Embedded Design**:
+
    - Higher priority = more urgent/important event
    - Lower priority handlers blocked when higher priority active
    - Countdown timers automatically release ownership (no manual state transitions)
    - Pattern prevents output conflicts (e.g., gas and motion both trying to set RGB color)
 
 3. **Code Review Process**:
+
    - Student questioned whether task was complete (good instinct to verify)
    - Systematic review: Read task requirements → Compare to implementation → Document gaps
    - Important to distinguish "missing feature" from "implemented differently than expected"
@@ -3443,6 +3767,7 @@ This session focused on debugging and resolving critical performance issues disc
 ### Issues Encountered
 
 1. **Task Description vs. Implementation Mismatch**:
+
    - T1.29 said "build main event loop" but event loop already existed
    - Required careful analysis to determine if task was truly incomplete
    - Resolution: Review showed all functional requirements met, just implemented differently
@@ -3479,6 +3804,7 @@ This session focused on debugging and resolving critical performance issues disc
 **Learning Focus**: State machine patterns, code review process, recognizing existing design patterns
 
 ---
+
 ## Session 28 - 2025-10-22 - C# API Refactoring: Handler Pattern Architecture ✅
 
 **Phase**: Phase 2 - C# API Layer
@@ -3496,6 +3822,7 @@ This session focused on debugging and resolving critical performance issues disc
 ### Architecture Refactoring
 
 **Problem Identified**: Original `MqttBackgroundService.cs` was 449 lines with multiple responsibilities (connection, RFID validation, sensor storage, status updates, database writes). Code review identified:
+
 - Thread safety bugs (sensor data fields accessed without locks)
 - Timer disposal race conditions
 - Missing RFID scan logging (TODO not implemented)
@@ -3503,6 +3830,7 @@ This session focused on debugging and resolving critical performance issues disc
 - Difficult to test and maintain
 
 **Solution Implemented**: Handler Pattern with dependency injection
+
 - Created `IMqttMessageHandler` interface (contract for all message handlers)
 - Split into 7 focused files (73% code reduction in main service):
   - `MqttBackgroundService.cs` - Connection & routing only (120 lines)
@@ -3514,6 +3842,7 @@ This session focused on debugging and resolving critical performance issues disc
   - `IMqttMessageHandler.cs` - Interface definition (10 lines)
 
 **Key Improvements**:
+
 - ✅ Thread safety: Added `lock` statements for concurrent access to sensor data fields
 - ✅ RFID logging: Fully implemented with database inserts to `rfid_scans` table
 - ✅ Separation of concerns: Each handler has single responsibility
@@ -3526,6 +3855,7 @@ This session focused on debugging and resolving critical performance issues disc
 1. **Minimal Code for Learning**: Removed verbose logging and input validation from handlers to reduce complexity for student understanding. Focus on core logic only.
 
 2. **Handler Registration**: Used ASP.NET Core DI to auto-inject all `IMqttMessageHandler` implementations:
+
    ```csharp
    builder.Services.AddSingleton<SensorDataHandler>();
    builder.Services.AddScoped<IMqttMessageHandler, RfidValidationHandler>();
@@ -3540,19 +3870,23 @@ This session focused on debugging and resolving critical performance issues disc
 
 ### Issues Encountered
 
-1. **Build Errors - Missing using statements**: 
+1. **Build Errors - Missing using statements**:
+
    - `using MQTTnet.Client` doesn't exist in MQTTnet library version
    - **Solution**: Removed unnecessary using statement
 
-2. **SensorDataMessage visibility**: 
+2. **SensorDataMessage visibility**:
+
    - `internal class` couldn't be returned from `public method`
    - **Solution**: Changed to `public class`
 
-3. **AccessResult type mismatch**: 
+3. **AccessResult type mismatch**:
+
    - Database expects `string`, code was passing `bool`
    - **Solution**: Use ternary operator `isValid ? "granted" : "denied"`
 
 4. **Async warning in SensorDataHandler**:
+
    - Method marked `async` but no `await` operations
    - **Solution**: Changed to return `Task.CompletedTask` directly without `async` keyword
 
@@ -3564,6 +3898,7 @@ This session focused on debugging and resolving critical performance issues disc
 ### Student Learning Highlights
 
 **C# Concepts Explained**:
+
 - Namespaces vs using statements (like Python imports)
 - Interfaces as contracts (vs Python duck typing)
 - Dependency Injection (framework creates objects automatically)
@@ -3579,6 +3914,7 @@ This session focused on debugging and resolving critical performance issues disc
 - Tuple returns `(type1, type2)`
 
 **Student Contribution**: Successfully implemented `SensorDataHandler.cs` with guidance, demonstrating understanding of:
+
 - Interface implementation
 - Thread-safe field access with locks
 - JSON deserialization
@@ -3587,6 +3923,7 @@ This session focused on debugging and resolving critical performance issues disc
 ### Files Created/Modified
 
 **Created**:
+
 - `api/Services/Mqtt/IMqttMessageHandler.cs`
 - `api/Services/Mqtt/MqttBackgroundService.cs` (new refactored version)
 - `api/Services/Mqtt/MqttPublisher.cs`
@@ -3596,11 +3933,13 @@ This session focused on debugging and resolving critical performance issues disc
 - `api/Services/SensorDataWriter.cs`
 
 **Modified**:
+
 - `api/Program.cs` - Updated service registrations for new handler pattern
 - `planning/tasks.md` - Marked T2.1, T2.2, T2.5, T2.6, T2.7 as complete
 - `planning/development-notes.md` - This session entry
 
 **Backed Up**:
+
 - `api/Services/MqttBackgroundService.cs.backup` - Original monolithic version preserved
 
 ### Next Session
@@ -3608,15 +3947,18 @@ This session focused on debugging and resolving critical performance issues disc
 **Continue with T2.3**: Create REST API endpoints (GET only for historical data)
 
 **What's needed**:
+
 - `GET /api/sensors/temperature?hours=24` - Historical temperature readings
 - `GET /api/sensors/humidity?hours=24` - Historical humidity readings
 - `GET /api/sensors/motion?hours=1` - Motion event history
 - `GET /api/sensors/gas` - Gas alert history
 
 **Continue with T2.4**: Create RFID controller
+
 - `GET /api/rfid/scans?filter=all|success|failed` - RFID scan history with filtering
 
 **Status of Phase 2**:
+
 - ✅ T2.1 - Project setup complete
 - ✅ T2.2 - Data access layer complete (modern DI pattern)
 - ✅ T2.5 - MQTT background service complete (handler pattern)
@@ -3627,7 +3969,8 @@ This session focused on debugging and resolving critical performance issues disc
 
 **Note**: Controllers exist (`SensorLogController`, `GasAlertController`, `AuthorisedCardController`) but only have POST endpoints. Need to add GET endpoints for historical data retrieval by the Next.js dashboard.
 
-**Preparation**: 
+**Preparation**:
+
 - Review existing controller patterns in `api/Controllers/`
 - Understand Supabase query filtering (WHERE clauses, date ranges)
 - Consider pagination for large result sets
@@ -3658,7 +4001,6 @@ This session focused on debugging and resolving critical performance issues disc
   - Implemented `GET /api/sensors/gas?hours=24` for gas alert history
   - Simplified scope to match PRD requirements (removed temperature/humidity historical endpoints)
   - Used time-based filtering with DateTimeOffset cutoff logic
-  
 - [x] **T2.4**: Create RFID controller
   - Added `GET /api/RfidScans?filter=all|success|failed` to existing RfidScansController
   - Implemented three-way filtering: all/success (granted)/failed (denied)
@@ -3667,12 +4009,14 @@ This session focused on debugging and resolving critical performance issues disc
 ### Architecture Refinements
 
 **PRD Alignment**: Reviewed functional requirements to determine which endpoints were actually needed:
+
 - **Motion events** (FR8.1): "Display PIR detections in last hour" → Requires historical query
 - **Gas alerts** (FR8.2): "Show gas detection alerts" → Requires historical log
 - **Temperature/Humidity**: Only real-time MQTT (FR6.3) → No historical endpoints needed for Phase 2
 - This reduced API complexity and focused on assessment requirements
 
 **Query Pattern**: Used if/else branching instead of query variable reassignment to avoid Supabase client type conversion errors:
+
 ```csharp
 if (filter == "success")
     response = await client.From<Model>().Where(x => x.Field == "value").Get();
@@ -3685,16 +4029,19 @@ else
 ### Issues Encountered
 
 1. **Dependency Injection Scope Mismatch**:
+
    - Error: "Cannot consume scoped service 'IMqttMessageHandler' from singleton 'MqttBackgroundService'"
    - **Solution**: Changed handler registrations from `AddScoped` to `AddSingleton` in Program.cs
    - **Why**: Singleton background services can only inject other singletons
 
 2. **Supabase Query Type Conversion**:
+
    - Error: Cannot implicitly convert IPostgrestTable to ISupabaseTable
    - **Solution**: Execute full query chain in each branch instead of reassigning query variable
    - **Why**: .Where() returns different type that doesn't match original query variable type
 
 3. **Missing appsettings.json**:
+
    - File was gitignored (correctly) but deleted locally
    - **Solution**: Restored from git commit history (`git show 73f2764:api/appsettings.json`)
 
@@ -3706,11 +4053,13 @@ else
 ### Testing
 
 **Test Data Insertion**: Used Supabase REST API directly to insert test records:
+
 - 3 motion events (value: 0 and 1)
 - 2 gas alerts (sensor_value: 850, 920)
 - 2 RFID scans (1 granted, 1 denied)
 
 **Endpoint Verification**:
+
 - `GET /api/sensors/motion?hours=1` → Returns 3 motion events ✅
 - `GET /api/sensors/gas?hours=24` → Returns 2 gas alerts ✅
 - `GET /api/RfidScans?filter=all` → Returns 2 scans ✅
@@ -3722,14 +4071,17 @@ All endpoints return properly formatted JSON arrays with correct field names (ca
 ### Files Created/Modified
 
 **Created**:
+
 - `api/Controllers/SensorsController.cs` (new - motion and gas GET endpoints)
 
 **Modified**:
+
 - `api/Controllers/RfidScansController.cs` (renamed from RfidScansRequest.cs, added GET endpoint)
 - `api/Program.cs` (fixed DI scopes: Scoped → Singleton for handlers)
 - `planning/tasks.md` (updated T2.3 requirements, marked T2.3 and T2.4 complete)
 
 **Restored**:
+
 - `api/appsettings.json` (from git history)
 
 ### Decisions Made
@@ -3745,6 +4097,7 @@ All endpoints return properly formatted JSON arrays with correct field names (ca
 ### Next Session
 
 **Milestone 2.1 Complete!** All 7 tasks done:
+
 - ✅ T2.1: Project setup
 - ✅ T2.2: Supabase data access layer
 - ✅ T2.5: MQTT background service (handler pattern)
@@ -3756,6 +4109,7 @@ All endpoints return properly formatted JSON arrays with correct field names (ca
 **Next**: Begin Phase 3 (Web Dashboard) or address MQTT TLS certificate issue before proceeding.
 
 **Preparation**:
+
 - Review Next.js setup requirements (T3.1)
 - Consider MQTT TLS fix for background services
 - Plan dashboard component structure
@@ -3785,19 +4139,22 @@ All endpoints return properly formatted JSON arrays with correct field names (ca
 ### Changes Made
 
 **1. Re-enabled Background Services** (`Program.cs:54-56`)
+
 - Uncommented `MqttBackgroundService` and `SensorDataWriter` registrations
 - MQTT functionality now operational
 
 **2. Input Validation - MQTT Handlers**
 
-*RfidValidationHandler.cs*:
+_RfidValidationHandler.cs_:
+
 - Added topic format validation (must have 4+ segments)
 - Added JSON parsing try-catch with `JsonException` handling
 - Changed `data?["card_id"]` → `TryGetValue()` pattern (avoids `KeyNotFoundException`)
 - Removed null-forgiving operators (`cardId!` → proper null checks)
 - Added `ILogger<RfidValidationHandler>` with warning/info logs
 
-*SensorDataHandler.cs*:
+_SensorDataHandler.cs_:
+
 - Added JSON parsing try-catch
 - Added null check after deserialization
 - Added `sensor_type` validation (not null/empty)
@@ -3806,14 +4163,16 @@ All endpoints return properly formatted JSON arrays with correct field names (ca
 
 **3. Input Validation - Controllers**
 
-*SensorLogController.cs*:
+_SensorLogController.cs_:
+
 - Added null request check → 400 Bad Request
 - Added `DeviceId == Guid.Empty` check → 400
 - Added `SensorType` whitelist validation (temperature, humidity, gas, motion)
 - Added response validation (check `response.Models.Any()`)
 - Added `ILogger<SensorLogController>`
 
-*GasAlertController.cs*:
+_GasAlertController.cs_:
+
 - **Bug fix**: Changed `new GasAlertsModel()` → `new GasAlertsModel(request)` (was ignoring request data!)
 - Added null request check → 400
 - Added `DeviceId == Guid.Empty` check → 400
@@ -3823,11 +4182,13 @@ All endpoints return properly formatted JSON arrays with correct field names (ca
 
 **4. Console.WriteLine → ILogger**
 
-*MqttBackgroundService.cs*:
+_MqttBackgroundService.cs_:
+
 - Line 89: `Console.WriteLine($"Error processing...")` → `_logger.LogError(ex, "Error processing MQTT message on topic {Topic}", ...)`
 - Line 104: `Console.WriteLine($"Reconnection failed...")` → `_logger.LogWarning(ex, "MQTT reconnection attempt failed...")`
 
-*SensorDataWriter.cs*:
+_SensorDataWriter.cs_:
+
 - Line 88: `Console.WriteLine($"Error writing...")` → `_logger.LogError(ex, "Error writing sensor data to database")`
 
 ### Decisions Made
@@ -3843,14 +4204,14 @@ None - all changes compiled successfully on first attempt.
 
 ### Audit Status After This Session
 
-| Finding | Severity | Status |
-|---------|----------|--------|
-| Hardcoded credentials | Critical | ✅ Fixed (commit 7f2a67a) |
-| Background services disabled | Critical | ✅ Fixed |
-| MQTT handler input validation | Critical | ✅ Fixed |
-| Controller input validation | High | ✅ Fixed |
-| Console.WriteLine → ILogger | Medium | ✅ Fixed |
-| Global exception middleware | Medium | ⏳ Not addressed |
+| Finding                       | Severity | Status                    |
+| ----------------------------- | -------- | ------------------------- |
+| Hardcoded credentials         | Critical | ✅ Fixed (commit 7f2a67a) |
+| Background services disabled  | Critical | ✅ Fixed                  |
+| MQTT handler input validation | Critical | ✅ Fixed                  |
+| Controller input validation   | High     | ✅ Fixed                  |
+| Console.WriteLine → ILogger   | Medium   | ✅ Fixed                  |
+| Global exception middleware   | Medium   | ⏳ Not addressed          |
 
 ### Next Session
 
@@ -3878,6 +4239,7 @@ None - all changes compiled successfully on first attempt.
 ### Changes Made
 
 **1. API Client Implementation** (`web/lib/api.ts`)
+
 - Created TypeScript types matching C# API models:
   - `SensorLogEntry` (motion data)
   - `GasAlertEntry` (gas detection events)
@@ -3891,20 +4253,24 @@ None - all changes compiled successfully on first attempt.
 - Used snake_case for type properties to match C# JSON serialization
 
 **2. CORS Configuration** (`api/Program.cs:33-42, 144`)
+
 - Added CORS policy `AllowNextJs` to allow requests from `http://localhost:3000`
 - Configured to allow all headers and methods for development
 - Critical fix: Without CORS, browser blocked all API requests with network errors
 
 **3. Test Component** (`web/components/ApiTests.tsx`)
+
 - Created client-side component with `useEffect` to test all 4 endpoints
 - Displays JSON responses for manual verification
 - Used `'use client'` directive for browser-based API calls
 
 **4. Environment Configuration** (`web/.env.local`, `web/.env.example`)
+
 - Set `NEXT_PUBLIC_API_URL=http://localhost:5223`
 - Created `.env.example` for repository reference
 
 **5. Dependencies**
+
 - Installed `axios@1.13.2` for HTTP client
 
 ### Decisions Made
@@ -3913,16 +4279,18 @@ None - all changes compiled successfully on first attempt.
    - Cleaner syntax for unions (`"granted" | "denied"`)
    - Prevents accidental declaration merging
    - Appropriate for data contracts
-   
 2. **snake_case Properties**: Kept API type properties in snake_case (`device_id`, `sensor_type`) to match C# JSON output
+
    - C# uses snake_case column attributes for Supabase compatibility
    - Could transform to camelCase in future, but snake_case works for now
 
 3. **Error Handling**: Simple try-catch with console.error
+
    - Errors thrown to calling components for handling
    - Sufficient for development; can add retry logic/toasts later
 
 4. **Testing Approach**: Browser-based component testing instead of Node.js scripts
+
    - Matches Next.js environment (browser APIs available)
    - Simpler than configuring ts-node/tsx
    - useEffect automatically calls endpoints on mount
@@ -3936,11 +4304,13 @@ None - all changes compiled successfully on first attempt.
 ### Issues Encountered
 
 1. **Network Errors (CORS)**: All 4 API calls initially failed with "Network Error"
+
    - Root cause: C# API had no CORS configuration
    - Fix: Added `AddCors()` and `UseCors("AllowNextJs")` to Program.cs
    - Learning: CORS errors appear as generic "Network Error" in axios, not specific CORS messages
 
 2. **Missing `/api/` prefix**: `getAuthorisedCards` initially called `/AuthorisedCard/{id}` instead of `/api/AuthorisedCard/{id}`
+
    - Fixed by adding `/api/` prefix to match controller route structure
 
 3. **Port Conflicts**: Multiple attempts to restart API hit "address already in use" errors
@@ -3975,6 +4345,7 @@ None - all changes compiled successfully on first attempt.
 ### Changes Made
 
 **1. MQTT Provider Implementation** (`web/components/MQTTProvider.tsx`)
+
 - Created React Context with TypeScript types for sensor data, RFID checks, and device status
 - Implemented bi-directional MQTT communication:
   - **Receive**: Subscribe to `data`, `rfid/check`, `status/*` topics
@@ -3985,6 +4356,7 @@ None - all changes compiled successfully on first attempt.
 - 200ms delay before status request to ensure subscription completes
 
 **2. Display Components** (`web/components/MQTTStatus.tsx`, `web/components/MQTTFanToggle.tsx`)
+
 - **MQTTStatus**: Shows connection status and latest sensor data using `useMQTT()` hook
 - **MQTTFanToggle**: Fan control button with bi-directional updates
   - Publishes to `devices/esp32_main/control/fan`
@@ -3992,22 +4364,26 @@ None - all changes compiled successfully on first attempt.
   - Color-coded button (green=off, red=on)
 
 **3. Updated Page** (`web/app/page.tsx`)
+
 - Added MQTTStatus and MQTTFanToggle components to home page
 
 ### Decisions Made
 
 1. **Context API over Props**: Used React Context to avoid prop drilling through multiple component levels
+
    - `MQTTProvider` wraps entire app in layout.tsx
    - Components access data via `useMQTT()` custom hook
    - Automatic re-renders when MQTT messages arrive
 
-2. **Request/Response Pattern for Initial Status**: 
+2. **Request/Response Pattern for Initial Status**:
+
    - Web publishes to `request/status` on connection (200ms delay)
    - ESP32 responds on `response/status` with all device states
    - Solves "unknown" status problem on page refresh
    - More accurate than localStorage (reflects actual device state)
 
 3. **Bi-directional MQTT Topics**:
+
    - **Control topics**: `devices/{id}/control/*` (web → ESP32)
    - **Status topics**: `devices/{id}/status/*` (ESP32 → web)
    - Prevents confusion and enables feedback loop
@@ -4019,14 +4395,17 @@ None - all changes compiled successfully on first attempt.
 ### Issues Encountered
 
 1. **Topic Direction Confusion**: Initially subscribed to `request/status` instead of `response/status`
+
    - Web should publish to request, subscribe to response
    - ESP32 should subscribe to request, publish to response
 
 2. **Function Scope Error**: `publishMessage` initially defined inside useEffect
+
    - Caused "not in scope" error when adding to Context value
    - Fixed by moving to component level before useEffect
 
 3. **Property Mismatch**: ESP32 `control_handler.py` expects `action` but web sends `state`
+
    - **Not fixed yet** - requires ESP32 code update (see Next Session)
 
 4. **Missing Status Publishing**: ESP32 fan control doesn't publish status after executing command
@@ -4046,6 +4425,7 @@ None - all changes compiled successfully on first attempt.
 **CRITICAL - ESP32 Updates Required:**
 
 1. **Update `esp32/handlers/control_handler.py`** - `handle_fan_control()`:
+
    - Change `action = data.get('action')` to `state = data.get('state')`
    - Add status publishing after fan control:
      ```python
@@ -4058,6 +4438,7 @@ None - all changes compiled successfully on first attempt.
      ```
 
 2. **Implement Request/Response Handler on ESP32**:
+
    - Subscribe to `devices/esp32_main/request/status`
    - When request received, publish current state of all outputs:
      ```python
@@ -4082,7 +4463,6 @@ None - all changes compiled successfully on first attempt.
 **Lines Added**: ~250  
 **Build Status**: ✅ Next.js builds, MQTT connects, bi-directional communication working (pending ESP32 updates)
 
-
 ## Session 35 - 2025-12-09 - ESP32 Bi-Directional MQTT Complete ✅
 
 **Phase**: 1 - Embedded Core (ESP32)  
@@ -4096,11 +4476,13 @@ None - all changes compiled successfully on first attempt.
 ### Changes Made
 
 **1. Manager Classes Created**
+
 - `FanManager` - Persistent fan state tracking (outputs/fan.py)
 - `WindowServoManager` - Persistent window state tracking (outputs/servo.py)
 - Both follow DoorServoManager pattern for consistency
 
 **2. Control Handler Refactoring** (handlers/control_handler.py)
+
 - Updated all handlers to use `state` property instead of `action` for API consistency
 - Added status publishing to fan, door, and window control handlers
 - Status publishes immediately after command execution (feedback loop)
@@ -4108,16 +4490,19 @@ None - all changes compiled successfully on first attempt.
 - Integrated environment sensor data (temperature, humidity) into status response
 
 **3. Gas Handler Fix** (handlers/gas_handler.py)
+
 - Resolved critical GPIO conflict where gas handler created temporary Fan() instances
 - Now uses persistent `fan_manager` passed as parameter
 - Eliminated fan turning off unexpectedly after MQTT commands
 
 **4. Environment Handler Integration** (app.py)
+
 - Moved EnvironmentHandler creation to `__init__()` instead of `run()`
 - Makes sensor data available for status requests
 - Status response includes both outputs (fan/door/window) and sensors (temp/humidity)
 
 **5. MQTT Subscription Updates** (app.py)
+
 - Added lambda wrappers to pass `mqtt` parameter to control handlers
 - Added `environment_handler` parameter to status request subscription
 - All control handlers now receive mqtt client for status publishing
@@ -4164,7 +4549,7 @@ ESP32 Phase 1 is now 100% complete! All future work is Next.js frontend componen
 
 **Duration**: ~6 hours (full TAFE day)  
 **Files Modified**: 4 (app.py, control_handler.py, gas_handler.py, servo.py)  
-**Files Created**: 6 (esp32/lib/*.py - RFID and LCD libraries)  
+**Files Created**: 6 (esp32/lib/\*.py - RFID and LCD libraries)  
 **Lines Changed**: +1196 / -17  
 **Commits**: 6 (including library additions and config cleanup)  
 **Hardware Testing**: ✅ All MQTT communication tested and working
@@ -4184,20 +4569,24 @@ ESP32 Phase 1 is now 100% complete! All future work is Next.js frontend componen
 ### Changes Made
 
 **1. MQTTProvider Type System** (web/components/MQTTProvider.tsx)
+
 - Added `temperature: number | null` and `humidity: number | null` to `MQTTContextValue` type
 - Updated default context to include temperature and humidity defaults
 - Created useState hooks for both sensor values
 
 **2. Status Response Handler**
+
 - Modified `/response/status` message handler to extract temperature and humidity
 - Used `!== undefined` check to allow zero values (safer than truthiness check)
 - Temperature and humidity now populate from status response payload
 
 **3. Context Export**
+
 - Added temperature and humidity to exported context value
 - Components can now access instant sensor values via `useMQTT()` hook
 
 **4. Console Logging Cleanup**
+
 - Removed global message handler from `mqtt.ts` (lines 22-25)
 - Removed general "Received message on topic" log from MQTTProvider (line 114)
 - Now only logs meaningful "Status updated from response" message
@@ -4216,6 +4605,7 @@ ESP32 Phase 1 is now 100% complete! All future work is Next.js frontend componen
 ### Issues Encountered
 
 1. **Duplicate Console Logs**: Initially saw two sets of logs for each MQTT message:
+
    - Global handler in `mqtt.ts` logged all messages
    - MQTTProvider logged general messages + specific status updates
    - **Solution**: Removed both redundant handlers, kept only status-specific log
@@ -4246,7 +4636,6 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
 **Commits**: 1 (pending)
 **Status**: Ready for SensorCard component implementation
 
-
 ## Session 37 - 2025-12-10 - Create Sensor Display Components and Test Database Integration ✅
 
 **Phase**: 3 - Web Dashboard (Next.js)
@@ -4266,12 +4655,14 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
 ### Changes Made
 
 **1. Sensor Card Component** (web/components/SensorCard.tsx)
+
 - Generic card component accepts title, value, valueType, icon, and status
 - Uses HeroUI Card with blur effect and shadow
 - Displays sensor icon with color-coded status indicator
 - Shows value with unit label (°C, %, detections/hr)
 
 **2. Sensor Grid Component** (web/components/SensorGrid.tsx)
+
 - Grid layout (2 columns mobile, 4 columns desktop)
 - Four sensor cards: Temperature, Humidity, PIR Activity, Gas Sensor
 - Fetches motion data from C# API on mount
@@ -4281,23 +4672,27 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
 - Shows loading state when data not yet available
 
 **3. Sensor Icon Component** (web/components/SensorIcon.tsx)
+
 - HeroUI Button with icon display
 - Status-based coloring: loading (default), normal (green), warning (orange), danger (red)
 - Shows spinner for loading state
 - Uses lucide-react icons (Thermometer, Droplet, Flame, ShieldAlert/Check)
 
 **4. MQTT Provider Enhancement** (web/components/MQTTProvider.tsx)
+
 - Added `gasDetected: boolean | null` to context
 - Parses gas sensor data from `/data` topic
 - Extracts temperature/humidity from real-time sensor messages
 - Added console logging for debugging MQTT message flow
 
 **5. API Client Updates** (web/lib/api.ts)
+
 - Fixed GasAlertEntry type to match C# API response (camelCase properties)
 - Changed `alert_end` from string to `string | null` (active alerts have no end time)
 - Added console logging for motion data debugging
 
 **6. Page Integration** (web/app/page.tsx)
+
 - Added SensorGrid to home page
 - Background image added to layout.tsx for visual design
 
@@ -4316,9 +4711,11 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
 ### Issues Encountered
 
 1. **Database Test Data Missing**: Initially no gas alerts in database for testing.
+
    - **Solution**: Used Supabase MCP tool to insert dummy gas alert with active status (alertEnd = null)
 
 2. **Type Mismatch in API Response**: C# API returns camelCase properties but TypeScript types used snake_case.
+
    - **Solution**: Updated GasAlertEntry type to match API format (deviceId, sensorValue, alertStart, alertEnd)
 
 3. **Gas Detection State Reliability**: MQTT messages are transient - page refresh lost gas alert state.
@@ -4358,6 +4755,7 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
 ### Tasks Completed
 
 - [x] **Code Refactoring**: Cleaned up technical debt from previous sessions
+
   - Merged NavbarIcon + SensorIcon into single StatusIcon component
   - Removed ~15 console.log statements from MQTTProvider
   - Simplified updateDeviceStatus function (28 lines → 14 lines)
@@ -4366,6 +4764,7 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
   - Total reduction: ~68 lines removed
 
 - [x] **T3.9**: Created output control panel with device buttons
+
   - ControlButton.tsx - Reusable button with loading state and timeout
   - ControlPanel.tsx - Container with Door, Window, Fan controls
   - Publishes to `devices/esp32_main/control/{device}` MQTT topics
@@ -4381,20 +4780,24 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
 ### Components Created
 
 **1. StatusIcon.tsx** (merged from NavbarIcon + SensorIcon)
+
 - Single reusable icon component with variant prop (flat/bordered)
 - Used by both navbar and sensor cards
 
 **2. ControlButton.tsx**
+
 - Self-contained button with local pending state
 - Tracks previous state for timeout revert
 - Publishes MQTT control messages
 
 **3. ControlPanel.tsx**
+
 - Card container with three ControlButtons
 - Reads device status from MQTTProvider context
 - Consistent styling with SensorCard/SensorGrid
 
 **4. RecentAccess.tsx**
+
 - HeroUI Table with filter tabs
 - Fetches from C# API on filter change
 - Equal-width columns with border styling
@@ -4409,12 +4812,15 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
 ### Issues Encountered
 
 1. **Icon Import Error**: `Door` doesn't exist in lucide-react
+
    - **Solution**: Changed to `DoorOpen`
 
 2. **card_id undefined**: API sometimes returns null card_id
+
    - **Solution**: Added optional chaining (`card_id?.slice(-4)`)
 
 3. **Styling Inconsistency**: Initial ControlPanel had large buttons and wrong text sizes
+
    - **Solution**: Matched padding, text sizes to existing SensorCard pattern
 
 4. **Table Column Alignment**: Status column had extra left padding
@@ -4452,7 +4858,7 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
 
 ---
 
-## Session 27 - 2025-12-11 - Docker Deployment Setup for C# API ✅
+## Session 39 - 2025-12-11 - Docker Deployment Setup for C# API ✅
 
 **Phase**: Phase 2 - C# API Layer
 **Milestone**: 2.1 - C# API Setup
@@ -4480,7 +4886,7 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
 3. **Security Hardening**:
    - Non-root user (appuser) in Docker container
    - SSH strict host key checking enabled (removed -o StrictHostKeyChecking=no)
-   - .env files excluded from git tracking (.env.production, .env.test, .env.*)
+   - .env files excluded from git tracking (.env.production, .env.test, .env.\*)
    - Explicit .dockerignore patterns to prevent secrets from being copied
 4. **Environment Separation**: Created separate .env files for testing and production
    - .env.test: For local Docker testing with real credentials (Swagger enabled, Development mode)
@@ -4492,17 +4898,21 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
 ### Issues Encountered
 
 1. **ASP.NET 9.0 Port Change**: App ignored ASPNETCORE_URLS=http://+:80 and defaulted to 8080
+
    - **Root Cause**: ASP.NET 9.0 changed default port from 5000 to 8080
    - **Solution**: Updated all Docker configs to use port 8080 consistently
 
 2. **Port 5000 Blocked**: macOS Docker Desktop control process using port 5000
+
    - **Solution**: Used port 5001 for local testing instead
 
 3. **appsettings.json Credentials**: File contained real credentials but was already ignored by git
+
    - **Verification**: Confirmed file not in git history (line 64-66 of .gitignore already blocked it)
    - **Action**: Strengthened .gitignore with explicit API environment file patterns
 
 4. **Missing Health Endpoint**: Initial healthcheck failed because no /health route existed
+
    - **Solution**: Created HealthController.cs with simple JSON health response
 
 5. **Swagger Access**: Initially disabled in .env.test
@@ -4511,17 +4921,20 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
 ### Architecture Notes
 
 **Docker Build Pattern**:
+
 - Stage 1 (base): ASP.NET 9.0 runtime image
 - Stage 2 (build): SDK image with restore + build
 - Stage 3 (publish): dotnet publish with Release config
 - Stage 4 (final): Copy published app, create non-root user, run as appuser
 
 **Port Mapping**:
+
 - Container Internal: 8080 (ASP.NET Kestrel)
 - Host External: 5000 (or 5001 for local testing)
 - Production URL: http://DROPLET_IP:5000
 
 **Deployment Flow**:
+
 1. Local test: `./test-deploy.sh` → builds image, runs on localhost:5001, tests /health
 2. Production deploy: `./deploy.sh DROPLET_IP root` → copies files, builds on remote, runs docker-compose
 
@@ -4535,6 +4948,7 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
 ### Files Created/Modified
 
 **Created**:
+
 - api/Dockerfile (multi-stage build)
 - api/docker-compose.yml (production service definition)
 - api/deploy.sh (deployment script for DigitalOcean)
@@ -4544,6 +4958,7 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
 - api/.env.test (local testing environment variables)
 
 **Modified**:
+
 - .gitignore (strengthened environment file protection)
 - api/Program.cs (disabled HTTPS redirect temporarily)
 - web/.env.local (updated API URL to http://localhost:5001 for Docker testing)

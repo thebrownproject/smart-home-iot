@@ -35,7 +35,6 @@ export const getMotionData = async (
     const response = await axios.get(
       `${API_URL}/api/sensors/motion?hours=${hours}`
     );
-    console.log("Motion data:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error fetching motion data:", error);
