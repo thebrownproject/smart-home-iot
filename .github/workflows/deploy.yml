@@ -49,10 +49,8 @@ jobs:
             echo "📝 Creating configuration file..."
             cat > appsettings.Production.json << EOF
             {
-              "Supabase": {
-                "Url": "${{ secrets.SUPABASE_URL }}",
-                "ApiKey": "${{ secrets.SUPABASE_API_KEY }}"
-              },
+              "SupabaseUrl": "${{ secrets.SUPABASE_URL }}",
+              "SupabaseApiKey": "${{ secrets.SUPABASE_API_KEY }}",
               "HiveMQ": {
                 "Broker": "${{ secrets.HIVEMQ_BROKER }}",
                 "Username": "${{ secrets.HIVEMQ_USERNAME }}",
