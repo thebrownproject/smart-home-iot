@@ -1,0 +1,78 @@
+name: Deploy to DigitalOcean
+
+# When should this workflow run?
+on:
+  push:
+    branches: [main]  # Run when pushing to main branch
+    paths:
+      - 'api/**'       # Only run when files in api/ folder change
+
+# What jobs should run?
+jobs:
+  deploy:
+    name: Deploy API to Droplet
+    runs-on: ubuntu-latest  # Use Ubuntu runner
+
+    steps:
+      # Step 1: Check out the code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Copy only API folder to droplet
+      - name: Copy API files to droplet
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DROPLET_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "api/*"
+          target: "/opt/smart-home-api/"
+          strip_components: 1  # Removes 'api/' prefix, keeping only contents
+
+      # Step 3: SSH into droplet and deploy
+      - name: Deploy to DigitalOcean
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DROPLET_IP }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "🚀 Deploying Smart Home API to DigitalOcean droplet..."
+            echo "📍 Target: /opt/smart-home-api"
+            cd /opt/smart-home-api
+
+            # Stop existing container
+            echo "🛑 Stopping existing container..."
+            docker-compose down || true
+
+            # Create .env.production from secrets
+            echo "📝 Creating environment file..."
+            cat > .env.production << EOF
+            SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+            SUPABASE_API_KEY=${{ secrets.SUPABASE_API_KEY }}
+            HIVEMQ_BROKER=${{ secrets.HIVEMQ_BROKER }}
+            HIVEMQ_USERNAME=${{ secrets.HIVEMQ_USERNAME }}
+            HIVEMQ_PASSWORD=${{ secrets.HIVEMQ_PASSWORD }}
+            ESP32_DEVICE_UUID=${{ secrets.ESP32_DEVICE_UUID }}
+            ASPNETCORE_ENVIRONMENT=Production
+            ASPNETCORE_URLS=http://+:8080
+            EOF
+
+            # Build and start new container
+            echo "🔧 Building and starting container..."
+            docker-compose up -d --build
+
+            # Wait for health check
+            echo "⏳ Waiting for API to be healthy..."
+            sleep 10
+
+            # Check container status
+            echo "📊 Container status:"
+            docker-compose ps
+
+            # Show logs
+            echo "📋 Recent logs:"
+            docker-compose logs --tail=20
+
+            echo "✅ Deployment complete!"
+            echo "🌐 API available at: http://${{ secrets.DROPLET_IP }}:5000"
