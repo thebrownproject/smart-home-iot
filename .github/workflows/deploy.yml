@@ -83,3 +83,4 @@ jobs:
 
             echo "✅ Deployment complete!"
             echo "🌐 API available at: http://${{ secrets.DROPLET_IP }}:5000"
+            echo "🔐 HTTPS available at: http://${{ secrets.DROPLET_IP }}:5001"
