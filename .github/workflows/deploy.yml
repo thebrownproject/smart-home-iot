@@ -51,16 +51,17 @@ jobs:
             {
               "SupabaseUrl": "${{ secrets.SUPABASE_URL }}",
               "SupabaseApiKey": "${{ secrets.SUPABASE_API_KEY }}",
-              "HiveMQ": {
-                "Broker": "${{ secrets.HIVEMQ_BROKER }}",
-                "Username": "${{ secrets.HIVEMQ_USERNAME }}",
-                "Password": "${{ secrets.HIVEMQ_PASSWORD }}"
-              },
-              "Esp32": {
-                "DeviceUuid": "${{ secrets.ESP32_DEVICE_UUID }}"
-              },
+              "MqttBroker": "${{ secrets.HIVEMQ_BROKER }}",
+              "MqttPort": 8883,
+              "MqttUser": "${{ secrets.HIVEMQ_USERNAME }}",
+              "MqttPassword": "${{ secrets.HIVEMQ_PASSWORD }}",
+              "DeviceUuid": "${{ secrets.ESP32_DEVICE_UUID }}",
+              "AllowedHosts": "*",
               "Logging": {
-                "LogLevel": "Information"
+                "LogLevel": {
+                  "Default": "Information",
+                  "Microsoft.AspNetCore": "Warning"
+                }
               }
             }
             EOF
