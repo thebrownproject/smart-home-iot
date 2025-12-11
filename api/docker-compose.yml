@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  smart-home-api:
+    build: .
+    container_name: smart-home-api
+    ports:
+      - "5000:8080"  # Map container port 8080 to host port 5000 (ASP.NET 9.0 default)
+      - "5001:443"   # Map container port 443 to host port 5001 (for HTTPS)
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080  # ASP.NET 9.0 uses port 8080 by default
+    env_file:
+      - .env.production  # Production environment variables
+    restart: unless-stopped
+    # Healthcheck removed - neither curl nor wget are available in ASP.NET runtime image
+    # Can be re-enabled later with custom healthcheck implementation

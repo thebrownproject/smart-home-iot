@@ -545,12 +545,14 @@
 
 ### Milestone 3.4: Main Dashboard Page
 
-- [ ] **T3.11**: Build main dashboard layout
+- [x] **T3.11**: Build main dashboard layout
 
   - File: `web/app/page.tsx`
   - Grid layout: Sensor cards (top), Status indicators (middle), Control panel (bottom)
   - RFID log table on side panel
   - Responsive design (mobile-friendly)
+  - **Started**: 2025-12-11
+  - **Completed**: 2025-12-11
 
 - [~] **T3.12**: Add asthma alert banner
   - Subscribe to `devices/esp32_main/data` MQTT topic

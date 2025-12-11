@@ -4449,3 +4449,109 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
 **Lines Removed**: ~68 (refactoring)
 **Lines Added**: ~250
 **Status**: Dashboard UI nearly complete - control panel and RFID table functional
+
+---
+
+## Session 27 - 2025-12-11 - Docker Deployment Setup for C# API ✅
+
+**Phase**: Phase 2 - C# API Layer
+**Milestone**: 2.1 - C# API Setup
+**Branch**: main
+
+### Tasks Completed
+
+- [x] **Docker Deployment Configuration**: Set up complete Docker deployment workflow for C# API
+  - Created multi-stage Dockerfile with ASP.NET 9.0 runtime
+  - Created docker-compose.yml with production environment configuration
+  - Created deployment scripts (deploy.sh for DigitalOcean, test-deploy.sh for local testing)
+  - Added .dockerignore to exclude build artifacts and secrets
+  - Created HealthController for Docker health checks
+  - Configured environment files (.env.production, .env.test) for credentials management
+  - Updated .gitignore to protect all environment files from being committed
+
+### Decisions Made
+
+1. **Multi-stage Docker Build**: Used separate build and runtime stages to minimize final image size
+2. **Port Configuration**: ASP.NET 9.0 defaults to port 8080 instead of 5000 - updated all configs to match
+   - Changed Dockerfile EXPOSE from 80 to 8080
+   - Changed docker-compose port mapping from 5000:80 to 5000:8080
+   - Updated test-deploy.sh to use port mapping 5000:8080
+   - Added explicit ASPNETCORE_URLS=http://+:8080 environment variable
+3. **Security Hardening**:
+   - Non-root user (appuser) in Docker container
+   - SSH strict host key checking enabled (removed -o StrictHostKeyChecking=no)
+   - .env files excluded from git tracking (.env.production, .env.test, .env.*)
+   - Explicit .dockerignore patterns to prevent secrets from being copied
+4. **Environment Separation**: Created separate .env files for testing and production
+   - .env.test: For local Docker testing with real credentials (Swagger enabled, Development mode)
+   - .env.production: For DigitalOcean deployment (Swagger disabled, Production mode)
+5. **HTTPS Disabled**: Removed UseHttpsRedirection() since no SSL certificates configured yet
+6. **Healthcheck Removed**: Docker healthcheck removed because curl/wget not available in runtime image
+7. **Deployment Target**: DigitalOcean droplet with Docker/docker-compose pre-installed
+
+### Issues Encountered
+
+1. **ASP.NET 9.0 Port Change**: App ignored ASPNETCORE_URLS=http://+:80 and defaulted to 8080
+   - **Root Cause**: ASP.NET 9.0 changed default port from 5000 to 8080
+   - **Solution**: Updated all Docker configs to use port 8080 consistently
+
+2. **Port 5000 Blocked**: macOS Docker Desktop control process using port 5000
+   - **Solution**: Used port 5001 for local testing instead
+
+3. **appsettings.json Credentials**: File contained real credentials but was already ignored by git
+   - **Verification**: Confirmed file not in git history (line 64-66 of .gitignore already blocked it)
+   - **Action**: Strengthened .gitignore with explicit API environment file patterns
+
+4. **Missing Health Endpoint**: Initial healthcheck failed because no /health route existed
+   - **Solution**: Created HealthController.cs with simple JSON health response
+
+5. **Swagger Access**: Initially disabled in .env.test
+   - **Solution**: Changed UseSwagger=true and ASPNETCORE_ENVIRONMENT=Development for local testing
+
+### Architecture Notes
+
+**Docker Build Pattern**:
+- Stage 1 (base): ASP.NET 9.0 runtime image
+- Stage 2 (build): SDK image with restore + build
+- Stage 3 (publish): dotnet publish with Release config
+- Stage 4 (final): Copy published app, create non-root user, run as appuser
+
+**Port Mapping**:
+- Container Internal: 8080 (ASP.NET Kestrel)
+- Host External: 5000 (or 5001 for local testing)
+- Production URL: http://DROPLET_IP:5000
+
+**Deployment Flow**:
+1. Local test: `./test-deploy.sh` → builds image, runs on localhost:5001, tests /health
+2. Production deploy: `./deploy.sh DROPLET_IP root` → copies files, builds on remote, runs docker-compose
+
+### Next Session
+
+- Test deployment to actual DigitalOcean droplet
+- Configure nginx reverse proxy for cleaner URLs (optional)
+- Add Let's Encrypt SSL certificates (optional)
+- Continue with Phase 3 web dashboard tasks
+
+### Files Created/Modified
+
+**Created**:
+- api/Dockerfile (multi-stage build)
+- api/docker-compose.yml (production service definition)
+- api/deploy.sh (deployment script for DigitalOcean)
+- api/test-deploy.sh (local testing script)
+- api/.dockerignore (exclude build artifacts and secrets)
+- api/Controllers/HealthController.cs (health check endpoint)
+- api/.env.test (local testing environment variables)
+
+**Modified**:
+- .gitignore (strengthened environment file protection)
+- api/Program.cs (disabled HTTPS redirect temporarily)
+- web/.env.local (updated API URL to http://localhost:5001 for Docker testing)
+
+### Session Statistics
+
+**Files Created**: 7
+**Files Modified**: 3
+**Docker Image Size**: ~220MB (multi-stage build optimization)
+**Local Test Status**: ✅ Passing (health check successful)
+**Production Deployment**: Ready for DigitalOcean droplet

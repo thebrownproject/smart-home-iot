@@ -30,14 +30,18 @@ internal static class Program
     // Configures the web app builder with the necessary services
     private static void ConfigureWebAppBuilder(WebApplicationBuilder builder, bool useSwagger)
     {
-        // Add CORS policy for Next.js frontend
+        // Add CORS policy for Next.js frontend (Vercel deployment)
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowNextJs", policy =>
             {
-                policy.WithOrigins("http://localhost:3000")
-                      .AllowAnyHeader()
-                      .AllowAnyMethod();
+                policy.WithOrigins(
+                        "http://localhost:3000",  // Local development
+                        "https://zap-smart-home.vercel.app"  // Production Vercel app
+                    )
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials(); // Needed for MQTT/SSE if used later
             });
         });
 
@@ -140,8 +144,9 @@ internal static class Program
             });
         }
 
-        // Redirects to HTTPS
-        app.UseHttpsRedirection();
+        // HTTPS redirection disabled for simplicity in initial deployment
+        // Can be re-enabled when proper SSL certificates are configured
+        // app.UseHttpsRedirection();
 
         // Enable CORS
         app.UseCors("AllowNextJs");
