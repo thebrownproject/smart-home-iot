@@ -45,17 +45,26 @@ jobs:
             echo "🛑 Stopping existing container..."
             docker-compose down || true
 
-            # Create .env.production from secrets
-            echo "📝 Creating environment file..."
-            cat > .env.production << EOF
-            SUPABASE_URL=${{ secrets.SUPABASE_URL }}
-            SUPABASE_API_KEY=${{ secrets.SUPABASE_API_KEY }}
-            HIVEMQ_BROKER=${{ secrets.HIVEMQ_BROKER }}
-            HIVEMQ_USERNAME=${{ secrets.HIVEMQ_USERNAME }}
-            HIVEMQ_PASSWORD=${{ secrets.HIVEMQ_PASSWORD }}
-            ESP32_DEVICE_UUID=${{ secrets.ESP32_DEVICE_UUID }}
-            ASPNETCORE_ENVIRONMENT=Production
-            ASPNETCORE_URLS=http://+:8080
+            # Create appsettings.Production.json from secrets
+            echo "📝 Creating configuration file..."
+            cat > appsettings.Production.json << EOF
+            {
+              "Supabase": {
+                "Url": "${{ secrets.SUPABASE_URL }}",
+                "ApiKey": "${{ secrets.SUPABASE_API_KEY }}"
+              },
+              "HiveMQ": {
+                "Broker": "${{ secrets.HIVEMQ_BROKER }}",
+                "Username": "${{ secrets.HIVEMQ_USERNAME }}",
+                "Password": "${{ secrets.HIVEMQ_PASSWORD }}"
+              },
+              "Esp32": {
+                "DeviceUuid": "${{ secrets.ESP32_DEVICE_UUID }}"
+              },
+              "Logging": {
+                "LogLevel": "Information"
+              }
+            }
             EOF
 
             # Build and start new container
