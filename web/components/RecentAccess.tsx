@@ -23,7 +23,6 @@ export const RecentAccess = () => {
 
   useEffect(() => {
     const fetchScans = async () => {
-      setIsLoading(true);
       try {
         const data = await getRfidScans(filter);
         setScans(data);
@@ -36,6 +35,9 @@ export const RecentAccess = () => {
     };
 
     fetchScans();
+    const interval = setInterval(fetchScans, 5000);
+
+    return () => clearInterval(interval);
   }, [filter]);
 
   const formatTime = (timestamp: string) => {
@@ -68,7 +70,7 @@ export const RecentAccess = () => {
           <Tab key="failed" title="Denied" />
         </Tabs>
       </CardHeader>
-      <CardBody className="pb-4 pt-3 px-4">
+      <CardBody className="pb-4 pt-3 px-4 max-h-[260px] overflow-y-auto">
         <Table
           aria-label="Recent access logs"
           removeWrapper
