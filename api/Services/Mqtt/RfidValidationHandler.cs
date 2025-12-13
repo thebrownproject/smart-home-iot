@@ -101,13 +101,17 @@ public class RfidValidationHandler : IMqttMessageHandler
                 return;
             }
 
+            // Look up the authorised card to get both ID and username
+            var authorisedCard = isValid ? await cardService.GetByCardIdAsync(cardId) : null;
+
             var rfidScan = new RfidScansModel
             {
                 Id = Guid.NewGuid(),
                 DeviceId = deviceUuid,
                 CardId = cardId,
                 AccessResult = isValid ? "granted" : "denied",
-                AuthorisedCardId = isValid ? (await cardService.GetByCardIdAsync(cardId))?.Id : null,
+                AuthorisedCardId = authorisedCard?.Id,
+                Username = authorisedCard?.Username,
                 Timestamp = DateTimeOffset.UtcNow
             };
             await supabase.From<RfidScansModel>().Insert(rfidScan);

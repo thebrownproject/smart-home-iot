@@ -10,6 +10,8 @@ public class RfidScansRequest
     [MaxLength(100)]
     public required string CardId { get; set; }
     public Guid? AuthorisedCardId { get; set; }
+    [MaxLength(100)]
+    public string? Username { get; set; }
     [Required]
     [MaxLength(20)]
     [RegularExpression("^(granted|denied)$", ErrorMessage = "AccessResult must be 'granted' or 'denied'.")]

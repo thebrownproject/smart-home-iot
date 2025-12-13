@@ -31,7 +31,11 @@ class DoorServoManager:
         self.servo = Servo(pin=13)
         self.countdown = 0
         self.is_open = None
-    
+        self.mqtt = None
+
+    def set_mqtt(self, mqtt):
+        self.mqtt = mqtt
+
     def open(self, duration=5):
         self.servo.open()
         self.is_open = True
@@ -47,6 +51,20 @@ class DoorServoManager:
             self.countdown -= 1
             if self.countdown == 0 and self.is_open:
                 self.close()
+                self._publish_status()
+
+    def _publish_status(self):
+        if self.mqtt is None:
+            return
+        import ujson
+        from config import TOPIC_STATUS_DOOR
+        from utils.time_sync import TimeSync
+        payload = ujson.dumps({
+            "state": "closed",
+            "timestamp": TimeSync().get_iso_timestamp()
+        })
+        if not self.mqtt.publish(TOPIC_STATUS_DOOR, payload):
+            print("[DoorServoManager] MQTT publish failed - door auto-close status")
 
 class WindowServoManager:
     def __init__(self):

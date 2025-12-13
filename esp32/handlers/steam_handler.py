@@ -5,21 +5,19 @@ class SteamHandler:
         self.memory = Memory()
         self.flash_count = 0
 
-    def handle_steam_detection(self, mqtt, rgb_manager, oled_manager):
+    def handle_steam_detection(self, mqtt, rgb_manager, oled_manager, window_servo_manager):
         from sensors.steam import SteamSensor
-        from outputs.servo import Servo
         from config import TOPIC_SENSOR_DATA, TOPIC_STATUS_WINDOW
         import ujson
         from utils.time_sync import TimeSync
 
         steam = SteamSensor()
-        window_servo = Servo(pin=5)
         time_sync = TimeSync()
 
         if steam.is_moisture_detected():
             if self.flash_count == 0:
                 self.flash_count = 6
-                window_servo.close()
+                window_servo_manager.close()
 
                 payload = ujson.dumps({
                     "sensor_type": "steam",
@@ -44,5 +42,5 @@ class SteamHandler:
             else:
                 rgb_manager.show('steam', (0, 0, 0), 1)
 
-        del steam, window_servo, time_sync
+        del steam, time_sync
         self.memory.collect("After steam handling")

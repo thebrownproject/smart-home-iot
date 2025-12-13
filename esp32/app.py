@@ -48,6 +48,9 @@ class SmartHomeApp:
                     time.sleep(3)
                     raise RuntimeError("MQTT connection failed after all retries - system cannot operate without broker")
 
+        # Give door servo manager access to MQTT for auto-close status updates
+        self.door_servo_manager.set_mqtt(self.mqtt)
+
         self.control = ControlHandler(self.rgb_manager, self.oled_manager, self.door_servo_manager, self.window_servo_manager, self.buzzer_manager, self.fan_manager)
 
         # Subscribe to MQTT topics with control handler methods as callbacks
@@ -95,7 +98,7 @@ class SmartHomeApp:
                 motion.handle_motion_detection(self.mqtt, self.rgb_manager, self.oled_manager, button)
 
             if loop_count % 10 == 0:
-                steam.handle_steam_detection(self.mqtt, self.rgb_manager, self.oled_manager)
+                steam.handle_steam_detection(self.mqtt, self.rgb_manager, self.oled_manager, self.window_servo_manager)
 
             if loop_count % 10 == 5:
                 gas.handle_gas_detection(self.mqtt, self.rgb_manager, self.oled_manager, self.buzzer_manager, button, self.fan_manager)

@@ -15,10 +15,13 @@ public class RfidScansModel : BaseModel
 
     public RfidScansModel(RfidScansRequest request)
     {
+        Id = Guid.NewGuid();
         DeviceId = request.DeviceId;
         CardId = request.CardId;
         AuthorisedCardId = request.AuthorisedCardId;
+        Username = request.Username;
         AccessResult = request.AccessResult;
+        Timestamp = DateTimeOffset.UtcNow;
     }
 
     [PrimaryKey("id")]
@@ -36,9 +39,9 @@ public class RfidScansModel : BaseModel
     [Column("access_result")]
     public string AccessResult { get; set; }
 
-    [Column("username")]
-    public string? Username { get; set; }
-
     [Column("timestamp")]
     public DateTimeOffset Timestamp { get; set; }
+
+    [Column("username")]
+    public string? Username { get; set; }
 }
