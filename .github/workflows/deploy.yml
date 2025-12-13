@@ -37,17 +37,19 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            echo "🚀 Deploying Smart Home API to DigitalOcean droplet..."
-            echo "📍 Target: /opt/smart-home-api"
+            set -e
+            echo "🚀 Deploying Smart Home API..."
             cd /opt/smart-home-api
 
-            # Stop existing container
-            echo "🛑 Stopping existing container..."
-            docker-compose down || true
+            # Verify files exist
+            echo "📁 Checking files..."
+            ls -la
 
-            # Create appsettings.Production.json from secrets
-            echo "📝 Creating configuration file..."
-            cat > appsettings.Production.json << EOF
+            # Stop existing container
+            docker-compose down 2>/dev/null || true
+
+            # Create production config
+            cat > appsettings.Production.json << 'EOFCONFIG'
             {
               "SupabaseUrl": "${{ secrets.SUPABASE_URL }}",
               "SupabaseApiKey": "${{ secrets.SUPABASE_API_KEY }}",
@@ -56,32 +58,31 @@ jobs:
               "MqttUser": "${{ secrets.HIVEMQ_USERNAME }}",
               "MqttPassword": "${{ secrets.HIVEMQ_PASSWORD }}",
               "DeviceUuid": "${{ secrets.ESP32_DEVICE_UUID }}",
+              "UseSwagger": true,
               "AllowedHosts": "*",
-              "Logging": {
-                "LogLevel": {
-                  "Default": "Information",
-                  "Microsoft.AspNetCore": "Warning"
-                }
-              }
+              "Logging": { "LogLevel": { "Default": "Information" } }
             }
-            EOF
+            EOFCONFIG
 
-            # Build and start new container
-            echo "🔧 Building and starting container..."
-            docker-compose up -d --build
+            # Show system resources
+            echo "💻 System resources:"
+            free -m | head -2
 
-            # Wait for health check
-            echo "⏳ Waiting for API to be healthy..."
-            sleep 10
+            # Build and start
+            echo "🔧 Building container..."
+            docker-compose build --no-cache 2>&1 | tail -30
 
-            # Check container status
+            echo "🚀 Starting container..."
+            docker-compose up -d
+
+            # Wait and check
+            sleep 15
             echo "📊 Container status:"
             docker-compose ps
+            docker ps -a | grep smart-home
 
-            # Show logs
-            echo "📋 Recent logs:"
-            docker-compose logs --tail=20
+            echo "📋 Container logs:"
+            docker-compose logs --tail=50
 
-            echo "✅ Deployment complete!"
-            echo "🌐 API available at: http://${{ secrets.DROPLET_IP }}:5000"
-            echo "🔐 HTTPS available at: http://${{ secrets.DROPLET_IP }}:5001"
+            echo "✅ Deploy script finished"
+            echo "🌐 API: http://${{ secrets.DROPLET_IP }}:5000"
