@@ -86,7 +86,9 @@ export const SensorGrid = () => {
             ? "--"
             : motionData.length.toString()
         }
-        valueType={motionData === null || isOffline || isLoading ? "" : "/hr"}
+        valueType={
+          motionData === null || isOffline || isLoading ? "" : "last hr"
+        }
       />
       <SensorCard
         icon={<Flame />}
