@@ -4970,3 +4970,67 @@ Temperature and humidity state infrastructure is now complete and ready for UI c
 **Docker Image Size**: ~220MB (multi-stage build optimization)
 **Local Test Status**: ✅ Passing (health check successful)
 **Production Deployment**: Ready for DigitalOcean droplet
+
+---
+
+## Session 40 - 2025-12-13 - DigitalOcean Deployment Fix & HTTPS Setup ✅
+
+**Phase**: Phase 2 - C# API Layer
+**Milestone**: 2.1 - Deployment & Infrastructure
+**Branch**: main
+
+### Tasks Completed
+
+- [x] Fixed DigitalOcean deployment - API now running and accessible
+- [x] Configured Caddy reverse proxy for HTTPS with auto SSL
+- [x] Set up DuckDNS domain (zap-smart-home.duckdns.org)
+- [x] Verified frontend-to-API communication working
+
+### Summary
+
+Diagnosed and fixed deployment issues preventing the C# API from running on DigitalOcean:
+
+1. **Root cause identified**: `env_file: .env.production` in docker-compose.yml was causing configuration conflicts with appsettings.Production.json
+2. **Solution**: Simplified docker-compose.yml - removed env_file dependency, deprecated version field
+3. **Enhanced debugging**: Added file verification, memory checks, and detailed logging to deploy workflow
+
+After API was running, discovered mixed-content issue (HTTPS frontend → HTTP API). Set up:
+- DuckDNS domain pointing to droplet IP
+- Caddy reverse proxy on existing droplet (alongside shelter-sync project)
+- Automatic SSL certificate provisioning
+
+### Decisions Made
+
+1. **Removed env_file from docker-compose**: Configuration now comes solely from appsettings.Production.json (created by GitHub Actions from secrets)
+2. **Caddy for SSL**: Reused existing Caddy installation on droplet - added new site block for zap-smart-home.duckdns.org
+3. **DuckDNS for domain**: Free dynamic DNS service, sufficient for student project
+
+### Issues Encountered
+
+1. **Container crash (exit code 139)**: Initial diagnosis suggested memory/SIGSEGV, but actual issue was env_file loading conflicts
+   - **Solution**: Removed env_file reference from docker-compose.yml
+
+2. **Mixed content blocking**: Vercel HTTPS site couldn't call HTTP API
+   - **Solution**: Added Caddy reverse proxy with automatic Let's Encrypt SSL
+
+3. **DuckDNS IP mismatch**: Domain was pointing to wrong IP
+   - **Solution**: Updated DuckDNS to point to droplet IP (170.64.146.159)
+
+### Next Session
+
+- Implement MQTT/database POST for RFID logs table
+- Fix gas sensor alert_end logging (currently only logs alert_start)
+- Continue with remaining Phase 3 polish tasks
+
+### Files Modified
+
+- `.github/workflows/deploy.yml` - Enhanced debugging output
+- `api/docker-compose.yml` - Removed env_file, simplified configuration
+- `/etc/caddy/Caddyfile` (on droplet) - Added zap-smart-home.duckdns.org site block
+
+### Deployment Status
+
+- **API URL**: https://zap-smart-home.duckdns.org
+- **Swagger**: https://zap-smart-home.duckdns.org/swagger
+- **Frontend**: https://zap-smart-home.vercel.app
+- **Status**: ✅ All systems operational
