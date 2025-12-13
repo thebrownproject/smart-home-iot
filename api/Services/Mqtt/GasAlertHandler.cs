@@ -137,12 +137,15 @@ public class GasAlertHandler : IMqttMessageHandler
                 return;
             }
 
-            // Update alert_end
-            activeAlert.AlertEnd = timestamp;
-            await supabase.From<GasAlertsModel>().Update(activeAlert);
+            // Update alert_end using correct Supabase syntax (WHERE + SET)
+            await supabase
+                .From<GasAlertsModel>()
+                .Where(x => x.Id == activeAlert.Id)
+                .Set(x => x.AlertEnd, timestamp)
+                .Update();
 
-            _logger.LogInformation("✅ Gas alert CLEARED - Device: {DeviceId}, Duration: {Duration}",
-                deviceId, timestamp - activeAlert.AlertStart);
+            _logger.LogInformation("✅ Gas alert CLEARED - Device: {DeviceId}, AlertId: {AlertId}, Duration: {Duration}",
+                deviceId, activeAlert.Id, timestamp - activeAlert.AlertStart);
         }
         catch (Exception ex)
         {

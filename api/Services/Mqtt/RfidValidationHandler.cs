@@ -13,15 +13,18 @@ public class RfidValidationHandler : IMqttMessageHandler
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly MqttPublisher _mqttPublisher;
     private readonly ILogger<RfidValidationHandler> _logger;
+    private readonly IConfiguration _configuration;
 
     public RfidValidationHandler(
         IServiceScopeFactory scopeFactory,
         MqttPublisher mqttPublisher,
-        ILogger<RfidValidationHandler> logger)
+        ILogger<RfidValidationHandler> logger,
+        IConfiguration configuration)
     {
         _scopeFactory = scopeFactory;
         _mqttPublisher = mqttPublisher;
         _logger = logger;
+        _configuration = configuration;
     }
 
     public bool CanHandle(string topic)
@@ -88,14 +91,31 @@ public class RfidValidationHandler : IMqttMessageHandler
         _logger.LogInformation("RFID validation for card {CardId}: {Result}", cardId, isValid ? "granted" : "denied");
 
         // Log scan to database
-        var rfidScan = new RfidScansModel
+        try
         {
-            Id = Guid.NewGuid(),
-            CardId = cardId,
-            AccessResult = isValid ? "granted" : "denied",
-            AuthorisedCardId = isValid ? (await cardService.GetByCardIdAsync(cardId))?.Id : null,
-            Timestamp = DateTimeOffset.UtcNow
-        };
-        await supabase.From<RfidScansModel>().Insert(rfidScan);
+            // Parse device UUID from configuration
+            var deviceUuidString = _configuration.GetValue<string>("DeviceUuid");
+            if (!Guid.TryParse(deviceUuidString, out var deviceUuid))
+            {
+                _logger.LogWarning("Invalid DeviceUuid configuration for RFID scan logging");
+                return;
+            }
+
+            var rfidScan = new RfidScansModel
+            {
+                Id = Guid.NewGuid(),
+                DeviceId = deviceUuid,
+                CardId = cardId,
+                AccessResult = isValid ? "granted" : "denied",
+                AuthorisedCardId = isValid ? (await cardService.GetByCardIdAsync(cardId))?.Id : null,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+            await supabase.From<RfidScansModel>().Insert(rfidScan);
+            _logger.LogInformation("RFID scan logged to database for card {CardId}", cardId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to log RFID scan to database for card {CardId}", cardId);
+        }
     }
 }
