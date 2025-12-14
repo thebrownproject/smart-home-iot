@@ -589,90 +589,90 @@
 
 ## Phase 4: Assessment Deliverables
 
-### Milestone 4.1: Documentation
+### Milestone 4.1: Web App & Documentation
 
-- [ ] **T4.1**: Create ERD (Entity Relationship Diagram)
+- [ ] **T4.0**: Add authentication to web app
 
-  - Tool: dbdiagram.io or draw.io
-  - Show all tables, relationships, indexes
-  - Export as PNG/PDF to `docs/erd.png`
+  - Requirement: "Allow users to log in via web app. This is counted as equivalent to RFID login"
+  - Create simple login form (username/password)
+  - Store users in database (users table already exists)
+  - Add session management/auth middleware
+  - Protect dashboard routes (require login to view controls)
+  - Files: `web/pages/login.tsx`, `web/app/api/auth/*`, middleware
+  - Note: Clarify with teacher if this is required
+  - **Started**: 2025-12-14
+  - **Completed**: 2025-12-14
 
-- [ ] **T4.2**: Create web app wireframes
+- [x] **T4.1**: Create ERD (Entity Relationship Diagram)
 
-  - Tool: Figma or Excalidraw
-  - Wireframes for: Dashboard, RFID Log, Control Panel
-  - Export to `docs/wireframes/`
+  - Technical Requirement: "ERD must be created"
+  - Tool: Supabase auto-generated ERD
+  - Shows all tables, relationships, indexes
+  - Export screenshot to `docs/deliverables/erd.png`
+  - **Started**: 2025-12-14
+  - **Completed**: 2025-12-14
 
-- [ ] **T4.3**: Write README.md
+- [x] **T4.2**: Create web app wireframes
 
-  - Project overview
-  - Hardware requirements and setup
-  - Software installation (ESP32 + Web app)
-  - Environment variable configuration
-  - How to run the system
+  - Technical Requirement: "Mock-ups/Wireframes need to be attached"
+  - Tool: Figma
+  - Wireframes for: Dashboard, RFID Log, Control Panel, Login
+  - Export screenshot to `docs/deliverables/wireframes.png`
+  - **Started**: 2025-12-14
+  - **Completed**: 2025-12-14
 
-- [ ] **T4.4**: Document MQTT topics
+- [x] **T4.3**: Write README.md
 
-  - File: `docs/mqtt-topics.md`
-  - List all topics with payload examples
-  - Explain pub/sub patterns
+  - Technical Requirement: Project documentation
+  - Project overview, hardware requirements, software installation
+  - Environment configuration, system setup instructions
+  - Updated project name to "Zap Smart Home"
+  - Added Production status and live demo link
+  - Added comprehensive CI/CD deployment section
+  - **Started**: 2025-12-14
+  - **Completed**: 2025-12-14
 
-- [ ] **T4.5**: Create hardware pinout diagram
-  - File: `docs/hardware-pinout.md`
-  - List all ESP32 pin connections
-  - Include I2C addresses for RFID, OLED
+- [x] **T4.4**: Create user manual
+
+  - Teacher requested user manual (week of 2025-12-07)
+  - File: `docs/user-manual.md` - Comprehensive user manual created
+  - Agent Review: docs-architect provided detailed feedback
+  - **Started**: 2025-12-14
+  - **Updates**: Fixed hardware pin layout (added missing steam sensor, window servo)
+  - **Updates**: Referenced config.example.py in repo (avoided bloat)
+  - **Completed**: 2025-12-14
+  - **Note**: Omitted visual documentation (smart home kit has own docs)
 
 ---
 
 ### Milestone 4.2: Project Management
 
-- [ ] **T4.6**: Set up GitHub Projects board
+- [x] **T4.6**: Set up GitHub Projects board
 
   - Create project: "Smart Home Automation"
   - Convert user stories to GitHub Issues
   - Create columns: Backlog, In Progress, Done
   - Link commits to issues
+  - Export screenshot to `docs/deliverables/github-projects.png`
+  - **Completed**: 2025-12-14
 
-- [ ] **T4.7**: Add task timestamps
+- [x] **T4.7**: Add task timestamps
   - For each completed task in GitHub, add:
     - Date started (in issue description)
     - Date completed (when issue closed)
   - Track total development time
-
----
-
-### Milestone 4.3: Learning Reflection
-
-- [ ] **T4.8**: Write development process reflection
-
-  - File: `docs/learning-reflection.md`
-  - Sections:
-    1. Challenges encountered and solutions
-    2. Technical skills acquired (MicroPython, MQTT, IoT patterns)
-    3. Problem-solving approach (debugging hardware, network issues)
-    4. What you'd do differently next time
-    5. Most valuable learning moments
-
-- [ ] **T4.9**: Code review and cleanup
-  - Remove debug print statements
-  - Add comments for complex logic
-  - Ensure consistent code style
-  - Remove unused imports/files
+  - **Completed**: 2025-12-14
 
 ---
 
 ### Milestone 4.4: Deployment & CI/CD
 
-- [ ] **T4.10**: Set up GitHub Actions CI/CD
+- [x] **T4.10**: Set up GitHub Actions CI/CD and deployment
 
-  - Create `.github/workflows/test.yml`
-  - Run linting on commits (optional for MicroPython)
-  - Auto-deploy web app to Vercel on merge to main
-
-- [ ] **T4.11**: Deploy web app to Vercel
-  - Connect GitHub repo to Vercel
-  - Configure environment variables
-  - Test production deployment
+  - GitHub Actions: Auto-deploy API to DigitalOcean VPS via Docker
+  - Vercel: Auto-deploy web app to https://zap-smart-home.vercel.app/
+  - Test production deployments
+  - **Completed**: 2025-12-14
 
 ---
 

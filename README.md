@@ -1,6 +1,6 @@
-# Smart Home IoT System
+# Zap Smart Home
 
-![Status](https://img.shields.io/badge/status-in%20development-yellow)
+![Status](https://img.shields.io/badge/status-production-green)
 ![Python](https://img.shields.io/badge/MicroPython-2B2728?logo=micropython&logoColor=white)
 ![C#](https://img.shields.io/badge/C%23-239120?logo=csharp&logoColor=white)
 ![.NET](https://img.shields.io/badge/.NET-512BD4?logo=dotnet&logoColor=white)
@@ -9,7 +9,7 @@
 
 > Distributed IoT system connecting ESP32 microcontroller with multiple sensors and web dashboard via RESTful API and MQTT
 
-🔗 **Live Demo:** *In development*
+🔗 **Live Demo:** [zap-smart-home.vercel.app](https://zap-smart-home.vercel.app/)
 
 ---
 
@@ -49,6 +49,33 @@ A comprehensive IoT smart home automation system built for Cert IV capstone proj
 ## Architecture & Tech Decisions
 
 Built using distributed IoT architecture with three-tier communication pattern: ESP32 publishes sensor data to HiveMQ MQTT broker, C# middleware subscribes to device messages for validation and database persistence, and Next.js web app subscribes for real-time updates while querying C# API for historical data. Chose MQTT-only communication for ESP32 to avoid memory leaks from MicroPython's urequests library, maintaining persistent connection with reconnect logic. Implemented C# middleware as single database gateway to centralise Supabase credentials and business logic, providing RESTful endpoints for queries while handling all database writes via MQTT subscriptions. RFID validation uses request/response pattern where ESP32 publishes card UID, C# queries authorized cards table, and publishes validation result back to device. Object-oriented MicroPython structure with handler classes for environmental monitoring, security, and outputs enables clean separation of concerns and testability. Event priority state machine ensures critical alerts (gas detection) override lower-priority events (motion detection).
+
+---
+
+## Deployment & CI/CD
+
+**Production infrastructure deployed with automated CI/CD pipelines for both API and web applications:**
+
+**API Deployment (DigitalOcean VPS):**
+- Hosted on DigitalOcean droplet with Docker containerization
+- Automatic deployment via GitHub Actions when `/api` folder is updated
+- Dynamic DNS resolution through DuckDNS (`zap-smart-home.duckdns.org`)
+- Container runs on port 8080, exposed on host port 5000
+- Environment variables managed through GitHub Secrets
+- Health monitoring with container status checks and log streaming
+
+**Web Deployment (Vercel):**
+- Automatic deployment to [zap-smart-home.vercel.app](https://zap-smart-home.vercel.app/)
+- Triggers on every push to `web/` folder
+- Environment variables configured through Vercel dashboard
+- Global CDN for fast worldwide access
+
+**CI/CD Pipeline:**
+- GitHub Actions workflow deploys API to DigitalOcean VPS on push to main branch
+- Uses SSH/SCP actions to copy files and execute remote deployment scripts
+- Docker Compose handles container orchestration with health checks
+- Web app auto-deploys through Vercel's GitHub integration
+- Both pipelines maintain zero-downtime deployments with rolling updates
 
 ---
 
