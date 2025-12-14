@@ -48,7 +48,50 @@ A comprehensive IoT smart home automation system built for Cert IV capstone proj
 
 ## Architecture & Tech Decisions
 
-Built using distributed IoT architecture with three-tier communication pattern: ESP32 publishes sensor data to HiveMQ MQTT broker, C# middleware subscribes to device messages for validation and database persistence, and Next.js web app subscribes for real-time updates while querying C# API for historical data. Chose MQTT-only communication for ESP32 to avoid memory leaks from MicroPython's urequests library, maintaining persistent connection with reconnect logic. Implemented C# middleware as single database gateway to centralise Supabase credentials and business logic, providing RESTful endpoints for queries while handling all database writes via MQTT subscriptions. RFID validation uses request/response pattern where ESP32 publishes card UID, C# queries authorized cards table, and publishes validation result back to device. Object-oriented MicroPython structure with handler classes for environmental monitoring, security, and outputs enables clean separation of concerns and testability. Event priority state machine ensures critical alerts (gas detection) override lower-priority events (motion detection).
+**Built using distributed IoT architecture with three-tier communication pattern:**
+
+**Communication Flow:**
+- ESP32 publishes sensor data to HiveMQ MQTT broker
+- C# middleware subscribes to device messages for validation and database persistence
+- Next.js web app queries C# API for historical data and subscribes to MQTT for direct ESP32 status updates
+
+**ESP32 Communication Strategy:**
+- MQTT-only communication to avoid memory leaks from MicroPython's urequests library
+- Persistent connection with automatic reconnection logic
+- Publishes status updates (door/window state, temperature, humidity) to MQTT topics
+- Web app subscribes to these status topics for real-time updates
+
+**Direct ESP32-to-Web Communication:**
+- ESP32 publishes current temperature/humidity to MQTT topics
+- ESP32 publishes door/window status updates to MQTT topics
+- Web app subscribes to these MQTT topics and updates React state
+- Historical data accessed via C# API queries to database
+
+**C# Middleware Gateway:**
+- Single database gateway to centralise Supabase credentials and business logic
+- Provides RESTful endpoints for historical queries
+- Handles all database writes via MQTT subscriptions
+- Implements business logic and data validation
+
+**RFID Validation Pattern:**
+- Request/response pattern via MQTT topics
+- ESP32 publishes card UID to `devices/{id}/rfid/check`
+- C# queries authorized cards table in database
+- C# publishes validation result back to `devices/{id}/rfid/response`
+- ESP32 receives response and controls door access
+
+**MicroPython Architecture:**
+- Object-oriented structure with handler classes
+- Separate handlers for environmental monitoring, security, and outputs
+- Clean separation of concerns for testability
+- Lazy-loading pattern for memory efficiency (100KB RAM constraint)
+
+**Event Priority State Machine:**
+- Gas alert (highest priority) - activates fan, RGB solid red
+- Steam alert - closes window, RGB flashes blue
+- Motion alert - visual indicator, RGB orange
+- Normal operation - standard monitoring cycle
+- Critical alerts override lower-priority events
 
 ---
 
