@@ -7,12 +7,11 @@ import { useMQTT } from "./MQTTProvider";
 export const AsthmaAlertIcon = () => {
   const { temperature, humidity } = useMQTT();
 
-  // const isAsthmaAlert =
-  //   temperature !== null &&
-  //   humidity !== null &&
-  //   humidity > 50 &&
-  //   temperature > 27;
-  const isAsthmaAlert = true;
+  const isAsthmaAlert =
+    temperature !== null &&
+    humidity !== null &&
+    humidity > 50 &&
+    temperature > 27;
 
   if (!isAsthmaAlert) return null;
 
