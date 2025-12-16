@@ -10,8 +10,8 @@ export const AsthmaAlertIcon = () => {
   const isAsthmaAlert =
     temperature !== null &&
     humidity !== null &&
-    humidity > 50 &&
-    temperature > 27;
+    humidity > 10 &&
+    temperature > 10;
 
   if (!isAsthmaAlert) return null;
 

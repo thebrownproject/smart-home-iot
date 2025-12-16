@@ -89,6 +89,9 @@ logs/
 temp/
 tmp/
 
+# Microsoft Office temporary files
+~$*
+
 # Hardware-specific files (if any compiled firmware)
 *.bin
 *.hex
@@ -102,3 +105,12 @@ Planning/scratch.md
 
 # Archived web project
 web-old/
+
+# Node.js and Next.js
+node_modules/
+node_modules.nosync/
+.next/
+out/
+.cache/
+*.tsbuildinfo
+next-env.d.ts

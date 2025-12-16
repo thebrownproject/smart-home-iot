@@ -52,6 +52,8 @@ class SmartHomeApp:
         self.door_servo_manager.set_mqtt(self.mqtt)
 
         self.control = ControlHandler(self.rgb_manager, self.oled_manager, self.door_servo_manager, self.window_servo_manager, self.buzzer_manager, self.fan_manager)
+        # Give control handler access to MQTT for publishing door status on RFID access
+        self.control.set_mqtt(self.mqtt)
 
         # Subscribe to MQTT topics with control handler methods as callbacks
         self.mqtt.subscribe(TOPIC_RFID_RESPONSE, self.control.handle_rfid_response)

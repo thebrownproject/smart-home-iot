@@ -6,6 +6,11 @@ class ControlHandler:
         self.window_servo_manager = window_servo_manager
         self.buzzer_manager = buzzer_manager
         self.fan_manager = fan_manager
+        self.mqtt = None
+
+    def set_mqtt(self, mqtt):
+        """Store MQTT client for publishing door status on RFID access."""
+        self.mqtt = mqtt
 
     def handle_rfid_response(self, topic, msg):
         import ujson
@@ -19,6 +24,7 @@ class ControlHandler:
                 self.rgb_manager.show('rfid', (0, 255, 0), 3)
                 self.oled_manager.show('rfid', "ACCESS", 3, "GRANTED")
                 self.door_servo_manager.open(duration=5)
+                self._publish_door_status("open")
             elif data.get('access') == 'denied':
                 print("[ControlHandler] ACCESS DENIED - activating buzzer")
                 self.rgb_manager.show('rfid', (255, 0, 0), 3)
@@ -155,3 +161,19 @@ class ControlHandler:
         })
         if not mqtt.publish(TOPIC_RESPONSE_STATUS, payload):
             print("[ControlHandler] MQTT publish failed - status request")
+
+    def _publish_door_status(self, state):
+        """Publish door status to MQTT (used by RFID access grant)."""
+        if self.mqtt is None:
+            print("[ControlHandler] Cannot publish door status - MQTT not set")
+            return
+        import ujson
+        from config import TOPIC_STATUS_DOOR
+        from utils.time_sync import TimeSync
+
+        payload = ujson.dumps({
+            "state": state,
+            "timestamp": TimeSync().get_iso_timestamp()
+        })
+        if not self.mqtt.publish(TOPIC_STATUS_DOOR, payload):
+            print(f"[ControlHandler] MQTT publish failed - door status ({state})")
